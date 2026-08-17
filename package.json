@@ -12,7 +12,7 @@
     "serp"
   ],
   "license": "MIT",
-  "homepage": "https://docs.upapi.io",
+  "homepage": "https://upapi.io/docs",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/DevinoSolutions/upapi-node.git"
