@@ -42,6 +42,10 @@ import type {
   GithubUserGetOutput,
   GoogleAutocompletePostInput,
   GoogleAutocompletePostOutput,
+  GoogleMapsPlaceGetInput,
+  GoogleMapsPlaceGetOutput,
+  GoogleMapsSearchPostInput,
+  GoogleMapsSearchPostOutput,
   HackernewsSearchGetInput,
   HackernewsSearchGetOutput,
   HtmlToPdfPostInput,
@@ -211,6 +215,16 @@ export type Operations = {
     input: GoogleAutocompletePostInput,
     options?: CallOptions,
   ) => Promise<GoogleAutocompletePostOutput>;
+  /** Google Maps Place Details — Look up one Google Maps place by place id, CID, feature id or a pasted Maps link, and get its name, full address, coordinates, categories, rating, review count, phone, website and opening hours. Pairs with Google Maps Business Search, which returns the identifiers this accepts. */
+  'google-maps-place.get': (
+    input: GoogleMapsPlaceGetInput,
+    options?: CallOptions,
+  ) => Promise<GoogleMapsPlaceGetOutput>;
+  /** Google Maps Business Search — Search Google Maps for businesses by text query, optionally centred on coordinates. Returns each place with its name, address, coordinates, category, rating, review count, opening hours, website and phone where Google publishes them, plus the place id you can pass to Google Maps Place Details. */
+  'google-maps-search.post': (
+    input: GoogleMapsSearchPostInput,
+    options?: CallOptions,
+  ) => Promise<GoogleMapsSearchPostOutput>;
   /** Search Hacker News — Full-text + filter search over Hacker News (stories, comments, Show/Ask HN, front page) via Algolia's open API. Ordered by relevance or date. */
   'hackernews-search.get': (
     input: HackernewsSearchGetInput,
@@ -495,6 +509,18 @@ export function buildOperations(client: UpAPI): Operations {
     'google-autocomplete.post': (input, options) =>
       client.call<GoogleAutocompletePostOutput, GoogleAutocompletePostInput>(
         'google-autocomplete.post',
+        input,
+        options,
+      ),
+    'google-maps-place.get': (input, options) =>
+      client.call<GoogleMapsPlaceGetOutput, GoogleMapsPlaceGetInput>(
+        'google-maps-place.get',
+        input,
+        options,
+      ),
+    'google-maps-search.post': (input, options) =>
+      client.call<GoogleMapsSearchPostOutput, GoogleMapsSearchPostInput>(
+        'google-maps-search.post',
         input,
         options,
       ),

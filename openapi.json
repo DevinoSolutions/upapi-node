@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "upAPI",
-    "description": "Browser-powered API marketplace. 57 of 57 APIs included (capped at 449 for RapidAPI compatibility).\n\nBilling: a call spends WEIGHTED UNITS against your plan's monthly quota — not a flat one call = one unit. A light HTTP relay costs 1 unit; heavy work costs more, up to 25 (search-engine result pages 25, headless-browser renders and page scrapes 20, residential-proxy social reads 15, LLM completions 10, datacenter social/media reads 4). Every operation declares its own price as `x-upapi-unit-weight`, so a workload can be costed before it is run. Quota state rides on every response in the `RateLimit` / `RateLimit-Policy` headers.",
+    "description": "Browser-powered API marketplace. 59 of 59 APIs included (capped at 449 for RapidAPI compatibility).\n\nBilling: a call spends WEIGHTED UNITS against your plan's monthly quota — not a flat one call = one unit. A light HTTP relay costs 1 unit; heavy work costs more, up to 25 (search-engine result pages 25, headless-browser renders and page scrapes 20, residential-proxy social reads 15, LLM completions 10, datacenter social/media reads 4). Every operation declares its own price as `x-upapi-unit-weight`, so a workload can be costed before it is run. Quota state rides on every response in the `RateLimit` / `RateLimit-Policy` headers.",
     "version": "1.0.0"
   },
   "servers": [
@@ -4007,6 +4007,734 @@
                     "fetchedAt",
                     "elapsedMs"
                   ],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/google-maps-place.get": {
+      "post": {
+        "operationId": "google_maps_place_get",
+        "summary": "Google Maps Place Details",
+        "description": "Look up one Google Maps place by place id, CID, feature id or a pasted Maps link, and get its name, full address, coordinates, categories, rating, review count, phone, website and opening hours. Pairs with Google Maps Business Search, which returns the identifiers this accepts.",
+        "tags": ["Maps", "google", "maps", "places", "local", "business", "details", "geo"],
+        "x-upapi-unit-weight": 4,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "placeId": {
+                    "default": null,
+                    "description": "Google place id, as returned by Google Maps Business Search (e.g. \"ChIJj61dQgK6j4AR4GeTYWZsKWw\").",
+                    "title": "Placeid",
+                    "maxLength": 200,
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "cid": {
+                    "default": null,
+                    "description": "Google customer id, the decimal identifier (e.g. \"1868053941146338963\").",
+                    "title": "Cid",
+                    "maxLength": 25,
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "featureId": {
+                    "default": null,
+                    "description": "Google feature id (e.g. \"0x4cce05120f81812b:0x19eca9297f4bc693\").",
+                    "title": "Featureid",
+                    "maxLength": 60,
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "url": {
+                    "default": null,
+                    "description": "A Google Maps link to the place, pasted as-is from the browser or the share sheet.",
+                    "title": "Url",
+                    "maxLength": 2000,
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "language": {
+                    "default": "en",
+                    "description": "Language for the name and opening hours, as an ISO code (e.g. \"en\").",
+                    "maxLength": 5,
+                    "title": "Language",
+                    "type": "string"
+                  },
+                  "region": {
+                    "default": "us",
+                    "description": "Two-letter country code biasing the response (e.g. \"ca\").",
+                    "maxLength": 2,
+                    "minLength": 2,
+                    "title": "Region",
+                    "type": "string"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Route the request through your own proxy (e.g. http://user:pass@host:port). Omit to use upAPI's pool.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "The place itself, flattened — same shape as one Business Search result.",
+                  "properties": {
+                    "name": {
+                      "title": "Name",
+                      "type": "string"
+                    },
+                    "placeId": {
+                      "default": null,
+                      "description": "Google place id (ChIJ...)",
+                      "title": "Placeid",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "featureId": {
+                      "default": null,
+                      "description": "Google feature id (0x<cell>:0x<cid>); pass it to Google Maps Place Details",
+                      "title": "Featureid",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "cid": {
+                      "default": null,
+                      "description": "Google customer id — the decimal form of the feature id",
+                      "title": "Cid",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "address": {
+                      "default": null,
+                      "title": "Address",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "addressLines": {
+                      "default": null,
+                      "title": "Addresslines",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array",
+                      "nullable": true
+                    },
+                    "street": {
+                      "default": null,
+                      "title": "Street",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "city": {
+                      "default": null,
+                      "title": "City",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "locality": {
+                      "default": null,
+                      "description": "Human \"City, Region, Country\" line",
+                      "title": "Locality",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "countryCode": {
+                      "default": null,
+                      "title": "Countrycode",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "latitude": {
+                      "default": null,
+                      "title": "Latitude",
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "longitude": {
+                      "default": null,
+                      "title": "Longitude",
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "category": {
+                      "default": null,
+                      "description": "Primary Google category",
+                      "title": "Category",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "categories": {
+                      "default": null,
+                      "title": "Categories",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array",
+                      "nullable": true
+                    },
+                    "rating": {
+                      "default": null,
+                      "title": "Rating",
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "reviewCount": {
+                      "default": null,
+                      "description": "Total Google reviews. Best-effort: Google serves this field inconsistently on the Maps endpoints — the same request returned it one hour and omitted it the next (measured 2026-08-17) — so treat null as 'not published on this response', not as zero reviews.",
+                      "title": "Reviewcount",
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "phone": {
+                      "default": null,
+                      "description": "Phone as Google displays it locally",
+                      "title": "Phone",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "phoneInternational": {
+                      "default": null,
+                      "description": "E.164 phone, when Google publishes one",
+                      "title": "Phoneinternational",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "website": {
+                      "default": null,
+                      "title": "Website",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "domain": {
+                      "default": null,
+                      "title": "Domain",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "timezone": {
+                      "default": null,
+                      "title": "Timezone",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "thumbnail": {
+                      "default": null,
+                      "title": "Thumbnail",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "openingHours": {
+                      "default": null,
+                      "description": "Per weekday, as [{\"day\": \"Monday\", \"hours\": [\"8 AM-11 PM\"]}]",
+                      "title": "Openinghours",
+                      "items": {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      "type": "array",
+                      "nullable": true
+                    },
+                    "googleMapsUrl": {
+                      "default": null,
+                      "title": "Googlemapsurl",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "resolvedFrom": {
+                      "description": "Which input identifier this lookup was resolved from: placeId, cid, featureId or url",
+                      "title": "Resolvedfrom",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["name", "resolvedFrom"],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/google-maps-search.post": {
+      "post": {
+        "operationId": "google_maps_search_post",
+        "summary": "Google Maps Business Search",
+        "description": "Search Google Maps for businesses by text query, optionally centred on coordinates. Returns each place with its name, address, coordinates, category, rating, review count, opening hours, website and phone where Google publishes them, plus the place id you can pass to Google Maps Place Details.",
+        "tags": ["Maps", "google", "maps", "places", "local", "business", "leads", "geo"],
+        "x-upapi-unit-weight": 6,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "query": {
+                    "description": "What to search for, exactly as you would type it into Google Maps (e.g. \"coffee shops in Ottawa\" or \"dentist near Shoreditch London\").",
+                    "maxLength": 300,
+                    "minLength": 1,
+                    "title": "Query",
+                    "type": "string"
+                  },
+                  "latitude": {
+                    "default": null,
+                    "description": "Centre the search on this latitude (e.g. 45.4215). Pass with `longitude`. Omit to let Google infer the area from the query text.",
+                    "title": "Latitude",
+                    "maximum": 90,
+                    "minimum": -90,
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "longitude": {
+                    "default": null,
+                    "description": "Centre the search on this longitude (e.g. -75.6972). Pass with `latitude`.",
+                    "title": "Longitude",
+                    "maximum": 180,
+                    "minimum": -180,
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "zoom": {
+                    "default": null,
+                    "description": "Map zoom for the coordinate search, controlling the radius: 13 is roughly a city (the default), 16 a neighbourhood, 10 a metro area.",
+                    "title": "Zoom",
+                    "maximum": 21,
+                    "minimum": 3,
+                    "type": "number",
+                    "nullable": true
+                  },
+                  "maxResults": {
+                    "default": 20,
+                    "description": "How many places to return, up to 100 (e.g. 40). Google serves 20 per page, so higher values cost proportionally more time.",
+                    "maximum": 100,
+                    "minimum": 1,
+                    "title": "Maxresults",
+                    "type": "integer"
+                  },
+                  "language": {
+                    "default": "en",
+                    "description": "Language for names and hours, as an ISO code (e.g. \"en\", \"fr\").",
+                    "maxLength": 5,
+                    "title": "Language",
+                    "type": "string"
+                  },
+                  "region": {
+                    "default": "us",
+                    "description": "Two-letter country code biasing the results (e.g. \"ca\", \"gb\").",
+                    "maxLength": 2,
+                    "minLength": 2,
+                    "title": "Region",
+                    "type": "string"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Route the request through your own proxy (e.g. http://user:pass@host:port). Omit to use upAPI's pool.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["query"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "query": {
+                      "title": "Query",
+                      "type": "string"
+                    },
+                    "count": {
+                      "title": "Count",
+                      "type": "integer"
+                    },
+                    "places": {
+                      "items": {
+                        "description": "One Google Maps business.\n\nShared by both operations on purpose: search rows and the place-details\nresponse are the SAME record shape upstream, so publishing two subtly\ndifferent schemas for them would be a fiction that callers pay for when they\nchain a search into a details lookup.",
+                        "properties": {
+                          "name": {
+                            "title": "Name",
+                            "type": "string"
+                          },
+                          "placeId": {
+                            "default": null,
+                            "description": "Google place id (ChIJ...)",
+                            "title": "Placeid",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "featureId": {
+                            "default": null,
+                            "description": "Google feature id (0x<cell>:0x<cid>); pass it to Google Maps Place Details",
+                            "title": "Featureid",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "cid": {
+                            "default": null,
+                            "description": "Google customer id — the decimal form of the feature id",
+                            "title": "Cid",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "address": {
+                            "default": null,
+                            "title": "Address",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "addressLines": {
+                            "default": null,
+                            "title": "Addresslines",
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array",
+                            "nullable": true
+                          },
+                          "street": {
+                            "default": null,
+                            "title": "Street",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "city": {
+                            "default": null,
+                            "title": "City",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "locality": {
+                            "default": null,
+                            "description": "Human \"City, Region, Country\" line",
+                            "title": "Locality",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "countryCode": {
+                            "default": null,
+                            "title": "Countrycode",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "latitude": {
+                            "default": null,
+                            "title": "Latitude",
+                            "type": "number",
+                            "nullable": true
+                          },
+                          "longitude": {
+                            "default": null,
+                            "title": "Longitude",
+                            "type": "number",
+                            "nullable": true
+                          },
+                          "category": {
+                            "default": null,
+                            "description": "Primary Google category",
+                            "title": "Category",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "categories": {
+                            "default": null,
+                            "title": "Categories",
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array",
+                            "nullable": true
+                          },
+                          "rating": {
+                            "default": null,
+                            "title": "Rating",
+                            "type": "number",
+                            "nullable": true
+                          },
+                          "reviewCount": {
+                            "default": null,
+                            "description": "Total Google reviews. Best-effort: Google serves this field inconsistently on the Maps endpoints — the same request returned it one hour and omitted it the next (measured 2026-08-17) — so treat null as 'not published on this response', not as zero reviews.",
+                            "title": "Reviewcount",
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "phone": {
+                            "default": null,
+                            "description": "Phone as Google displays it locally",
+                            "title": "Phone",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "phoneInternational": {
+                            "default": null,
+                            "description": "E.164 phone, when Google publishes one",
+                            "title": "Phoneinternational",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "website": {
+                            "default": null,
+                            "title": "Website",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "domain": {
+                            "default": null,
+                            "title": "Domain",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "timezone": {
+                            "default": null,
+                            "title": "Timezone",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "thumbnail": {
+                            "default": null,
+                            "title": "Thumbnail",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "openingHours": {
+                            "default": null,
+                            "description": "Per weekday, as [{\"day\": \"Monday\", \"hours\": [\"8 AM-11 PM\"]}]",
+                            "title": "Openinghours",
+                            "items": {
+                              "additionalProperties": true,
+                              "type": "object"
+                            },
+                            "type": "array",
+                            "nullable": true
+                          },
+                          "googleMapsUrl": {
+                            "default": null,
+                            "title": "Googlemapsurl",
+                            "type": "string",
+                            "nullable": true
+                          }
+                        },
+                        "required": ["name"],
+                        "title": "Place",
+                        "type": "object"
+                      },
+                      "title": "Places",
+                      "type": "array"
+                    },
+                    "truncated": {
+                      "description": "True when Google still had more results than `maxResults` allowed",
+                      "title": "Truncated",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["query", "count", "places", "truncated"],
                   "title": "Output",
                   "type": "object"
                 }

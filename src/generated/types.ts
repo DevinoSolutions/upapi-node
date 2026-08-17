@@ -735,6 +735,209 @@ export interface GoogleAutocompletePostOutput {
   elapsedMs: number;
 }
 
+// ── google-maps-place.get ───────────────────────────────────────────────
+
+export interface GoogleMapsPlaceGetInput {
+  /**
+   * Google place id, as returned by Google Maps Business Search (e.g. "ChIJj61dQgK6j4AR4GeTYWZsKWw").
+   */
+  placeId?: string | null;
+  /**
+   * Google customer id, the decimal identifier (e.g. "1868053941146338963").
+   */
+  cid?: string | null;
+  /**
+   * Google feature id (e.g. "0x4cce05120f81812b:0x19eca9297f4bc693").
+   */
+  featureId?: string | null;
+  /**
+   * A Google Maps link to the place, pasted as-is from the browser or the share sheet.
+   */
+  url?: string | null;
+  /**
+   * Language for the name and opening hours, as an ISO code (e.g. "en").
+   */
+  language?: string;
+  /**
+   * Two-letter country code biasing the response (e.g. "ca").
+   */
+  region?: string;
+  /**
+   * Route the request through your own proxy (e.g. http://user:pass@host:port). Omit to use upAPI's pool.
+   */
+  proxyUrl?: string | null;
+}
+
+/**
+ * The place itself, flattened — same shape as one Business Search result.
+ */
+export interface GoogleMapsPlaceGetOutput {
+  name: string;
+  /**
+   * Google place id (ChIJ...)
+   */
+  placeId?: string | null;
+  /**
+   * Google feature id (0x<cell>:0x<cid>); pass it to Google Maps Place Details
+   */
+  featureId?: string | null;
+  /**
+   * Google customer id — the decimal form of the feature id
+   */
+  cid?: string | null;
+  address?: string | null;
+  addressLines?: Array<string> | null;
+  street?: string | null;
+  city?: string | null;
+  /**
+   * Human "City, Region, Country" line
+   */
+  locality?: string | null;
+  countryCode?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  /**
+   * Primary Google category
+   */
+  category?: string | null;
+  categories?: Array<string> | null;
+  rating?: number | null;
+  /**
+   * Total Google reviews. Best-effort: Google serves this field inconsistently on the Maps endpoints — the same request returned it one hour and omitted it the next (measured 2026-08-17) — so treat null as 'not published on this response', not as zero reviews.
+   */
+  reviewCount?: number | null;
+  /**
+   * Phone as Google displays it locally
+   */
+  phone?: string | null;
+  /**
+   * E.164 phone, when Google publishes one
+   */
+  phoneInternational?: string | null;
+  website?: string | null;
+  domain?: string | null;
+  timezone?: string | null;
+  thumbnail?: string | null;
+  /**
+   * Per weekday, as [{"day": "Monday", "hours": ["8 AM-11 PM"]}]
+   */
+  openingHours?: Array<Record<string, unknown>> | null;
+  googleMapsUrl?: string | null;
+  /**
+   * Which input identifier this lookup was resolved from: placeId, cid, featureId or url
+   */
+  resolvedFrom: string;
+}
+
+// ── google-maps-search.post ─────────────────────────────────────────────
+
+export interface GoogleMapsSearchPostInput {
+  /**
+   * What to search for, exactly as you would type it into Google Maps (e.g. "coffee shops in Ottawa" or "dentist near Shoreditch London").
+   */
+  query: string;
+  /**
+   * Centre the search on this latitude (e.g. 45.4215). Pass with `longitude`. Omit to let Google infer the area from the query text.
+   */
+  latitude?: number | null;
+  /**
+   * Centre the search on this longitude (e.g. -75.6972). Pass with `latitude`.
+   */
+  longitude?: number | null;
+  /**
+   * Map zoom for the coordinate search, controlling the radius: 13 is roughly a city (the default), 16 a neighbourhood, 10 a metro area.
+   */
+  zoom?: number | null;
+  /**
+   * How many places to return, up to 100 (e.g. 40). Google serves 20 per page, so higher values cost proportionally more time.
+   */
+  maxResults?: number;
+  /**
+   * Language for names and hours, as an ISO code (e.g. "en", "fr").
+   */
+  language?: string;
+  /**
+   * Two-letter country code biasing the results (e.g. "ca", "gb").
+   */
+  region?: string;
+  /**
+   * Route the request through your own proxy (e.g. http://user:pass@host:port). Omit to use upAPI's pool.
+   */
+  proxyUrl?: string | null;
+}
+
+/**
+ * One Google Maps business.
+ *
+ * Shared by both operations on purpose: search rows and the place-details
+ * response are the SAME record shape upstream, so publishing two subtly
+ * different schemas for them would be a fiction that callers pay for when they
+ * chain a search into a details lookup.
+ */
+export interface GoogleMapsSearchPostOutputPlace {
+  name: string;
+  /**
+   * Google place id (ChIJ...)
+   */
+  placeId?: string | null;
+  /**
+   * Google feature id (0x<cell>:0x<cid>); pass it to Google Maps Place Details
+   */
+  featureId?: string | null;
+  /**
+   * Google customer id — the decimal form of the feature id
+   */
+  cid?: string | null;
+  address?: string | null;
+  addressLines?: Array<string> | null;
+  street?: string | null;
+  city?: string | null;
+  /**
+   * Human "City, Region, Country" line
+   */
+  locality?: string | null;
+  countryCode?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  /**
+   * Primary Google category
+   */
+  category?: string | null;
+  categories?: Array<string> | null;
+  rating?: number | null;
+  /**
+   * Total Google reviews. Best-effort: Google serves this field inconsistently on the Maps endpoints — the same request returned it one hour and omitted it the next (measured 2026-08-17) — so treat null as 'not published on this response', not as zero reviews.
+   */
+  reviewCount?: number | null;
+  /**
+   * Phone as Google displays it locally
+   */
+  phone?: string | null;
+  /**
+   * E.164 phone, when Google publishes one
+   */
+  phoneInternational?: string | null;
+  website?: string | null;
+  domain?: string | null;
+  timezone?: string | null;
+  thumbnail?: string | null;
+  /**
+   * Per weekday, as [{"day": "Monday", "hours": ["8 AM-11 PM"]}]
+   */
+  openingHours?: Array<Record<string, unknown>> | null;
+  googleMapsUrl?: string | null;
+}
+
+export interface GoogleMapsSearchPostOutput {
+  query: string;
+  count: number;
+  places: Array<GoogleMapsSearchPostOutputPlace>;
+  /**
+   * True when Google still had more results than `maxResults` allowed
+   */
+  truncated: boolean;
+}
+
 // ── hackernews-search.get ───────────────────────────────────────────────
 
 export interface HackernewsSearchGetInput {

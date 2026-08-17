@@ -46,6 +46,8 @@ export const OPERATION_SLUGS = [
   'github-trending.get',
   'github-user.get',
   'google-autocomplete.post',
+  'google-maps-place.get',
+  'google-maps-search.post',
   'hackernews-search.get',
   'html-to-pdf.post',
   'image-ocr.post',
@@ -2243,6 +2245,876 @@ export const OPERATIONS: readonly OperationMeta[] = [
         },
       },
       required: ['success', 'query', 'suggestions', 'count', 'message', 'fetchedAt', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'google-maps-place.get',
+    operationId: 'google_maps_place_get',
+    name: 'Google Maps Place Details',
+    description:
+      'Look up one Google Maps place by place id, CID, feature id or a pasted Maps link, and get its name, full address, coordinates, categories, rating, review count, phone, website and opening hours. Pairs with Google Maps Business Search, which returns the identifiers this accepts.',
+    category: 'Maps',
+    tags: ['google', 'maps', 'places', 'local', 'business', 'details', 'geo'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        placeId: {
+          anyOf: [
+            {
+              maxLength: 200,
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Google place id, as returned by Google Maps Business Search (e.g. "ChIJj61dQgK6j4AR4GeTYWZsKWw").',
+          title: 'Placeid',
+        },
+        cid: {
+          anyOf: [
+            {
+              maxLength: 25,
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Google customer id, the decimal identifier (e.g. "1868053941146338963").',
+          title: 'Cid',
+        },
+        featureId: {
+          anyOf: [
+            {
+              maxLength: 60,
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Google feature id (e.g. "0x4cce05120f81812b:0x19eca9297f4bc693").',
+          title: 'Featureid',
+        },
+        url: {
+          anyOf: [
+            {
+              maxLength: 2000,
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'A Google Maps link to the place, pasted as-is from the browser or the share sheet.',
+          title: 'Url',
+        },
+        language: {
+          default: 'en',
+          description: 'Language for the name and opening hours, as an ISO code (e.g. "en").',
+          maxLength: 5,
+          title: 'Language',
+          type: 'string',
+        },
+        region: {
+          default: 'us',
+          description: 'Two-letter country code biasing the response (e.g. "ca").',
+          maxLength: 2,
+          minLength: 2,
+          title: 'Region',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            "Route the request through your own proxy (e.g. http://user:pass@host:port). Omit to use upAPI's pool.",
+          title: 'Proxyurl',
+        },
+      },
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      description: 'The place itself, flattened — same shape as one Business Search result.',
+      properties: {
+        name: {
+          title: 'Name',
+          type: 'string',
+        },
+        placeId: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Google place id (ChIJ...)',
+          title: 'Placeid',
+        },
+        featureId: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Google feature id (0x<cell>:0x<cid>); pass it to Google Maps Place Details',
+          title: 'Featureid',
+        },
+        cid: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Google customer id — the decimal form of the feature id',
+          title: 'Cid',
+        },
+        address: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Address',
+        },
+        addressLines: {
+          anyOf: [
+            {
+              items: {
+                type: 'string',
+              },
+              type: 'array',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Addresslines',
+        },
+        street: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Street',
+        },
+        city: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'City',
+        },
+        locality: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Human "City, Region, Country" line',
+          title: 'Locality',
+        },
+        countryCode: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Countrycode',
+        },
+        latitude: {
+          anyOf: [
+            {
+              type: 'number',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Latitude',
+        },
+        longitude: {
+          anyOf: [
+            {
+              type: 'number',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Longitude',
+        },
+        category: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Primary Google category',
+          title: 'Category',
+        },
+        categories: {
+          anyOf: [
+            {
+              items: {
+                type: 'string',
+              },
+              type: 'array',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Categories',
+        },
+        rating: {
+          anyOf: [
+            {
+              type: 'number',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Rating',
+        },
+        reviewCount: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            "Total Google reviews. Best-effort: Google serves this field inconsistently on the Maps endpoints — the same request returned it one hour and omitted it the next (measured 2026-08-17) — so treat null as 'not published on this response', not as zero reviews.",
+          title: 'Reviewcount',
+        },
+        phone: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Phone as Google displays it locally',
+          title: 'Phone',
+        },
+        phoneInternational: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'E.164 phone, when Google publishes one',
+          title: 'Phoneinternational',
+        },
+        website: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Website',
+        },
+        domain: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Domain',
+        },
+        timezone: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Timezone',
+        },
+        thumbnail: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Thumbnail',
+        },
+        openingHours: {
+          anyOf: [
+            {
+              items: {
+                additionalProperties: true,
+                type: 'object',
+              },
+              type: 'array',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Per weekday, as [{"day": "Monday", "hours": ["8 AM-11 PM"]}]',
+          title: 'Openinghours',
+        },
+        googleMapsUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Googlemapsurl',
+        },
+        resolvedFrom: {
+          description:
+            'Which input identifier this lookup was resolved from: placeId, cid, featureId or url',
+          title: 'Resolvedfrom',
+          type: 'string',
+        },
+      },
+      required: ['name', 'resolvedFrom'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'google-maps-search.post',
+    operationId: 'google_maps_search_post',
+    name: 'Google Maps Business Search',
+    description:
+      'Search Google Maps for businesses by text query, optionally centred on coordinates. Returns each place with its name, address, coordinates, category, rating, review count, opening hours, website and phone where Google publishes them, plus the place id you can pass to Google Maps Place Details.',
+    category: 'Maps',
+    tags: ['google', 'maps', 'places', 'local', 'business', 'leads', 'geo'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 6,
+    inputSchema: {
+      properties: {
+        query: {
+          description:
+            'What to search for, exactly as you would type it into Google Maps (e.g. "coffee shops in Ottawa" or "dentist near Shoreditch London").',
+          maxLength: 300,
+          minLength: 1,
+          title: 'Query',
+          type: 'string',
+        },
+        latitude: {
+          anyOf: [
+            {
+              maximum: 90,
+              minimum: -90,
+              type: 'number',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Centre the search on this latitude (e.g. 45.4215). Pass with `longitude`. Omit to let Google infer the area from the query text.',
+          title: 'Latitude',
+        },
+        longitude: {
+          anyOf: [
+            {
+              maximum: 180,
+              minimum: -180,
+              type: 'number',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Centre the search on this longitude (e.g. -75.6972). Pass with `latitude`.',
+          title: 'Longitude',
+        },
+        zoom: {
+          anyOf: [
+            {
+              maximum: 21,
+              minimum: 3,
+              type: 'number',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Map zoom for the coordinate search, controlling the radius: 13 is roughly a city (the default), 16 a neighbourhood, 10 a metro area.',
+          title: 'Zoom',
+        },
+        maxResults: {
+          default: 20,
+          description:
+            'How many places to return, up to 100 (e.g. 40). Google serves 20 per page, so higher values cost proportionally more time.',
+          maximum: 100,
+          minimum: 1,
+          title: 'Maxresults',
+          type: 'integer',
+        },
+        language: {
+          default: 'en',
+          description: 'Language for names and hours, as an ISO code (e.g. "en", "fr").',
+          maxLength: 5,
+          title: 'Language',
+          type: 'string',
+        },
+        region: {
+          default: 'us',
+          description: 'Two-letter country code biasing the results (e.g. "ca", "gb").',
+          maxLength: 2,
+          minLength: 2,
+          title: 'Region',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            "Route the request through your own proxy (e.g. http://user:pass@host:port). Omit to use upAPI's pool.",
+          title: 'Proxyurl',
+        },
+      },
+      required: ['query'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        Place: {
+          description:
+            'One Google Maps business.\n\nShared by both operations on purpose: search rows and the place-details\nresponse are the SAME record shape upstream, so publishing two subtly\ndifferent schemas for them would be a fiction that callers pay for when they\nchain a search into a details lookup.',
+          properties: {
+            name: {
+              title: 'Name',
+              type: 'string',
+            },
+            placeId: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'Google place id (ChIJ...)',
+              title: 'Placeid',
+            },
+            featureId: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description:
+                'Google feature id (0x<cell>:0x<cid>); pass it to Google Maps Place Details',
+              title: 'Featureid',
+            },
+            cid: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'Google customer id — the decimal form of the feature id',
+              title: 'Cid',
+            },
+            address: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Address',
+            },
+            addressLines: {
+              anyOf: [
+                {
+                  items: {
+                    type: 'string',
+                  },
+                  type: 'array',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Addresslines',
+            },
+            street: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Street',
+            },
+            city: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'City',
+            },
+            locality: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'Human "City, Region, Country" line',
+              title: 'Locality',
+            },
+            countryCode: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Countrycode',
+            },
+            latitude: {
+              anyOf: [
+                {
+                  type: 'number',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Latitude',
+            },
+            longitude: {
+              anyOf: [
+                {
+                  type: 'number',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Longitude',
+            },
+            category: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'Primary Google category',
+              title: 'Category',
+            },
+            categories: {
+              anyOf: [
+                {
+                  items: {
+                    type: 'string',
+                  },
+                  type: 'array',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Categories',
+            },
+            rating: {
+              anyOf: [
+                {
+                  type: 'number',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Rating',
+            },
+            reviewCount: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description:
+                "Total Google reviews. Best-effort: Google serves this field inconsistently on the Maps endpoints — the same request returned it one hour and omitted it the next (measured 2026-08-17) — so treat null as 'not published on this response', not as zero reviews.",
+              title: 'Reviewcount',
+            },
+            phone: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'Phone as Google displays it locally',
+              title: 'Phone',
+            },
+            phoneInternational: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'E.164 phone, when Google publishes one',
+              title: 'Phoneinternational',
+            },
+            website: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Website',
+            },
+            domain: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Domain',
+            },
+            timezone: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Timezone',
+            },
+            thumbnail: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Thumbnail',
+            },
+            openingHours: {
+              anyOf: [
+                {
+                  items: {
+                    additionalProperties: true,
+                    type: 'object',
+                  },
+                  type: 'array',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'Per weekday, as [{"day": "Monday", "hours": ["8 AM-11 PM"]}]',
+              title: 'Openinghours',
+            },
+            googleMapsUrl: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Googlemapsurl',
+            },
+          },
+          required: ['name'],
+          title: 'Place',
+          type: 'object',
+        },
+      },
+      properties: {
+        query: {
+          title: 'Query',
+          type: 'string',
+        },
+        count: {
+          title: 'Count',
+          type: 'integer',
+        },
+        places: {
+          items: {
+            $ref: '#/$defs/Place',
+          },
+          title: 'Places',
+          type: 'array',
+        },
+        truncated: {
+          description: 'True when Google still had more results than `maxResults` allowed',
+          title: 'Truncated',
+          type: 'boolean',
+        },
+      },
+      required: ['query', 'count', 'places', 'truncated'],
       title: 'Output',
       type: 'object',
     },
