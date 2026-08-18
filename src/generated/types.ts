@@ -829,6 +829,148 @@ export interface GoogleMapsPlaceGetOutput {
   resolvedFrom: string;
 }
 
+// ── google-maps-reviews.get ─────────────────────────────────────────────
+
+export interface GoogleMapsReviewsGetInput {
+  /**
+   * Google place id, as returned by Google Maps Business Search (e.g. "ChIJj61dQgK6j4AR4GeTYWZsKWw").
+   */
+  placeId?: string | null;
+  /**
+   * Google customer id, the decimal identifier (e.g. "1868053941146338963").
+   */
+  cid?: string | null;
+  /**
+   * Google feature id (e.g. "0x4cce05120f81812b:0x19eca9297f4bc693").
+   */
+  featureId?: string | null;
+  /**
+   * A Google Maps link to the place, pasted as-is from the browser or the share sheet.
+   */
+  url?: string | null;
+  /**
+   * How many reviews to return, up to 200 (e.g. 100). Google serves at most 60 per page, so higher values cost proportionally more time.
+   */
+  maxResults?: number;
+  /**
+   * Order Google returns the reviews in: relevance (Google's own "most relevant" ranking, the default), newest, highest_rating or lowest_rating.
+   */
+  sort?: string;
+  /**
+   * Continue a previous call: pass the `nextPageToken` it returned. Keep `sort` and the place identifier the same, or the token will not line up.
+   */
+  pageToken?: string | null;
+  /**
+   * Language for the reviews, as an ISO code (e.g. "en", "fr"). Google uses this to pick and rank which reviews it surfaces, so different languages genuinely return different reviews rather than translations of one set.
+   */
+  language?: string;
+  /**
+   * Two-letter country code biasing the response (e.g. "ca").
+   */
+  region?: string;
+  /**
+   * Route the request through your own proxy (e.g. http://user:pass@host:port). Omit to use upAPI's pool.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface GoogleMapsReviewsGetOutputOwnerResponse {
+  text?: string | null;
+  /**
+   * How Google phrases the age of the reply (e.g. "a month ago")
+   */
+  relativeTime?: string | null;
+}
+
+/**
+ * One Google Maps review.
+ */
+export interface GoogleMapsReviewsGetOutputReview {
+  reviewId?: string | null;
+  /**
+   * Stars the author gave, 1-5
+   */
+  rating?: number | null;
+  /**
+   * The scale the rating is on — 5 on every response measured
+   */
+  ratingMax?: number | null;
+  /**
+   * The review body in full. Null when the author rated without writing anything, which is common — roughly one review in ten on the places measured.
+   */
+  text?: string | null;
+  /**
+   * Language of the text as delivered, as an ISO code
+   */
+  language?: string | null;
+  /**
+   * How Google phrases the age of the review (e.g. "a week ago")
+   */
+  relativeTime?: string | null;
+  /**
+   * When the review was posted, as an ISO 8601 UTC timestamp
+   */
+  publishedAt?: string | null;
+  author?: GoogleMapsReviewsGetOutputReviewAuthor | null;
+  /**
+   * Photos the author attached to this review
+   */
+  photos?: Array<GoogleMapsReviewsGetOutputReviewPhoto> | null;
+  /**
+   * The business owner's public reply, when there is one
+   */
+  ownerResponse?: GoogleMapsReviewsGetOutputOwnerResponse | null;
+  /**
+   * Permalink to the review on Google Maps
+   */
+  reviewUrl?: string | null;
+  /**
+   * Which network published the review — "Google" for the overwhelming majority, but Google also syndicates partner sources on some places
+   */
+  source?: string | null;
+}
+
+export interface GoogleMapsReviewsGetOutputReviewAuthor {
+  name?: string | null;
+  profileUrl?: string | null;
+  photoUrl?: string | null;
+  /**
+   * How many reviews this author has contributed to Google overall
+   */
+  reviewCount?: number | null;
+  /**
+   * How many photos this author has contributed to Google overall
+   */
+  photoCount?: number | null;
+}
+
+export interface GoogleMapsReviewsGetOutputReviewPhoto {
+  url: string;
+  caption?: string | null;
+}
+
+export interface GoogleMapsReviewsGetOutput {
+  /**
+   * The Google feature id these reviews were read from
+   */
+  featureId: string;
+  /**
+   * Which input identifier this lookup was resolved from: placeId, cid, featureId or url
+   */
+  resolvedFrom: string;
+  sort: string;
+  count: number;
+  reviews: Array<GoogleMapsReviewsGetOutputReview>;
+  /**
+   * Pass back as `pageToken` to read the next page. Null when Google has no more reviews to give.
+   */
+  nextPageToken?: string | null;
+  /**
+   * True when Google still had more reviews than `maxResults` allowed
+   */
+  truncated: boolean;
+}
+
 // ── google-maps-search.post ─────────────────────────────────────────────
 
 export interface GoogleMapsSearchPostInput {

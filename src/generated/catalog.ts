@@ -47,6 +47,7 @@ export const OPERATION_SLUGS = [
   'github-user.get',
   'google-autocomplete.post',
   'google-maps-place.get',
+  'google-maps-reviews.get',
   'google-maps-search.post',
   'hackernews-search.get',
   'html-to-pdf.post',
@@ -2664,6 +2665,483 @@ export const OPERATIONS: readonly OperationMeta[] = [
         },
       },
       required: ['name', 'resolvedFrom'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'google-maps-reviews.get',
+    operationId: 'google_maps_reviews_get',
+    name: 'Google Maps Reviews',
+    description:
+      "Read the reviews on any Google Maps place by place id, CID, feature id or a pasted Maps link. Returns each review's rating, full text, author, photos, timestamp and the owner's reply, sorted by relevance, date or rating, with cursor pagination through the whole feed.",
+    category: 'Maps',
+    tags: ['google', 'maps', 'reviews', 'ratings', 'local', 'business', 'reputation'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 6,
+    inputSchema: {
+      properties: {
+        placeId: {
+          anyOf: [
+            {
+              maxLength: 200,
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Google place id, as returned by Google Maps Business Search (e.g. "ChIJj61dQgK6j4AR4GeTYWZsKWw").',
+          title: 'Placeid',
+        },
+        cid: {
+          anyOf: [
+            {
+              maxLength: 25,
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Google customer id, the decimal identifier (e.g. "1868053941146338963").',
+          title: 'Cid',
+        },
+        featureId: {
+          anyOf: [
+            {
+              maxLength: 60,
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Google feature id (e.g. "0x4cce05120f81812b:0x19eca9297f4bc693").',
+          title: 'Featureid',
+        },
+        url: {
+          anyOf: [
+            {
+              maxLength: 2000,
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'A Google Maps link to the place, pasted as-is from the browser or the share sheet.',
+          title: 'Url',
+        },
+        maxResults: {
+          default: 20,
+          description:
+            'How many reviews to return, up to 200 (e.g. 100). Google serves at most 60 per page, so higher values cost proportionally more time.',
+          maximum: 200,
+          minimum: 1,
+          title: 'Maxresults',
+          type: 'integer',
+        },
+        sort: {
+          default: 'relevance',
+          description:
+            'Order Google returns the reviews in: relevance (Google\'s own "most relevant" ranking, the default), newest, highest_rating or lowest_rating.',
+          title: 'Sort',
+          type: 'string',
+        },
+        pageToken: {
+          anyOf: [
+            {
+              maxLength: 3000,
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Continue a previous call: pass the `nextPageToken` it returned. Keep `sort` and the place identifier the same, or the token will not line up.',
+          title: 'Pagetoken',
+        },
+        language: {
+          default: 'en',
+          description:
+            'Language for the reviews, as an ISO code (e.g. "en", "fr"). Google uses this to pick and rank which reviews it surfaces, so different languages genuinely return different reviews rather than translations of one set.',
+          maxLength: 5,
+          title: 'Language',
+          type: 'string',
+        },
+        region: {
+          default: 'us',
+          description: 'Two-letter country code biasing the response (e.g. "ca").',
+          maxLength: 2,
+          minLength: 2,
+          title: 'Region',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            "Route the request through your own proxy (e.g. http://user:pass@host:port). Omit to use upAPI's pool.",
+          title: 'Proxyurl',
+        },
+      },
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        OwnerResponse: {
+          properties: {
+            text: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Text',
+            },
+            relativeTime: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'How Google phrases the age of the reply (e.g. "a month ago")',
+              title: 'Relativetime',
+            },
+          },
+          title: 'OwnerResponse',
+          type: 'object',
+        },
+        Review: {
+          description: 'One Google Maps review.',
+          properties: {
+            reviewId: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Reviewid',
+            },
+            rating: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'Stars the author gave, 1-5',
+              title: 'Rating',
+            },
+            ratingMax: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'The scale the rating is on — 5 on every response measured',
+              title: 'Ratingmax',
+            },
+            text: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description:
+                'The review body in full. Null when the author rated without writing anything, which is common — roughly one review in ten on the places measured.',
+              title: 'Text',
+            },
+            language: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'Language of the text as delivered, as an ISO code',
+              title: 'Language',
+            },
+            relativeTime: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'How Google phrases the age of the review (e.g. "a week ago")',
+              title: 'Relativetime',
+            },
+            publishedAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'When the review was posted, as an ISO 8601 UTC timestamp',
+              title: 'Publishedat',
+            },
+            author: {
+              anyOf: [
+                {
+                  $ref: '#/$defs/ReviewAuthor',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+            },
+            photos: {
+              anyOf: [
+                {
+                  items: {
+                    $ref: '#/$defs/ReviewPhoto',
+                  },
+                  type: 'array',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'Photos the author attached to this review',
+              title: 'Photos',
+            },
+            ownerResponse: {
+              anyOf: [
+                {
+                  $ref: '#/$defs/OwnerResponse',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: "The business owner's public reply, when there is one",
+            },
+            reviewUrl: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'Permalink to the review on Google Maps',
+              title: 'Reviewurl',
+            },
+            source: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description:
+                'Which network published the review — "Google" for the overwhelming majority, but Google also syndicates partner sources on some places',
+              title: 'Source',
+            },
+          },
+          title: 'Review',
+          type: 'object',
+        },
+        ReviewAuthor: {
+          properties: {
+            name: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Name',
+            },
+            profileUrl: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Profileurl',
+            },
+            photoUrl: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Photourl',
+            },
+            reviewCount: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'How many reviews this author has contributed to Google overall',
+              title: 'Reviewcount',
+            },
+            photoCount: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'How many photos this author has contributed to Google overall',
+              title: 'Photocount',
+            },
+          },
+          title: 'ReviewAuthor',
+          type: 'object',
+        },
+        ReviewPhoto: {
+          properties: {
+            url: {
+              title: 'Url',
+              type: 'string',
+            },
+            caption: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Caption',
+            },
+          },
+          required: ['url'],
+          title: 'ReviewPhoto',
+          type: 'object',
+        },
+      },
+      properties: {
+        featureId: {
+          description: 'The Google feature id these reviews were read from',
+          title: 'Featureid',
+          type: 'string',
+        },
+        resolvedFrom: {
+          description:
+            'Which input identifier this lookup was resolved from: placeId, cid, featureId or url',
+          title: 'Resolvedfrom',
+          type: 'string',
+        },
+        sort: {
+          title: 'Sort',
+          type: 'string',
+        },
+        count: {
+          title: 'Count',
+          type: 'integer',
+        },
+        reviews: {
+          items: {
+            $ref: '#/$defs/Review',
+          },
+          title: 'Reviews',
+          type: 'array',
+        },
+        nextPageToken: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Pass back as `pageToken` to read the next page. Null when Google has no more reviews to give.',
+          title: 'Nextpagetoken',
+        },
+        truncated: {
+          description: 'True when Google still had more reviews than `maxResults` allowed',
+          title: 'Truncated',
+          type: 'boolean',
+        },
+      },
+      required: ['featureId', 'resolvedFrom', 'sort', 'count', 'reviews', 'truncated'],
       title: 'Output',
       type: 'object',
     },

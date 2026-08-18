@@ -44,6 +44,8 @@ import type {
   GoogleAutocompletePostOutput,
   GoogleMapsPlaceGetInput,
   GoogleMapsPlaceGetOutput,
+  GoogleMapsReviewsGetInput,
+  GoogleMapsReviewsGetOutput,
   GoogleMapsSearchPostInput,
   GoogleMapsSearchPostOutput,
   HackernewsSearchGetInput,
@@ -220,6 +222,11 @@ export type Operations = {
     input: GoogleMapsPlaceGetInput,
     options?: CallOptions,
   ) => Promise<GoogleMapsPlaceGetOutput>;
+  /** Google Maps Reviews — Read the reviews on any Google Maps place by place id, CID, feature id or a pasted Maps link. Returns each review's rating, full text, author, photos, timestamp and the owner's reply, sorted by relevance, date or rating, with cursor pagination through the whole feed. */
+  'google-maps-reviews.get': (
+    input: GoogleMapsReviewsGetInput,
+    options?: CallOptions,
+  ) => Promise<GoogleMapsReviewsGetOutput>;
   /** Google Maps Business Search — Search Google Maps for businesses by text query, optionally centred on coordinates. Returns each place with its name, address, coordinates, category, rating, review count, opening hours, website and phone where Google publishes them, plus the place id you can pass to Google Maps Place Details. */
   'google-maps-search.post': (
     input: GoogleMapsSearchPostInput,
@@ -515,6 +522,12 @@ export function buildOperations(client: UpAPI): Operations {
     'google-maps-place.get': (input, options) =>
       client.call<GoogleMapsPlaceGetOutput, GoogleMapsPlaceGetInput>(
         'google-maps-place.get',
+        input,
+        options,
+      ),
+    'google-maps-reviews.get': (input, options) =>
+      client.call<GoogleMapsReviewsGetOutput, GoogleMapsReviewsGetInput>(
+        'google-maps-reviews.get',
         input,
         options,
       ),
