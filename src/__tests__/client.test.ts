@@ -10,7 +10,7 @@ function jsonResponse(
 ): Response {
   return new Response(JSON.stringify(body), {
     status: init.status ?? 200,
-    headers: { 'content-type': 'application/json', ...(init.headers ?? {}) },
+    headers: { 'content-type': 'application/json', ...init.headers },
   });
 }
 
@@ -63,7 +63,7 @@ describe('UpAPI.call', () => {
     const call = fetchMock.mock.calls[0];
     expect(call?.[0]).toBe('https://api.upapi.io/github-trending.get');
     expect(call?.[1].method).toBe('POST');
-    expect((call?.[1].headers as Record<string, string>)['x-api-key']).toBe(KEY);
+    expect((call![1].headers as Record<string, string>)['x-api-key']).toBe(KEY);
     expect(call?.[1].body).toBe(JSON.stringify({ language: 'ts' }));
   });
 
@@ -550,7 +550,7 @@ describe('usage()', () => {
     const call = fetchMock.mock.calls[0];
     expect(call?.[0]).toBe('https://api.upapi.io/usage');
     expect(call?.[1].method).toBe('GET');
-    expect((call?.[1].headers as Record<string, string>)['x-api-key']).toBe(KEY);
+    expect((call![1].headers as Record<string, string>)['x-api-key']).toBe(KEY);
   });
 
   it('exposes the trial block while a trial is live', async () => {
