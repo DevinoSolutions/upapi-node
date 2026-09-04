@@ -97,10 +97,10 @@ Only operations whose `publishTargets` include `upapi` are emitted. Gated-privat
 automation ops are excluded — the gateway 404s them for every key, so listing them
 would advertise unreachable endpoints and name the automation surface publicly.
 
-**Known gap:** the Rust worker's `text-analyze.post` is public but is _not_ in the
-generated catalog. Its schema exists only in the live engine registry, and reading
-it would make generation network-dependent and non-deterministic, which the CI
-freshness check forbids. It remains callable through the untyped `call()`.
+All three worker languages are covered. The Rust worker's `text-analyze.post` used to
+be a known gap — its schema was read as "only knowable from the live engine", which
+generation cannot depend on — until `scripts/lib/rust-manifest.ts` began deriving the
+manifest and schemas from the `.rs` source, statically and with no Rust toolchain.
 
 ### Why the schema→TS emitter is in-tree
 

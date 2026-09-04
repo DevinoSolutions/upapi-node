@@ -1,8 +1,8 @@
 /**
  * GENERATED FILE — DO NOT EDIT.
  *
- * Produced by packages/sdk/scripts/generate.ts from the TS + Python operation
- * registries. Run `pnpm generate:sdk` after changing any operation; CI fails if
+ * Produced by packages/sdk/scripts/generate.ts from the TS + Python + Rust
+ * operation registries. Run `pnpm generate:sdk` after changing any operation; CI fails if
  * this file is out of date.
  */
 
@@ -112,6 +112,8 @@ import type {
   SitemapParseGetOutput,
   StackexchangeSearchGetInput,
   StackexchangeSearchGetOutput,
+  TextAnalyzePostInput,
+  TextAnalyzePostOutput,
   TiktokCheckAccountHealthGetInput,
   TiktokCheckAccountHealthGetOutput,
   TiktokDiscoverUsersPostInput,
@@ -393,6 +395,11 @@ export type Operations = {
     input: StackexchangeSearchGetInput,
     options?: CallOptions,
   ) => Promise<StackexchangeSearchGetOutput>;
+  /** Text Analyze — Analyze text: character / word / line / sentence / byte counts plus a SHA-256 digest. Pure-compute, no network — a native Rust marketplace endpoint. */
+  'text-analyze.post': (
+    input: TextAnalyzePostInput,
+    options?: CallOptions,
+  ) => Promise<TextAnalyzePostOutput>;
   /** TikTok Check Account Health — Check if TikTok account is active/suspended. Returns follower, video, and like counts. */
   'tiktok-check-account-health.get': (
     input: TiktokCheckAccountHealthGetInput,
@@ -715,6 +722,8 @@ export function buildOperations(client: UpAPI): Operations {
         input,
         options,
       ),
+    'text-analyze.post': (input, options) =>
+      client.call<TextAnalyzePostOutput, TextAnalyzePostInput>('text-analyze.post', input, options),
     'tiktok-check-account-health.get': (input, options) =>
       client.call<TiktokCheckAccountHealthGetOutput, TiktokCheckAccountHealthGetInput>(
         'tiktok-check-account-health.get',

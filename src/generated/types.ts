@@ -1,8 +1,8 @@
 /**
  * GENERATED FILE — DO NOT EDIT.
  *
- * Produced by packages/sdk/scripts/generate.ts from the TS + Python operation
- * registries. Run `pnpm generate:sdk` after changing any operation; CI fails if
+ * Produced by packages/sdk/scripts/generate.ts from the TS + Python + Rust
+ * operation registries. Run `pnpm generate:sdk` after changing any operation; CI fails if
  * this file is out of date.
  */
 
@@ -2369,6 +2369,27 @@ export interface StackexchangeSearchGetOutput {
   quotaRemaining: number | null;
   hits: Array<StackexchangeSearchGetOutputHit>;
   fetchedAt: string;
+}
+
+// ── text-analyze.post ───────────────────────────────────────────────────
+
+export interface TextAnalyzePostInput {
+  /**
+   * The text to analyze.
+   */
+  text: string;
+}
+
+export interface TextAnalyzePostOutput {
+  bytes: number;
+  characters: number;
+  lines: number;
+  sentences: number;
+  /**
+   * Lowercase hex SHA-256 of the UTF-8 bytes.
+   */
+  sha256: string;
+  words: number;
 }
 
 // ── tiktok-check-account-health.get ─────────────────────────────────────

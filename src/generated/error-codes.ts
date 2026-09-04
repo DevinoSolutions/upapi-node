@@ -1,8 +1,8 @@
 /**
  * GENERATED FILE — DO NOT EDIT.
  *
- * Produced by packages/sdk/scripts/generate.ts from the TS + Python operation
- * registries. Run `pnpm generate:sdk` after changing any operation; CI fails if
+ * Produced by packages/sdk/scripts/generate.ts from the TS + Python + Rust
+ * operation registries. Run `pnpm generate:sdk` after changing any operation; CI fails if
  * this file is out of date.
  */
 

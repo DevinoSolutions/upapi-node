@@ -1,8 +1,8 @@
 /**
  * GENERATED FILE — DO NOT EDIT.
  *
- * Produced by packages/sdk/scripts/generate.ts from the TS + Python operation
- * registries. Run `pnpm generate:sdk` after changing any operation; CI fails if
+ * Produced by packages/sdk/scripts/generate.ts from the TS + Python + Rust
+ * operation registries. Run `pnpm generate:sdk` after changing any operation; CI fails if
  * this file is out of date.
  */
 
@@ -81,6 +81,7 @@ export const OPERATION_SLUGS = [
   'screenshot.post',
   'sitemap-parse.get',
   'stackexchange-search.get',
+  'text-analyze.post',
   'tiktok-check-account-health.get',
   'tiktok-discover-users.post',
   'tiktok-get-comments.post',
@@ -8525,6 +8526,67 @@ export const OPERATIONS: readonly OperationMeta[] = [
       ],
       title: 'Output',
       type: 'object',
+    },
+  },
+  {
+    slug: 'text-analyze.post',
+    operationId: 'text_analyze_post',
+    name: 'Text Analyze',
+    description:
+      'Analyze text: character / word / line / sentence / byte counts plus a SHA-256 digest. Pure-compute, no network — a native Rust marketplace endpoint.',
+    category: 'Developer Tools',
+    tags: ['text', 'rust', 'hash', 'sha256', 'stats'],
+    workerLanguage: 'rust',
+    publishTargets: ['upapi'],
+    unitWeight: 1,
+    inputSchema: {
+      $schema: 'http://json-schema.org/draft-07/schema#',
+      title: 'AnalyzeInput',
+      type: 'object',
+      properties: {
+        text: {
+          type: 'string',
+          description: 'The text to analyze.',
+        },
+      },
+      required: ['text'],
+    },
+    outputSchema: {
+      $schema: 'http://json-schema.org/draft-07/schema#',
+      title: 'AnalyzeOutput',
+      type: 'object',
+      properties: {
+        bytes: {
+          type: 'integer',
+          format: 'uint',
+          minimum: 0,
+        },
+        characters: {
+          type: 'integer',
+          format: 'uint',
+          minimum: 0,
+        },
+        lines: {
+          type: 'integer',
+          format: 'uint',
+          minimum: 0,
+        },
+        sentences: {
+          type: 'integer',
+          format: 'uint',
+          minimum: 0,
+        },
+        sha256: {
+          type: 'string',
+          description: 'Lowercase hex SHA-256 of the UTF-8 bytes.',
+        },
+        words: {
+          type: 'integer',
+          format: 'uint',
+          minimum: 0,
+        },
+      },
+      required: ['bytes', 'characters', 'lines', 'sentences', 'sha256', 'words'],
     },
   },
   {
