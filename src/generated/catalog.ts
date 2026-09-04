@@ -62,6 +62,8 @@ export const OPERATION_SLUGS = [
   'ip-geolocation.get',
   'linkedin-check-account-health.post',
   'linkedin-get-profile.post',
+  'linkedin-jobs-detail.get',
+  'linkedin-jobs-search.get',
   'linkedin-profile-search.post',
   'mastodon-profile.get',
   'nasa-apod.get',
@@ -5335,6 +5337,430 @@ export const OPERATIONS: readonly OperationMeta[] = [
     },
   },
   {
+    slug: 'linkedin-jobs-detail.get',
+    operationId: 'linkedin_jobs_detail_get',
+    name: 'Get LinkedIn Job Details',
+    description:
+      "Fetch one LinkedIn job posting: full description, seniority level, employment type, job function, industries, applicant count and posting age. Accepts the job id from linkedin-jobs-search, a job URL or a urn:li:jobPosting URN. Reads LinkedIn's public guest surface — no LinkedIn account or cookie is required.",
+    category: 'Social Media',
+    tags: ['linkedin', 'jobs', 'hiring', 'recruiting', 'job-description'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 6,
+    inputSchema: {
+      properties: {
+        jobId: {
+          description:
+            'LinkedIn posting id, job URL or urn:li:jobPosting URN. Ids come from linkedin-jobs-search (e.g. 4431992044).',
+          maxLength: 300,
+          minLength: 1,
+          title: 'Jobid',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: "User-provided proxy URL. Omit to use the operation's own datacenter pool.",
+          title: 'Proxyurl',
+        },
+      },
+      required: ['jobId'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        jobId: {
+          title: 'Jobid',
+          type: 'string',
+        },
+        title: {
+          title: 'Title',
+          type: 'string',
+        },
+        company: {
+          title: 'Company',
+          type: 'string',
+        },
+        companyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Companyurl',
+        },
+        location: {
+          title: 'Location',
+          type: 'string',
+        },
+        postedLabel: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Postedlabel',
+        },
+        applicantsLabel: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Applicantslabel',
+        },
+        seniorityLevel: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Senioritylevel',
+        },
+        employmentType: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Employmenttype',
+        },
+        jobFunction: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Jobfunction',
+        },
+        industries: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Industries',
+        },
+        descriptionHtml: {
+          title: 'Descriptionhtml',
+          type: 'string',
+        },
+        descriptionText: {
+          title: 'Descriptiontext',
+          type: 'string',
+        },
+        jobUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Joburl',
+        },
+        logoUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Logourl',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: [
+        'jobId',
+        'title',
+        'company',
+        'companyUrl',
+        'location',
+        'postedLabel',
+        'applicantsLabel',
+        'seniorityLevel',
+        'employmentType',
+        'jobFunction',
+        'industries',
+        'descriptionHtml',
+        'descriptionText',
+        'jobUrl',
+        'logoUrl',
+        'fetchedAt',
+        'elapsedMs',
+      ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'linkedin-jobs-search.get',
+    operationId: 'linkedin_jobs_search_get',
+    name: 'Search LinkedIn Jobs',
+    description:
+      "Search LinkedIn job postings by keyword and location. Returns title, company, location, posting date, salary hint and the job id you pass to linkedin-jobs-detail. Reads LinkedIn's public guest surface — no LinkedIn account or cookie is required.",
+    category: 'Social Media',
+    tags: ['linkedin', 'jobs', 'hiring', 'recruiting', 'search'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 6,
+    inputSchema: {
+      properties: {
+        keywords: {
+          description: 'Job title, skill or company to search for (e.g. "python developer")',
+          maxLength: 200,
+          minLength: 1,
+          title: 'Keywords',
+          type: 'string',
+        },
+        location: {
+          default: 'United States',
+          description: 'City, region or country to search in (e.g. "United States")',
+          maxLength: 200,
+          title: 'Location',
+          type: 'string',
+        },
+        page: {
+          default: 1,
+          description:
+            "1-based results page. LinkedIn's guest surface returns 10 postings per page.",
+          maximum: 40,
+          minimum: 1,
+          title: 'Page',
+          type: 'integer',
+        },
+        timePosted: {
+          default: 'any',
+          description: 'Recency filter: any, past-month, past-week or past-24h',
+          title: 'Timeposted',
+          type: 'string',
+        },
+        workplaceType: {
+          default: 'any',
+          description: 'Workplace filter: any, on-site, remote or hybrid',
+          title: 'Workplacetype',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: "User-provided proxy URL. Omit to use the operation's own datacenter pool.",
+          title: 'Proxyurl',
+        },
+      },
+      required: ['keywords'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        JobResult: {
+          properties: {
+            jobId: {
+              title: 'Jobid',
+              type: 'string',
+            },
+            title: {
+              title: 'Title',
+              type: 'string',
+            },
+            company: {
+              title: 'Company',
+              type: 'string',
+            },
+            companyUrl: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Companyurl',
+            },
+            location: {
+              title: 'Location',
+              type: 'string',
+            },
+            postedAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Postedat',
+            },
+            postedLabel: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Postedlabel',
+            },
+            salary: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Salary',
+            },
+            benefits: {
+              items: {
+                type: 'string',
+              },
+              title: 'Benefits',
+              type: 'array',
+            },
+            jobUrl: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Joburl',
+            },
+            logoUrl: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Logourl',
+            },
+          },
+          required: [
+            'jobId',
+            'title',
+            'company',
+            'companyUrl',
+            'location',
+            'postedAt',
+            'postedLabel',
+            'salary',
+            'benefits',
+            'jobUrl',
+            'logoUrl',
+          ],
+          title: 'JobResult',
+          type: 'object',
+        },
+      },
+      properties: {
+        keywords: {
+          title: 'Keywords',
+          type: 'string',
+        },
+        location: {
+          title: 'Location',
+          type: 'string',
+        },
+        page: {
+          title: 'Page',
+          type: 'integer',
+        },
+        resultCount: {
+          title: 'Resultcount',
+          type: 'integer',
+        },
+        hasMore: {
+          title: 'Hasmore',
+          type: 'boolean',
+        },
+        jobs: {
+          items: {
+            $ref: '#/$defs/JobResult',
+          },
+          title: 'Jobs',
+          type: 'array',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: [
+        'keywords',
+        'location',
+        'page',
+        'resultCount',
+        'hasMore',
+        'jobs',
+        'fetchedAt',
+        'elapsedMs',
+      ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
     slug: 'linkedin-profile-search.post',
     operationId: 'linkedin_profile_search_post',
     name: 'LinkedIn Profile Search',
@@ -6833,7 +7259,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     operationId: 'reddit_get_trending_get',
     name: 'Get Trending Reddit Posts',
     description:
-      'Fetch trending, hot, rising, top, or new posts from any subreddit with pagination and time filtering.',
+      'Fetch trending, hot, rising, top, or new posts from any subreddit with pagination and time filtering. Requires a Reddit session cookie in sessionCookies (obtain it from reddit-login.post, or copy reddit_session out of a signed-in browser) — Reddit has blocked every anonymous read surface since 2026-07-30.',
     category: 'Social Media',
     tags: ['reddit', 'trending', 'posts', 'social'],
     workerLanguage: 'python',
@@ -6892,7 +7318,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
           ],
           default: null,
           description:
-            "Account session cookies (JSON or '; '-delimited). STRONGLY RECOMMENDED: since 2026-07-30 Reddit gates every ANONYMOUS listing surface behind a reCAPTCHA / network-security block, so a call without cookies is expected to fail with CAPTCHA_FAILED or UPSTREAM_BLOCKED rather than return posts.",
+            "REQUIRED IN PRACTICE. Reddit account session cookies, as a JSON object or a '; '-delimited cookie header; the blob must contain reddit_session. Since 2026-07-30 Reddit blocks EVERY anonymous read surface, so a call without cookies returns a classified UPSTREAM_BLOCKED rather than data. Obtain the blob from reddit-login.post, or copy the reddit_session cookie out of a signed-in browser. A lead-gen account-pool row stores it nested at cookies->>'sessionCookies', not at the row's top level.",
           title: 'Sessioncookies',
         },
         proxyUrl: {
@@ -7059,7 +7485,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     operationId: 'reddit_scrape_post_get',
     name: 'Scrape Reddit Post & Comments',
     description:
-      'Fetch a Reddit post with its comment tree. Returns post metadata, selftext, and nested comments with scores and authorship.',
+      'Fetch a Reddit post with its comment tree: post metadata, selftext, and nested comments with scores and authorship. Requires a Reddit session cookie in sessionCookies (obtain it from reddit-login.post, or copy reddit_session out of a signed-in browser) — Reddit has blocked every anonymous read surface since 2026-07-30.',
     category: 'Social Media',
     tags: ['reddit', 'scrape', 'post', 'comments', 'social'],
     workerLanguage: 'python',
@@ -7104,7 +7530,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
           ],
           default: null,
           description:
-            "Account session cookies (JSON or '; '-delimited). STRONGLY RECOMMENDED: since 2026-07-30 Reddit blocks the anonymous comments JSON read outright, so a call without cookies is expected to fail with UPSTREAM_BLOCKED.",
+            "REQUIRED IN PRACTICE. Reddit account session cookies, as a JSON object or a '; '-delimited cookie header; the blob must contain reddit_session. Since 2026-07-30 Reddit blocks EVERY anonymous read surface, so a call without cookies returns a classified UPSTREAM_BLOCKED rather than data. Obtain the blob from reddit-login.post, or copy the reddit_session cookie out of a signed-in browser. A lead-gen account-pool row stores it nested at cookies->>'sessionCookies', not at the row's top level.",
           title: 'Sessioncookies',
         },
         proxyUrl: {
@@ -7284,7 +7710,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     operationId: 'reddit_search_posts_get',
     name: 'Search Reddit Posts',
     description:
-      'Search Reddit posts by keyword with subreddit filtering, sort, and time range. Returns structured post data including scores, comments count, and metadata.',
+      'Search Reddit posts by keyword with subreddit filtering, sort and time range. Returns structured post data including scores, comment count and metadata. Requires a Reddit session cookie in sessionCookies (obtain it from reddit-login.post, or copy reddit_session out of a signed-in browser) — Reddit has blocked every anonymous read surface since 2026-07-30.',
     category: 'Social Media',
     tags: ['reddit', 'search', 'posts', 'social'],
     workerLanguage: 'python',
@@ -7356,7 +7782,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
           ],
           default: null,
           description:
-            "Account session cookies (JSON or '; '-delimited). STRONGLY RECOMMENDED: since 2026-07-30 Reddit gates the anonymous search page behind a reCAPTCHA and blocks the anonymous search.json, so a call without cookies is expected to fail with CAPTCHA_FAILED or UPSTREAM_BLOCKED. With cookies the SSR parse is skipped and the authenticated search.json is read directly.",
+            "REQUIRED IN PRACTICE. Reddit account session cookies, as a JSON object or a '; '-delimited cookie header; the blob must contain reddit_session. Since 2026-07-30 Reddit blocks EVERY anonymous read surface, so a call without cookies returns a classified UPSTREAM_BLOCKED rather than data. Obtain the blob from reddit-login.post, or copy the reddit_session cookie out of a signed-in browser. A lead-gen account-pool row stores it nested at cookies->>'sessionCookies', not at the row's top level.",
           title: 'Sessioncookies',
         },
         proxyUrl: {
@@ -7511,7 +7937,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     operationId: 'reddit_subreddit_info_get',
     name: 'Get Subreddit Info',
     description:
-      'Fetch subreddit metadata: subscriber count, description, rules, active users, appearance settings.',
+      'Fetch subreddit metadata: subscriber count, description, rules, active users and appearance settings. Requires a Reddit session cookie in sessionCookies (obtain it from reddit-login.post, or copy reddit_session out of a signed-in browser) — Reddit has blocked every anonymous read surface since 2026-07-30.',
     category: 'Social Media',
     tags: ['reddit', 'subreddit', 'metadata', 'social'],
     workerLanguage: 'python',
@@ -7537,7 +7963,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
           ],
           default: null,
           description:
-            "Account session cookies (JSON or '; '-delimited). STRONGLY RECOMMENDED: since 2026-07-30 Reddit blocks the anonymous about.json read outright, so a call without cookies is expected to fail with UPSTREAM_BLOCKED.",
+            "REQUIRED IN PRACTICE. Reddit account session cookies, as a JSON object or a '; '-delimited cookie header; the blob must contain reddit_session. Since 2026-07-30 Reddit blocks EVERY anonymous read surface, so a call without cookies returns a classified UPSTREAM_BLOCKED rather than data. Obtain the blob from reddit-login.post, or copy the reddit_session cookie out of a signed-in browser. A lead-gen account-pool row stores it nested at cookies->>'sessionCookies', not at the row's top level.",
           title: 'Sessioncookies',
         },
         proxyUrl: {

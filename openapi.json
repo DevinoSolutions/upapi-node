@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "upAPI",
-    "description": "Browser-powered API marketplace. 60 of 60 APIs included (capped at 449 for RapidAPI compatibility).\n\nBilling: a call spends WEIGHTED UNITS against your plan's monthly quota — not a flat one call = one unit. A light HTTP relay costs 1 unit; heavy work costs more, up to 25 (search-engine result pages 25, headless-browser renders and page scrapes 20, residential-proxy social reads 15, LLM completions 10, datacenter social/media reads 4). Every operation declares its own price as `x-upapi-unit-weight`, so a workload can be costed before it is run. Quota state rides on every response in the `RateLimit` / `RateLimit-Policy` headers.",
+    "description": "Browser-powered API marketplace. 62 of 62 APIs included (capped at 449 for RapidAPI compatibility).\n\nBilling: a call spends WEIGHTED UNITS against your plan's monthly quota — not a flat one call = one unit. A light HTTP relay costs 1 unit; heavy work costs more, up to 25 (search-engine result pages 25, headless-browser renders and page scrapes 20, residential-proxy social reads 15, LLM completions 10, datacenter social/media reads 4). Every operation declares its own price as `x-upapi-unit-weight`, so a workload can be costed before it is run. Quota state rides on every response in the `RateLimit` / `RateLimit-Policy` headers.",
     "version": "1.0.0"
   },
   "servers": [
@@ -7817,6 +7817,527 @@
         }
       }
     },
+    "/linkedin-jobs-detail.get": {
+      "post": {
+        "operationId": "linkedin_jobs_detail_get",
+        "summary": "Get LinkedIn Job Details",
+        "description": "Fetch one LinkedIn job posting: full description, seniority level, employment type, job function, industries, applicant count and posting age. Accepts the job id from linkedin-jobs-search, a job URL or a urn:li:jobPosting URN. Reads LinkedIn's public guest surface — no LinkedIn account or cookie is required.",
+        "tags": ["Social Media", "linkedin", "jobs", "hiring", "recruiting", "job-description"],
+        "x-upapi-unit-weight": 6,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "jobId": {
+                    "description": "LinkedIn posting id, job URL or urn:li:jobPosting URN. Ids come from linkedin-jobs-search (e.g. 4431992044).",
+                    "maxLength": 300,
+                    "minLength": 1,
+                    "title": "Jobid",
+                    "type": "string"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "User-provided proxy URL. Omit to use the operation's own datacenter pool.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["jobId"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "jobId": {
+                      "title": "Jobid",
+                      "type": "string"
+                    },
+                    "title": {
+                      "title": "Title",
+                      "type": "string"
+                    },
+                    "company": {
+                      "title": "Company",
+                      "type": "string"
+                    },
+                    "companyUrl": {
+                      "title": "Companyurl",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "location": {
+                      "title": "Location",
+                      "type": "string"
+                    },
+                    "postedLabel": {
+                      "title": "Postedlabel",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "applicantsLabel": {
+                      "title": "Applicantslabel",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "seniorityLevel": {
+                      "title": "Senioritylevel",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "employmentType": {
+                      "title": "Employmenttype",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "jobFunction": {
+                      "title": "Jobfunction",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "industries": {
+                      "title": "Industries",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "descriptionHtml": {
+                      "title": "Descriptionhtml",
+                      "type": "string"
+                    },
+                    "descriptionText": {
+                      "title": "Descriptiontext",
+                      "type": "string"
+                    },
+                    "jobUrl": {
+                      "title": "Joburl",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "logoUrl": {
+                      "title": "Logourl",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "fetchedAt": {
+                      "title": "Fetchedat",
+                      "type": "string"
+                    },
+                    "elapsedMs": {
+                      "title": "Elapsedms",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "jobId",
+                    "title",
+                    "company",
+                    "companyUrl",
+                    "location",
+                    "postedLabel",
+                    "applicantsLabel",
+                    "seniorityLevel",
+                    "employmentType",
+                    "jobFunction",
+                    "industries",
+                    "descriptionHtml",
+                    "descriptionText",
+                    "jobUrl",
+                    "logoUrl",
+                    "fetchedAt",
+                    "elapsedMs"
+                  ],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/linkedin-jobs-search.get": {
+      "post": {
+        "operationId": "linkedin_jobs_search_get",
+        "summary": "Search LinkedIn Jobs",
+        "description": "Search LinkedIn job postings by keyword and location. Returns title, company, location, posting date, salary hint and the job id you pass to linkedin-jobs-detail. Reads LinkedIn's public guest surface — no LinkedIn account or cookie is required.",
+        "tags": ["Social Media", "linkedin", "jobs", "hiring", "recruiting", "search"],
+        "x-upapi-unit-weight": 6,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "keywords": {
+                    "description": "Job title, skill or company to search for (e.g. \"python developer\")",
+                    "maxLength": 200,
+                    "minLength": 1,
+                    "title": "Keywords",
+                    "type": "string"
+                  },
+                  "location": {
+                    "default": "United States",
+                    "description": "City, region or country to search in (e.g. \"United States\")",
+                    "maxLength": 200,
+                    "title": "Location",
+                    "type": "string"
+                  },
+                  "page": {
+                    "default": 1,
+                    "description": "1-based results page. LinkedIn's guest surface returns 10 postings per page.",
+                    "maximum": 40,
+                    "minimum": 1,
+                    "title": "Page",
+                    "type": "integer"
+                  },
+                  "timePosted": {
+                    "default": "any",
+                    "description": "Recency filter: any, past-month, past-week or past-24h",
+                    "title": "Timeposted",
+                    "type": "string"
+                  },
+                  "workplaceType": {
+                    "default": "any",
+                    "description": "Workplace filter: any, on-site, remote or hybrid",
+                    "title": "Workplacetype",
+                    "type": "string"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "User-provided proxy URL. Omit to use the operation's own datacenter pool.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["keywords"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "keywords": {
+                      "title": "Keywords",
+                      "type": "string"
+                    },
+                    "location": {
+                      "title": "Location",
+                      "type": "string"
+                    },
+                    "page": {
+                      "title": "Page",
+                      "type": "integer"
+                    },
+                    "resultCount": {
+                      "title": "Resultcount",
+                      "type": "integer"
+                    },
+                    "hasMore": {
+                      "title": "Hasmore",
+                      "type": "boolean"
+                    },
+                    "jobs": {
+                      "items": {
+                        "properties": {
+                          "jobId": {
+                            "title": "Jobid",
+                            "type": "string"
+                          },
+                          "title": {
+                            "title": "Title",
+                            "type": "string"
+                          },
+                          "company": {
+                            "title": "Company",
+                            "type": "string"
+                          },
+                          "companyUrl": {
+                            "title": "Companyurl",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "location": {
+                            "title": "Location",
+                            "type": "string"
+                          },
+                          "postedAt": {
+                            "title": "Postedat",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "postedLabel": {
+                            "title": "Postedlabel",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "salary": {
+                            "title": "Salary",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "benefits": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "title": "Benefits",
+                            "type": "array"
+                          },
+                          "jobUrl": {
+                            "title": "Joburl",
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "logoUrl": {
+                            "title": "Logourl",
+                            "type": "string",
+                            "nullable": true
+                          }
+                        },
+                        "required": [
+                          "jobId",
+                          "title",
+                          "company",
+                          "companyUrl",
+                          "location",
+                          "postedAt",
+                          "postedLabel",
+                          "salary",
+                          "benefits",
+                          "jobUrl",
+                          "logoUrl"
+                        ],
+                        "title": "JobResult",
+                        "type": "object"
+                      },
+                      "title": "Jobs",
+                      "type": "array"
+                    },
+                    "fetchedAt": {
+                      "title": "Fetchedat",
+                      "type": "string"
+                    },
+                    "elapsedMs": {
+                      "title": "Elapsedms",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "keywords",
+                    "location",
+                    "page",
+                    "resultCount",
+                    "hasMore",
+                    "jobs",
+                    "fetchedAt",
+                    "elapsedMs"
+                  ],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/linkedin-profile-search.post": {
       "post": {
         "operationId": "linkedin_profile_search_post",
@@ -10023,7 +10544,7 @@
       "post": {
         "operationId": "reddit_get_trending_get",
         "summary": "Get Trending Reddit Posts",
-        "description": "Fetch trending, hot, rising, top, or new posts from any subreddit with pagination and time filtering.",
+        "description": "Fetch trending, hot, rising, top, or new posts from any subreddit with pagination and time filtering. Requires a Reddit session cookie in sessionCookies (obtain it from reddit-login.post, or copy reddit_session out of a signed-in browser) — Reddit has blocked every anonymous read surface since 2026-07-30.",
         "tags": ["Social Media", "reddit", "trending", "posts", "social"],
         "x-upapi-unit-weight": 4,
         "requestBody": {
@@ -10068,7 +10589,7 @@
                   },
                   "sessionCookies": {
                     "default": null,
-                    "description": "Account session cookies (JSON or '; '-delimited). STRONGLY RECOMMENDED: since 2026-07-30 Reddit gates every ANONYMOUS listing surface behind a reCAPTCHA / network-security block, so a call without cookies is expected to fail with CAPTCHA_FAILED or UPSTREAM_BLOCKED rather than return posts.",
+                    "description": "REQUIRED IN PRACTICE. Reddit account session cookies, as a JSON object or a '; '-delimited cookie header; the blob must contain reddit_session. Since 2026-07-30 Reddit blocks EVERY anonymous read surface, so a call without cookies returns a classified UPSTREAM_BLOCKED rather than data. Obtain the blob from reddit-login.post, or copy the reddit_session cookie out of a signed-in browser. A lead-gen account-pool row stores it nested at cookies->>'sessionCookies', not at the row's top level.",
                     "title": "Sessioncookies",
                     "type": "string",
                     "nullable": true
@@ -10316,7 +10837,7 @@
       "post": {
         "operationId": "reddit_scrape_post_get",
         "summary": "Scrape Reddit Post & Comments",
-        "description": "Fetch a Reddit post with its comment tree. Returns post metadata, selftext, and nested comments with scores and authorship.",
+        "description": "Fetch a Reddit post with its comment tree: post metadata, selftext, and nested comments with scores and authorship. Requires a Reddit session cookie in sessionCookies (obtain it from reddit-login.post, or copy reddit_session out of a signed-in browser) — Reddit has blocked every anonymous read surface since 2026-07-30.",
         "tags": ["Social Media", "reddit", "scrape", "post", "comments", "social"],
         "x-upapi-unit-weight": 4,
         "requestBody": {
@@ -10353,7 +10874,7 @@
                   },
                   "sessionCookies": {
                     "default": null,
-                    "description": "Account session cookies (JSON or '; '-delimited). STRONGLY RECOMMENDED: since 2026-07-30 Reddit blocks the anonymous comments JSON read outright, so a call without cookies is expected to fail with UPSTREAM_BLOCKED.",
+                    "description": "REQUIRED IN PRACTICE. Reddit account session cookies, as a JSON object or a '; '-delimited cookie header; the blob must contain reddit_session. Since 2026-07-30 Reddit blocks EVERY anonymous read surface, so a call without cookies returns a classified UPSTREAM_BLOCKED rather than data. Obtain the blob from reddit-login.post, or copy the reddit_session cookie out of a signed-in browser. A lead-gen account-pool row stores it nested at cookies->>'sessionCookies', not at the row's top level.",
                     "title": "Sessioncookies",
                     "type": "string",
                     "nullable": true
@@ -10620,7 +11141,7 @@
       "post": {
         "operationId": "reddit_search_posts_get",
         "summary": "Search Reddit Posts",
-        "description": "Search Reddit posts by keyword with subreddit filtering, sort, and time range. Returns structured post data including scores, comments count, and metadata.",
+        "description": "Search Reddit posts by keyword with subreddit filtering, sort and time range. Returns structured post data including scores, comment count and metadata. Requires a Reddit session cookie in sessionCookies (obtain it from reddit-login.post, or copy reddit_session out of a signed-in browser) — Reddit has blocked every anonymous read surface since 2026-07-30.",
         "tags": ["Social Media", "reddit", "search", "posts", "social"],
         "x-upapi-unit-weight": 4,
         "requestBody": {
@@ -10672,7 +11193,7 @@
                   },
                   "sessionCookies": {
                     "default": null,
-                    "description": "Account session cookies (JSON or '; '-delimited). STRONGLY RECOMMENDED: since 2026-07-30 Reddit gates the anonymous search page behind a reCAPTCHA and blocks the anonymous search.json, so a call without cookies is expected to fail with CAPTCHA_FAILED or UPSTREAM_BLOCKED. With cookies the SSR parse is skipped and the authenticated search.json is read directly.",
+                    "description": "REQUIRED IN PRACTICE. Reddit account session cookies, as a JSON object or a '; '-delimited cookie header; the blob must contain reddit_session. Since 2026-07-30 Reddit blocks EVERY anonymous read surface, so a call without cookies returns a classified UPSTREAM_BLOCKED rather than data. Obtain the blob from reddit-login.post, or copy the reddit_session cookie out of a signed-in browser. A lead-gen account-pool row stores it nested at cookies->>'sessionCookies', not at the row's top level.",
                     "title": "Sessioncookies",
                     "type": "string",
                     "nullable": true
@@ -10908,7 +11429,7 @@
       "post": {
         "operationId": "reddit_subreddit_info_get",
         "summary": "Get Subreddit Info",
-        "description": "Fetch subreddit metadata: subscriber count, description, rules, active users, appearance settings.",
+        "description": "Fetch subreddit metadata: subscriber count, description, rules, active users and appearance settings. Requires a Reddit session cookie in sessionCookies (obtain it from reddit-login.post, or copy reddit_session out of a signed-in browser) — Reddit has blocked every anonymous read surface since 2026-07-30.",
         "tags": ["Social Media", "reddit", "subreddit", "metadata", "social"],
         "x-upapi-unit-weight": 4,
         "requestBody": {
@@ -10926,7 +11447,7 @@
                   },
                   "sessionCookies": {
                     "default": null,
-                    "description": "Account session cookies (JSON or '; '-delimited). STRONGLY RECOMMENDED: since 2026-07-30 Reddit blocks the anonymous about.json read outright, so a call without cookies is expected to fail with UPSTREAM_BLOCKED.",
+                    "description": "REQUIRED IN PRACTICE. Reddit account session cookies, as a JSON object or a '; '-delimited cookie header; the blob must contain reddit_session. Since 2026-07-30 Reddit blocks EVERY anonymous read surface, so a call without cookies returns a classified UPSTREAM_BLOCKED rather than data. Obtain the blob from reddit-login.post, or copy the reddit_session cookie out of a signed-in browser. A lead-gen account-pool row stores it nested at cookies->>'sessionCookies', not at the row's top level.",
                     "title": "Sessioncookies",
                     "type": "string",
                     "nullable": true

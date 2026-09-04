@@ -1575,6 +1575,93 @@ export interface LinkedinGetProfilePostOutput {
   elapsedMs?: number;
 }
 
+// ── linkedin-jobs-detail.get ────────────────────────────────────────────
+
+export interface LinkedinJobsDetailGetInput {
+  /**
+   * LinkedIn posting id, job URL or urn:li:jobPosting URN. Ids come from linkedin-jobs-search (e.g. 4431992044).
+   */
+  jobId: string;
+  /**
+   * User-provided proxy URL. Omit to use the operation's own datacenter pool.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface LinkedinJobsDetailGetOutput {
+  jobId: string;
+  title: string;
+  company: string;
+  companyUrl: string | null;
+  location: string;
+  postedLabel: string | null;
+  applicantsLabel: string | null;
+  seniorityLevel: string | null;
+  employmentType: string | null;
+  jobFunction: string | null;
+  industries: string | null;
+  descriptionHtml: string;
+  descriptionText: string;
+  jobUrl: string | null;
+  logoUrl: string | null;
+  fetchedAt: string;
+  elapsedMs: number;
+}
+
+// ── linkedin-jobs-search.get ────────────────────────────────────────────
+
+export interface LinkedinJobsSearchGetInput {
+  /**
+   * Job title, skill or company to search for (e.g. "python developer")
+   */
+  keywords: string;
+  /**
+   * City, region or country to search in (e.g. "United States")
+   */
+  location?: string;
+  /**
+   * 1-based results page. LinkedIn's guest surface returns 10 postings per page.
+   */
+  page?: number;
+  /**
+   * Recency filter: any, past-month, past-week or past-24h
+   */
+  timePosted?: string;
+  /**
+   * Workplace filter: any, on-site, remote or hybrid
+   */
+  workplaceType?: string;
+  /**
+   * User-provided proxy URL. Omit to use the operation's own datacenter pool.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface LinkedinJobsSearchGetOutputJobResult {
+  jobId: string;
+  title: string;
+  company: string;
+  companyUrl: string | null;
+  location: string;
+  postedAt: string | null;
+  postedLabel: string | null;
+  salary: string | null;
+  benefits: Array<string>;
+  jobUrl: string | null;
+  logoUrl: string | null;
+}
+
+export interface LinkedinJobsSearchGetOutput {
+  keywords: string;
+  location: string;
+  page: number;
+  resultCount: number;
+  hasMore: boolean;
+  jobs: Array<LinkedinJobsSearchGetOutputJobResult>;
+  fetchedAt: string;
+  elapsedMs: number;
+}
+
 // ── linkedin-profile-search.post ────────────────────────────────────────
 
 export interface LinkedinProfileSearchPostInput {
@@ -1945,7 +2032,7 @@ export interface RedditGetTrendingGetInput {
    */
   after?: string | null;
   /**
-   * Account session cookies (JSON or '; '-delimited). STRONGLY RECOMMENDED: since 2026-07-30 Reddit gates every ANONYMOUS listing surface behind a reCAPTCHA / network-security block, so a call without cookies is expected to fail with CAPTCHA_FAILED or UPSTREAM_BLOCKED rather than return posts.
+   * REQUIRED IN PRACTICE. Reddit account session cookies, as a JSON object or a '; '-delimited cookie header; the blob must contain reddit_session. Since 2026-07-30 Reddit blocks EVERY anonymous read surface, so a call without cookies returns a classified UPSTREAM_BLOCKED rather than data. Obtain the blob from reddit-login.post, or copy the reddit_session cookie out of a signed-in browser. A lead-gen account-pool row stores it nested at cookies->>'sessionCookies', not at the row's top level.
    */
   sessionCookies?: string | null;
   /**
@@ -2001,7 +2088,7 @@ export interface RedditScrapePostGetInput {
    */
   commentDepth?: number;
   /**
-   * Account session cookies (JSON or '; '-delimited). STRONGLY RECOMMENDED: since 2026-07-30 Reddit blocks the anonymous comments JSON read outright, so a call without cookies is expected to fail with UPSTREAM_BLOCKED.
+   * REQUIRED IN PRACTICE. Reddit account session cookies, as a JSON object or a '; '-delimited cookie header; the blob must contain reddit_session. Since 2026-07-30 Reddit blocks EVERY anonymous read surface, so a call without cookies returns a classified UPSTREAM_BLOCKED rather than data. Obtain the blob from reddit-login.post, or copy the reddit_session cookie out of a signed-in browser. A lead-gen account-pool row stores it nested at cookies->>'sessionCookies', not at the row's top level.
    */
   sessionCookies?: string | null;
   /**
@@ -2072,7 +2159,7 @@ export interface RedditSearchPostsGetInput {
    */
   after?: string | null;
   /**
-   * Account session cookies (JSON or '; '-delimited). STRONGLY RECOMMENDED: since 2026-07-30 Reddit gates the anonymous search page behind a reCAPTCHA and blocks the anonymous search.json, so a call without cookies is expected to fail with CAPTCHA_FAILED or UPSTREAM_BLOCKED. With cookies the SSR parse is skipped and the authenticated search.json is read directly.
+   * REQUIRED IN PRACTICE. Reddit account session cookies, as a JSON object or a '; '-delimited cookie header; the blob must contain reddit_session. Since 2026-07-30 Reddit blocks EVERY anonymous read surface, so a call without cookies returns a classified UPSTREAM_BLOCKED rather than data. Obtain the blob from reddit-login.post, or copy the reddit_session cookie out of a signed-in browser. A lead-gen account-pool row stores it nested at cookies->>'sessionCookies', not at the row's top level.
    */
   sessionCookies?: string | null;
   /**
@@ -2115,7 +2202,7 @@ export interface RedditSubredditInfoGetInput {
    */
   subreddit: string;
   /**
-   * Account session cookies (JSON or '; '-delimited). STRONGLY RECOMMENDED: since 2026-07-30 Reddit blocks the anonymous about.json read outright, so a call without cookies is expected to fail with UPSTREAM_BLOCKED.
+   * REQUIRED IN PRACTICE. Reddit account session cookies, as a JSON object or a '; '-delimited cookie header; the blob must contain reddit_session. Since 2026-07-30 Reddit blocks EVERY anonymous read surface, so a call without cookies returns a classified UPSTREAM_BLOCKED rather than data. Obtain the blob from reddit-login.post, or copy the reddit_session cookie out of a signed-in browser. A lead-gen account-pool row stores it nested at cookies->>'sessionCookies', not at the row's top level.
    */
   sessionCookies?: string | null;
   /**

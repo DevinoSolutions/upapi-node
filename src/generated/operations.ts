@@ -74,6 +74,10 @@ import type {
   LinkedinCheckAccountHealthPostOutput,
   LinkedinGetProfilePostInput,
   LinkedinGetProfilePostOutput,
+  LinkedinJobsDetailGetInput,
+  LinkedinJobsDetailGetOutput,
+  LinkedinJobsSearchGetInput,
+  LinkedinJobsSearchGetOutput,
   LinkedinProfileSearchPostInput,
   LinkedinProfileSearchPostOutput,
   MastodonProfileGetInput,
@@ -297,6 +301,16 @@ export type Operations = {
     input: LinkedinGetProfilePostInput,
     options?: CallOptions,
   ) => Promise<LinkedinGetProfilePostOutput>;
+  /** Get LinkedIn Job Details — Fetch one LinkedIn job posting: full description, seniority level, employment type, job function, industries, applicant count and posting age. Accepts the job id from linkedin-jobs-search, a job URL or a urn:li:jobPosting URN. Reads LinkedIn's public guest surface — no LinkedIn account or cookie is required. */
+  'linkedin-jobs-detail.get': (
+    input: LinkedinJobsDetailGetInput,
+    options?: CallOptions,
+  ) => Promise<LinkedinJobsDetailGetOutput>;
+  /** Search LinkedIn Jobs — Search LinkedIn job postings by keyword and location. Returns title, company, location, posting date, salary hint and the job id you pass to linkedin-jobs-detail. Reads LinkedIn's public guest surface — no LinkedIn account or cookie is required. */
+  'linkedin-jobs-search.get': (
+    input: LinkedinJobsSearchGetInput,
+    options?: CallOptions,
+  ) => Promise<LinkedinJobsSearchGetOutput>;
   /** LinkedIn Profile Search — Find LinkedIn profiles by job title and location. Returns name, headline, and profile URL. Web-search backed — no login required. */
   'linkedin-profile-search.post': (
     input: LinkedinProfileSearchPostInput,
@@ -344,22 +358,22 @@ export type Operations = {
     input: RedditCheckCommentVisibilityGetInput,
     options?: CallOptions,
   ) => Promise<RedditCheckCommentVisibilityGetOutput>;
-  /** Get Trending Reddit Posts — Fetch trending, hot, rising, top, or new posts from any subreddit with pagination and time filtering. */
+  /** Get Trending Reddit Posts — Fetch trending, hot, rising, top, or new posts from any subreddit with pagination and time filtering. Requires a Reddit session cookie in sessionCookies (obtain it from reddit-login.post, or copy reddit_session out of a signed-in browser) — Reddit has blocked every anonymous read surface since 2026-07-30. */
   'reddit-get-trending.get': (
     input: RedditGetTrendingGetInput,
     options?: CallOptions,
   ) => Promise<RedditGetTrendingGetOutput>;
-  /** Scrape Reddit Post & Comments — Fetch a Reddit post with its comment tree. Returns post metadata, selftext, and nested comments with scores and authorship. */
+  /** Scrape Reddit Post & Comments — Fetch a Reddit post with its comment tree: post metadata, selftext, and nested comments with scores and authorship. Requires a Reddit session cookie in sessionCookies (obtain it from reddit-login.post, or copy reddit_session out of a signed-in browser) — Reddit has blocked every anonymous read surface since 2026-07-30. */
   'reddit-scrape-post.get': (
     input: RedditScrapePostGetInput,
     options?: CallOptions,
   ) => Promise<RedditScrapePostGetOutput>;
-  /** Search Reddit Posts — Search Reddit posts by keyword with subreddit filtering, sort, and time range. Returns structured post data including scores, comments count, and metadata. */
+  /** Search Reddit Posts — Search Reddit posts by keyword with subreddit filtering, sort and time range. Returns structured post data including scores, comment count and metadata. Requires a Reddit session cookie in sessionCookies (obtain it from reddit-login.post, or copy reddit_session out of a signed-in browser) — Reddit has blocked every anonymous read surface since 2026-07-30. */
   'reddit-search-posts.get': (
     input: RedditSearchPostsGetInput,
     options?: CallOptions,
   ) => Promise<RedditSearchPostsGetOutput>;
-  /** Get Subreddit Info — Fetch subreddit metadata: subscriber count, description, rules, active users, appearance settings. */
+  /** Get Subreddit Info — Fetch subreddit metadata: subscriber count, description, rules, active users and appearance settings. Requires a Reddit session cookie in sessionCookies (obtain it from reddit-login.post, or copy reddit_session out of a signed-in browser) — Reddit has blocked every anonymous read surface since 2026-07-30. */
   'reddit-subreddit-info.get': (
     input: RedditSubredditInfoGetInput,
     options?: CallOptions,
@@ -604,6 +618,18 @@ export function buildOperations(client: UpAPI): Operations {
     'linkedin-get-profile.post': (input, options) =>
       client.call<LinkedinGetProfilePostOutput, LinkedinGetProfilePostInput>(
         'linkedin-get-profile.post',
+        input,
+        options,
+      ),
+    'linkedin-jobs-detail.get': (input, options) =>
+      client.call<LinkedinJobsDetailGetOutput, LinkedinJobsDetailGetInput>(
+        'linkedin-jobs-detail.get',
+        input,
+        options,
+      ),
+    'linkedin-jobs-search.get': (input, options) =>
+      client.call<LinkedinJobsSearchGetOutput, LinkedinJobsSearchGetInput>(
+        'linkedin-jobs-search.get',
         input,
         options,
       ),
