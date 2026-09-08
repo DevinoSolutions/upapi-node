@@ -207,6 +207,162 @@ export interface BlueskyProfileGetOutput {
   fetchedAt: string;
 }
 
+// ── chatous-check-session.get ───────────────────────────────────────────
+
+export interface ChatousCheckSessionGetInput {
+  /**
+   * The account's `connect.sid` cookie value, as set on chatous.com when the account signed in.
+   */
+  connectSid: string;
+  /**
+   * Optional proxy URL to send this request through. Omit to call Chatous directly. Pass the exit the account normally uses if you keep one per account.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface ChatousCheckSessionGetOutput {
+  /**
+   * True when Chatous still accepts this connectSid.
+   */
+  valid: boolean;
+  /**
+   * Chatous's own verdict: 0 = authenticated, 1111 = anonymous or expired. Returned so a caller can tell those two apart from any future third value.
+   */
+  returnCode: number;
+  checkedAt: string;
+  elapsedMs: number;
+}
+
+// ── chatous-get-account-state.get ───────────────────────────────────────
+
+export interface ChatousGetAccountStateGetInput {
+  /**
+   * The account's `connect.sid` cookie value, as set on chatous.com when the account signed in.
+   */
+  connectSid: string;
+  /**
+   * How long to hold the socket open collecting the opening burst. Raise it for an account with many conversations; the call returns early once the server stops sending.
+   */
+  maxSeconds?: number;
+  /**
+   * Cap on collected socket frames, so a very busy account cannot stream on.
+   */
+  maxMessages?: number;
+  /**
+   * Optional proxy URL for the WebSocket. Omit to connect directly. Pass the exit the account normally uses if you keep one per account.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface ChatousGetAccountStateGetOutputConversation {
+  chat_id?: string | null;
+  user_id?: string | null;
+  screenname?: string | null;
+  age?: number | string | null;
+  about?: string | null;
+  gender?: string | null;
+  location?: string | null;
+  profile_tags?: Array<string> | null;
+  profile_photo_icon?: string | null;
+}
+
+export interface ChatousGetAccountStateGetOutputMessage {
+  chatId: string;
+  message: string;
+  /**
+   * True when this account sent it, from Chatous's own `is_me` flag.
+   */
+  fromMe: boolean;
+}
+
+export interface ChatousGetAccountStateGetOutput {
+  /**
+   * The account's own profile as Chatous pushed it, or null when the burst carried none. Null means 'not sent in this window', never 'no profile'.
+   */
+  profile: Record<string, unknown> | null;
+  conversations: Array<ChatousGetAccountStateGetOutputConversation>;
+  /**
+   * Message history for the conversations above, oldest first as received.
+   */
+  messages: Array<ChatousGetAccountStateGetOutputMessage>;
+  conversationCount: number;
+  messageCount: number;
+  socketOpened: boolean;
+  /**
+   * Raw socket frames collected, before classification.
+   */
+  frameCount: number;
+  /**
+   * Socket items this build could not read. Non-zero means the platform's frame shape has changed and this answer is INCOMPLETE - the account may hold conversations that are missing from the lists above.
+   */
+  undecodableItemCount: number;
+  fetchedAt: string;
+  elapsedMs: number;
+}
+
+// ── chatous-poll-events.get ─────────────────────────────────────────────
+
+export interface ChatousPollEventsGetInput {
+  /**
+   * The account's `connect.sid` cookie value, as set on chatous.com when the account signed in.
+   */
+  connectSid: string;
+  /**
+   * How long to listen before returning whatever arrived.
+   */
+  maxSeconds?: number;
+  /**
+   * Return as soon as this many socket frames have arrived.
+   */
+  maxEvents?: number;
+  /**
+   * Optional proxy URL for the WebSocket. Omit to connect directly.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface ChatousPollEventsGetOutputEvent {
+  /**
+   * chat = matched with a new person (carries their profile). message = a message in an existing chat. disconnect = a chat ended. queue = the server acknowledged a queue entry. unknown = a frame type this build does not recognise, with the raw payload.
+   */
+  type: string;
+  chatId?: string | null;
+  chat_id?: string | null;
+  user_id?: string | null;
+  screenname?: string | null;
+  age?: number | string | null;
+  about?: string | null;
+  gender?: string | null;
+  location?: string | null;
+  profile_tags?: Array<string> | null;
+  profile_photo_icon?: string | null;
+  message?: string | null;
+  fromMe?: boolean | null;
+  endedByMe?: boolean | null;
+  queueId?: string | null;
+  /**
+   * Present only on `unknown`: the frame exactly as Chatous sent it.
+   */
+  raw?: Record<string, unknown> | null;
+}
+
+export interface ChatousPollEventsGetOutput {
+  events: Array<ChatousPollEventsGetOutputEvent>;
+  eventCount: number;
+  /**
+   * Frames whose type this build does not recognise. A non-zero value is a shape change worth investigating, not an error.
+   */
+  unknownEventCount: number;
+  socketOpened: boolean;
+  /**
+   * Socket items this build could not read at all - distinct from `unknown` events, which ARE returned with their payload. Non-zero means frames were lost to a shape change, so a zero-event answer here is not evidence the account was quiet.
+   */
+  undecodableItemCount: number;
+  closedByServer: boolean;
+  fetchedAt: string;
+  elapsedMs: number;
+}
+
 // ── cloudflare-page-title.get ───────────────────────────────────────────
 
 export interface CloudflarePageTitleGetInput {
@@ -226,6 +382,175 @@ export interface CloudflarePageTitleGetOutput {
   title: string;
   server: string;
   fetched_with: string;
+}
+
+// ── contra-company-profile.get ──────────────────────────────────────────
+
+export interface ContraCompanyProfileGetInput {
+  /**
+   * Company slug from a contra.com/company/<slug> URL, e.g. "ajproductions_llc_c7a4d0"
+   */
+  slug: string;
+  /**
+   * User-provided proxy URL. Omit to use the operation's own datacenter pool.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface ContraCompanyProfileGetOutputMoney {
+  currency: string;
+  amount: number;
+}
+
+export interface ContraCompanyProfileGetOutputStatistics {
+  averageReviewRating: number | null;
+  projectCount: number | null;
+  totalSpend: ContraCompanyProfileGetOutputMoney | null;
+  visibility: string | null;
+}
+
+export interface ContraCompanyProfileGetOutput {
+  slug: string | null;
+  url: string;
+  id: string | null;
+  name: string | null;
+  headline: string | null;
+  description: string | null;
+  website: string | null;
+  location: string | null;
+  yearFounded: number | null;
+  numberOfEmployees: number | null;
+  isVerified: boolean | null;
+  profileRoute: string | null;
+  logoUrl: string | null;
+  reviewCount: number | null;
+  statistics: ContraCompanyProfileGetOutputStatistics | null;
+  fetchedAt: string;
+  elapsedMs: number;
+}
+
+// ── contra-discover-people.get ──────────────────────────────────────────
+
+export interface ContraDiscoverPeopleGetInput {
+  /**
+   * Contra role names to filter on, e.g. ["Web Developer", "Brand Designer"]. Omit for the unfiltered directory.
+   */
+  roles?: Array<string>;
+  /**
+   * Free-text search over profiles. Omit to browse by role only.
+   */
+  query?: string | null;
+  /**
+   * User-provided proxy URL. Omit to use the operation's own datacenter pool.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface ContraDiscoverPeopleGetOutputPerson {
+  id: string | null;
+  username: string | null;
+  name: string | null;
+  title: string | null;
+  professionalTitle: string | null;
+  location: string | null;
+  profileUrl: string | null;
+  avatarUrl: string | null;
+  roles: Array<string>;
+  followerCount: number | null;
+  hiredCount: number | null;
+  isQuickResponder: boolean | null;
+  isNewToContra: boolean | null;
+  canReceiveInquiries: boolean | null;
+  visitorIsFollowing: boolean | null;
+  platformEarningsBadge: string | null;
+  reviewSummary: ContraDiscoverPeopleGetOutputReviewSummary | null;
+  workPreferences: ContraDiscoverPeopleGetOutputWorkPreferences | null;
+}
+
+export interface ContraDiscoverPeopleGetOutputReviewSummary {
+  averageScore: string | null;
+  count: number | null;
+}
+
+export interface ContraDiscoverPeopleGetOutputWorkPreferences {
+  isCurrentlyAvailable: boolean | null;
+  minimumHourlyRate: number | null;
+}
+
+export interface ContraDiscoverPeopleGetOutput {
+  url: string;
+  roles: Array<string>;
+  query: string | null;
+  resultCount: number;
+  people: Array<ContraDiscoverPeopleGetOutputPerson>;
+  fetchedAt: string;
+  elapsedMs: number;
+}
+
+// ── contra-job-detail.get ───────────────────────────────────────────────
+
+export interface ContraJobDetailGetInput {
+  /**
+   * Opportunity slug from a contra.com/opportunity/<slug> URL, e.g. "vWsXX3YM-paid-ads-graphic-designer-for-meta-and-linked-in"
+   */
+  slug: string;
+  /**
+   * User-provided proxy URL. Omit to use the operation's own datacenter pool.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface ContraJobDetailGetOutputBudget {
+  type: string | null;
+  min: ContraJobDetailGetOutputMoney | null;
+  max: ContraJobDetailGetOutputMoney | null;
+  estimatedHours: number | null;
+}
+
+export interface ContraJobDetailGetOutputMoney {
+  currency: string;
+  amount: number;
+}
+
+export interface ContraJobDetailGetOutputOrganization {
+  id: string | null;
+  slug: string | null;
+  name: string | null;
+  headline: string | null;
+  description: string | null;
+  website: string | null;
+  location: string | null;
+  yearFounded: number | null;
+  numberOfEmployees: number | null;
+  isVerified: boolean | null;
+  profileRoute: string | null;
+  logoUrl: string | null;
+  reviewCount: number | null;
+  statistics: Record<string, unknown> | null;
+}
+
+export interface ContraJobDetailGetOutput {
+  slug: string | null;
+  url: string;
+  id: string | null;
+  title: string | null;
+  status: string | null;
+  description: string;
+  createdAt: string | null;
+  expiresAt: string | null;
+  applicationsClosedAt: string | null;
+  allowGuestApplications: boolean | null;
+  externalUrl: string | null;
+  numberOfOpenPositions: number | null;
+  numberOfFilledPositions: number | null;
+  hiringAsIndividual: boolean | null;
+  visitorCanApply: boolean;
+  budget: ContraJobDetailGetOutputBudget;
+  roles: Array<string>;
+  tools: Array<string>;
+  organization: ContraJobDetailGetOutputOrganization | null;
+  fetchedAt: string;
+  elapsedMs: number;
 }
 
 // ── crypto-price.get ────────────────────────────────────────────────────
@@ -591,6 +916,260 @@ export interface FetchMarkdownPostOutput {
   fetchedAt: string;
 }
 
+// ── github-issue-comments.get ───────────────────────────────────────────
+
+export interface GithubIssueCommentsGetInput {
+  /**
+   * Repo owner (user or org)
+   */
+  owner: string;
+  /**
+   * Repo name
+   */
+  repo: string;
+  /**
+   * Issue or pull request number
+   */
+  issueNumber: number;
+  /**
+   * ISO-8601 timestamp: only comments updated at or after this
+   */
+  since?: string | null;
+  perPage?: number;
+  page?: number;
+  /**
+   * Optional GitHub token (5,000 req/h)
+   */
+  token?: string | null;
+  /**
+   * Optional exit to send from (direct otherwise)
+   */
+  proxyUrl?: string | null;
+}
+
+export interface GithubIssueCommentsGetOutputCommentSummary {
+  id: number;
+  body: string;
+  author: string | null;
+  authorType: string | null;
+  authorAssociation: string | null;
+  htmlUrl: string;
+  reactions: number;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+/**
+ * The rate-limit headers GitHub returned on THIS response, surfaced so the caller
+ * can pace itself instead of the operation sleeping on its behalf.
+ */
+export interface GithubIssueCommentsGetOutputRateLimitInfo {
+  /**
+   * X-RateLimit-Limit: requests allowed per window
+   */
+  limit: number | null;
+  /**
+   * X-RateLimit-Remaining: requests left
+   */
+  remaining: number | null;
+  /**
+   * X-RateLimit-Reset as an ISO-8601 UTC timestamp
+   */
+  resetAt: string | null;
+  /**
+   * X-RateLimit-Reset as unix seconds
+   */
+  resetEpoch: number | null;
+  /**
+   * X-RateLimit-Resource: which bucket (core, search, graphql, ...)
+   */
+  resource: string | null;
+}
+
+export interface GithubIssueCommentsGetOutput {
+  items: Array<GithubIssueCommentsGetOutputCommentSummary>;
+  rateLimit: GithubIssueCommentsGetOutputRateLimitInfo;
+  fetchedAt: string;
+}
+
+// ── github-repo-contributors.get ────────────────────────────────────────
+
+export interface GithubRepoContributorsGetInput {
+  /**
+   * Repo owner (user or org)
+   */
+  owner: string;
+  /**
+   * Repo name
+   */
+  repo: string;
+  /**
+   * Also return email-only contributors with no GitHub account
+   */
+  includeAnonymous?: boolean;
+  perPage?: number;
+  page?: number;
+  /**
+   * Optional GitHub token (5,000 req/h)
+   */
+  token?: string | null;
+  /**
+   * Optional exit to send from (direct otherwise)
+   */
+  proxyUrl?: string | null;
+}
+
+export interface GithubRepoContributorsGetOutputContributorSummary {
+  id: number;
+  /**
+   * None for anonymous (email-only) contributors
+   */
+  login: string | null;
+  type: string;
+  contributions: number;
+  htmlUrl: string | null;
+  avatarUrl: string | null;
+}
+
+/**
+ * The rate-limit headers GitHub returned on THIS response, surfaced so the caller
+ * can pace itself instead of the operation sleeping on its behalf.
+ */
+export interface GithubRepoContributorsGetOutputRateLimitInfo {
+  /**
+   * X-RateLimit-Limit: requests allowed per window
+   */
+  limit: number | null;
+  /**
+   * X-RateLimit-Remaining: requests left
+   */
+  remaining: number | null;
+  /**
+   * X-RateLimit-Reset as an ISO-8601 UTC timestamp
+   */
+  resetAt: string | null;
+  /**
+   * X-RateLimit-Reset as unix seconds
+   */
+  resetEpoch: number | null;
+  /**
+   * X-RateLimit-Resource: which bucket (core, search, graphql, ...)
+   */
+  resource: string | null;
+}
+
+export interface GithubRepoContributorsGetOutput {
+  items: Array<GithubRepoContributorsGetOutputContributorSummary>;
+  rateLimit: GithubRepoContributorsGetOutputRateLimitInfo;
+  fetchedAt: string;
+}
+
+// ── github-repo-issues.get ──────────────────────────────────────────────
+
+export interface GithubRepoIssuesGetInput {
+  /**
+   * Repo owner (user or org)
+   */
+  owner: string;
+  /**
+   * Repo name
+   */
+  repo: string;
+  /**
+   * open | closed | all
+   */
+  state?: string;
+  /**
+   * Comma-separated label names to require
+   */
+  labels?: string | null;
+  /**
+   * created | updated | comments
+   */
+  sort?: string;
+  /**
+   * asc | desc
+   */
+  direction?: string;
+  /**
+   * ISO-8601 timestamp: only issues updated at or after this
+   */
+  since?: string | null;
+  perPage?: number;
+  page?: number;
+  /**
+   * GitHub lists pull requests on this endpoint too; the default drops them so a lead hunt sees only issues
+   */
+  includePullRequests?: boolean;
+  /**
+   * Optional GitHub token (5,000 req/h)
+   */
+  token?: string | null;
+  /**
+   * Optional exit to send from (direct otherwise)
+   */
+  proxyUrl?: string | null;
+}
+
+export interface GithubRepoIssuesGetOutputIssueSummary {
+  id: number;
+  number: number;
+  title: string;
+  body: string | null;
+  state: string;
+  htmlUrl: string;
+  /**
+   * owner/repo the issue belongs to
+   */
+  repository: string | null;
+  author: string | null;
+  authorType: string | null;
+  authorAssociation: string | null;
+  /**
+   * GitHub lists pull requests on the issues endpoints; this tells them apart
+   */
+  isPullRequest: boolean;
+  comments: number;
+  labels: Array<string>;
+  reactions: number;
+  createdAt: string | null;
+  updatedAt: string | null;
+  closedAt: string | null;
+}
+
+/**
+ * The rate-limit headers GitHub returned on THIS response, surfaced so the caller
+ * can pace itself instead of the operation sleeping on its behalf.
+ */
+export interface GithubRepoIssuesGetOutputRateLimitInfo {
+  /**
+   * X-RateLimit-Limit: requests allowed per window
+   */
+  limit: number | null;
+  /**
+   * X-RateLimit-Remaining: requests left
+   */
+  remaining: number | null;
+  /**
+   * X-RateLimit-Reset as an ISO-8601 UTC timestamp
+   */
+  resetAt: string | null;
+  /**
+   * X-RateLimit-Reset as unix seconds
+   */
+  resetEpoch: number | null;
+  /**
+   * X-RateLimit-Resource: which bucket (core, search, graphql, ...)
+   */
+  resource: string | null;
+}
+
+export interface GithubRepoIssuesGetOutput {
+  items: Array<GithubRepoIssuesGetOutputIssueSummary>;
+  rateLimit: GithubRepoIssuesGetOutputRateLimitInfo;
+  fetchedAt: string;
+}
+
 // ── github-repo.get ─────────────────────────────────────────────────────
 
 export interface GithubRepoGetInput {
@@ -626,6 +1205,337 @@ export interface GithubRepoGetOutput {
   fetchedAt: string;
 }
 
+// ── github-search-discussions.get ───────────────────────────────────────
+
+export interface GithubSearchDiscussionsGetInput {
+  /**
+   * GitHub search syntax for discussions, e.g. '"note taking" is:open'
+   */
+  q: string;
+  /**
+   * Rows to return (max 100)
+   */
+  first?: number;
+  /**
+   * pageInfo.endCursor from the previous page
+   */
+  after?: string | null;
+  /**
+   * GitHub token - GraphQL does not accept anonymous calls
+   */
+  token: string;
+  /**
+   * Optional exit to send from (direct otherwise)
+   */
+  proxyUrl?: string | null;
+}
+
+export interface GithubSearchDiscussionsGetOutputDiscussionSummary {
+  /**
+   * GraphQL node id (the value addDiscussionComment takes)
+   */
+  id: string;
+  number: number;
+  title: string;
+  body: string | null;
+  url: string;
+  author: string | null;
+  repository: string | null;
+  createdAt: string | null;
+  comments: number | null;
+  category: string | null;
+}
+
+/**
+ * The rate-limit headers GitHub returned on THIS response, surfaced so the caller
+ * can pace itself instead of the operation sleeping on its behalf.
+ */
+export interface GithubSearchDiscussionsGetOutputRateLimitInfo {
+  /**
+   * X-RateLimit-Limit: requests allowed per window
+   */
+  limit: number | null;
+  /**
+   * X-RateLimit-Remaining: requests left
+   */
+  remaining: number | null;
+  /**
+   * X-RateLimit-Reset as an ISO-8601 UTC timestamp
+   */
+  resetAt: string | null;
+  /**
+   * X-RateLimit-Reset as unix seconds
+   */
+  resetEpoch: number | null;
+  /**
+   * X-RateLimit-Resource: which bucket (core, search, graphql, ...)
+   */
+  resource: string | null;
+}
+
+export interface GithubSearchDiscussionsGetOutput {
+  totalCount: number;
+  items: Array<GithubSearchDiscussionsGetOutputDiscussionSummary>;
+  endCursor: string | null;
+  hasNextPage: boolean;
+  rateLimit: GithubSearchDiscussionsGetOutputRateLimitInfo;
+  fetchedAt: string;
+}
+
+// ── github-search-issues.get ────────────────────────────────────────────
+
+export interface GithubSearchIssuesGetInput {
+  /**
+   * GitHub search syntax, e.g. 'is:issue is:open "note taking app" language:python'
+   */
+  q: string;
+  /**
+   * Rows per page (max 100)
+   */
+  perPage?: number;
+  /**
+   * Page number (search caps at 1000 rows)
+   */
+  page?: number;
+  /**
+   * comments | reactions | created | updated | interactions (default: best match)
+   */
+  sort?: string | null;
+  /**
+   * asc | desc
+   */
+  order?: string | null;
+  /**
+   * GitHub returns PRs on this endpoint too; false filters them out client-side
+   */
+  includePullRequests?: boolean;
+  /**
+   * Optional GitHub token: raises the limit from 10 to 30 searches/min and lets the search see private repos the token can read
+   */
+  token?: string | null;
+  /**
+   * Optional exit to send from; a datacenter exit is leased when omitted
+   */
+  proxyUrl?: string | null;
+}
+
+export interface GithubSearchIssuesGetOutputIssueSummary {
+  id: number;
+  number: number;
+  title: string;
+  body: string | null;
+  state: string;
+  htmlUrl: string;
+  /**
+   * owner/repo the issue belongs to
+   */
+  repository: string | null;
+  author: string | null;
+  authorType: string | null;
+  authorAssociation: string | null;
+  /**
+   * GitHub lists pull requests on the issues endpoints; this tells them apart
+   */
+  isPullRequest: boolean;
+  comments: number;
+  labels: Array<string>;
+  reactions: number;
+  createdAt: string | null;
+  updatedAt: string | null;
+  closedAt: string | null;
+}
+
+/**
+ * The rate-limit headers GitHub returned on THIS response, surfaced so the caller
+ * can pace itself instead of the operation sleeping on its behalf.
+ */
+export interface GithubSearchIssuesGetOutputRateLimitInfo {
+  /**
+   * X-RateLimit-Limit: requests allowed per window
+   */
+  limit: number | null;
+  /**
+   * X-RateLimit-Remaining: requests left
+   */
+  remaining: number | null;
+  /**
+   * X-RateLimit-Reset as an ISO-8601 UTC timestamp
+   */
+  resetAt: string | null;
+  /**
+   * X-RateLimit-Reset as unix seconds
+   */
+  resetEpoch: number | null;
+  /**
+   * X-RateLimit-Resource: which bucket (core, search, graphql, ...)
+   */
+  resource: string | null;
+}
+
+export interface GithubSearchIssuesGetOutput {
+  totalCount: number;
+  incompleteResults: boolean;
+  items: Array<GithubSearchIssuesGetOutputIssueSummary>;
+  rateLimit: GithubSearchIssuesGetOutputRateLimitInfo;
+  fetchedAt: string;
+}
+
+// ── github-search-repos.get ─────────────────────────────────────────────
+
+export interface GithubSearchReposGetInput {
+  /**
+   * GitHub search syntax, e.g. 'note taking language:typescript stars:>100'
+   */
+  q: string;
+  perPage?: number;
+  page?: number;
+  /**
+   * stars | forks | help-wanted-issues | updated
+   */
+  sort?: string | null;
+  /**
+   * asc | desc
+   */
+  order?: string | null;
+  /**
+   * Optional GitHub token (30 searches/min)
+   */
+  token?: string | null;
+  /**
+   * Optional exit to send from; a datacenter exit is leased when omitted
+   */
+  proxyUrl?: string | null;
+}
+
+/**
+ * The rate-limit headers GitHub returned on THIS response, surfaced so the caller
+ * can pace itself instead of the operation sleeping on its behalf.
+ */
+export interface GithubSearchReposGetOutputRateLimitInfo {
+  /**
+   * X-RateLimit-Limit: requests allowed per window
+   */
+  limit: number | null;
+  /**
+   * X-RateLimit-Remaining: requests left
+   */
+  remaining: number | null;
+  /**
+   * X-RateLimit-Reset as an ISO-8601 UTC timestamp
+   */
+  resetAt: string | null;
+  /**
+   * X-RateLimit-Reset as unix seconds
+   */
+  resetEpoch: number | null;
+  /**
+   * X-RateLimit-Resource: which bucket (core, search, graphql, ...)
+   */
+  resource: string | null;
+}
+
+export interface GithubSearchReposGetOutputRepoSummary {
+  id: number;
+  fullName: string;
+  owner: string | null;
+  description: string | null;
+  htmlUrl: string;
+  homepage: string | null;
+  language: string | null;
+  stars: number;
+  forks: number;
+  openIssues: number;
+  topics: Array<string>;
+  license: string | null;
+  isArchived: boolean;
+  isFork: boolean;
+  createdAt: string | null;
+  updatedAt: string | null;
+  pushedAt: string | null;
+}
+
+export interface GithubSearchReposGetOutput {
+  totalCount: number;
+  incompleteResults: boolean;
+  items: Array<GithubSearchReposGetOutputRepoSummary>;
+  rateLimit: GithubSearchReposGetOutputRateLimitInfo;
+  fetchedAt: string;
+}
+
+// ── github-search-users.get ─────────────────────────────────────────────
+
+export interface GithubSearchUsersGetInput {
+  /**
+   * GitHub search syntax, e.g. 'location:berlin language:python followers:>50'
+   */
+  q: string;
+  perPage?: number;
+  page?: number;
+  /**
+   * followers | repositories | joined
+   */
+  sort?: string | null;
+  /**
+   * asc | desc
+   */
+  order?: string | null;
+  /**
+   * Optional GitHub token (30 searches/min)
+   */
+  token?: string | null;
+  /**
+   * Optional exit to send from; a datacenter exit is leased when omitted
+   */
+  proxyUrl?: string | null;
+}
+
+/**
+ * The rate-limit headers GitHub returned on THIS response, surfaced so the caller
+ * can pace itself instead of the operation sleeping on its behalf.
+ */
+export interface GithubSearchUsersGetOutputRateLimitInfo {
+  /**
+   * X-RateLimit-Limit: requests allowed per window
+   */
+  limit: number | null;
+  /**
+   * X-RateLimit-Remaining: requests left
+   */
+  remaining: number | null;
+  /**
+   * X-RateLimit-Reset as an ISO-8601 UTC timestamp
+   */
+  resetAt: string | null;
+  /**
+   * X-RateLimit-Reset as unix seconds
+   */
+  resetEpoch: number | null;
+  /**
+   * X-RateLimit-Resource: which bucket (core, search, graphql, ...)
+   */
+  resource: string | null;
+}
+
+export interface GithubSearchUsersGetOutputUserSummary {
+  id: number;
+  login: string;
+  type: string;
+  htmlUrl: string;
+  avatarUrl: string;
+  /**
+   * Search relevance score, when the row came from search
+   */
+  score: number | null;
+}
+
+export interface GithubSearchUsersGetOutput {
+  totalCount: number;
+  incompleteResults: boolean;
+  items: Array<GithubSearchUsersGetOutputUserSummary>;
+  rateLimit: GithubSearchUsersGetOutputRateLimitInfo;
+  fetchedAt: string;
+}
+
 // ── github-trending.get ─────────────────────────────────────────────────
 
 export interface GithubTrendingGetInput {
@@ -657,6 +1567,76 @@ export interface GithubTrendingGetOutput {
   fetchedAt: string;
 }
 
+// ── github-user-emails.get ──────────────────────────────────────────────
+
+export interface GithubUserEmailsGetInput {
+  /**
+   * GitHub login
+   */
+  username: string;
+  /**
+   * How many of the user's most recently pushed repositories to scan
+   */
+  maxRepos?: number;
+  /**
+   * GitHub token. REQUIRED here, unlike the single-call reads: this operation fans out to 1 + maxRepos requests, so an anonymous call spends up to 11 of the 60 requests an hour that every keyless caller through this worker shares. With a token the budget is the caller's own 5,000/h.
+   */
+  token: string;
+  /**
+   * Optional exit to send from (direct otherwise)
+   */
+  proxyUrl?: string | null;
+}
+
+export interface GithubUserEmailsGetOutputCommitEmail {
+  email: string;
+  name: string | null;
+  /**
+   * owner/repo the commit was read from
+   */
+  repository: string;
+  sha: string;
+  committedAt: string | null;
+}
+
+/**
+ * The rate-limit headers GitHub returned on THIS response, surfaced so the caller
+ * can pace itself instead of the operation sleeping on its behalf.
+ */
+export interface GithubUserEmailsGetOutputRateLimitInfo {
+  /**
+   * X-RateLimit-Limit: requests allowed per window
+   */
+  limit: number | null;
+  /**
+   * X-RateLimit-Remaining: requests left
+   */
+  remaining: number | null;
+  /**
+   * X-RateLimit-Reset as an ISO-8601 UTC timestamp
+   */
+  resetAt: string | null;
+  /**
+   * X-RateLimit-Reset as unix seconds
+   */
+  resetEpoch: number | null;
+  /**
+   * X-RateLimit-Resource: which bucket (core, search, graphql, ...)
+   */
+  resource: string | null;
+}
+
+export interface GithubUserEmailsGetOutput {
+  username: string;
+  emails: Array<GithubUserEmailsGetOutputCommitEmail>;
+  reposScanned: Array<string>;
+  /**
+   * Rate-limit headers from the LAST call made
+   */
+  rateLimit: GithubUserEmailsGetOutputRateLimitInfo;
+  fetchedAt: string;
+}
+
 // ── github-user.get ─────────────────────────────────────────────────────
 
 export interface GithubUserGetInput {
@@ -664,10 +1644,46 @@ export interface GithubUserGetInput {
    * GitHub login (user or org)
    */
   username: string;
+  /**
+   * Optional GitHub token: 5,000 req/h instead of 60, and sees the email field when the profile allows it
+   */
+  token?: string | null;
+  /**
+   * Optional exit to send from (direct otherwise)
+   */
+  proxyUrl?: string | null;
+}
+
+/**
+ * The rate-limit headers GitHub returned on THIS response, surfaced so the caller
+ * can pace itself instead of the operation sleeping on its behalf.
+ */
+export interface GithubUserGetOutputRateLimitInfo {
+  /**
+   * X-RateLimit-Limit: requests allowed per window
+   */
+  limit: number | null;
+  /**
+   * X-RateLimit-Remaining: requests left
+   */
+  remaining: number | null;
+  /**
+   * X-RateLimit-Reset as an ISO-8601 UTC timestamp
+   */
+  resetAt: string | null;
+  /**
+   * X-RateLimit-Reset as unix seconds
+   */
+  resetEpoch: number | null;
+  /**
+   * X-RateLimit-Resource: which bucket (core, search, graphql, ...)
+   */
+  resource: string | null;
 }
 
 export interface GithubUserGetOutput {
   login: string;
+  id: number;
   name: string | null;
   type: string;
   bio: string | null;
@@ -676,6 +1692,7 @@ export interface GithubUserGetOutput {
   location: string | null;
   email: string | null;
   twitterHandle: string | null;
+  hireable: boolean | null;
   publicRepos: number;
   publicGists: number;
   followers: number;
@@ -683,6 +1700,8 @@ export interface GithubUserGetOutput {
   avatarUrl: string;
   htmlUrl: string;
   createdAt: string;
+  updatedAt: string | null;
+  rateLimit: GithubUserGetOutputRateLimitInfo;
   fetchedAt: string;
 }
 
@@ -1406,6 +2425,51 @@ export interface InstagramGetPostInfoPostOutput {
   mediaUrls: Array<string>;
   isVideo?: boolean;
   videoUrl?: string | null;
+  fetchedAt: string;
+  elapsedMs: number;
+}
+
+// ── instagram-get-user-by-id.post ───────────────────────────────────────
+
+export interface InstagramGetUserByIdPostInput {
+  /**
+   * Numeric Instagram user id (pk)
+   */
+  userId: string;
+  /**
+   * Optional proxy URL. Instagram 401-gates anonymous reads per egress IP.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface InstagramGetUserByIdPostOutput {
+  success: boolean;
+  pk: string;
+  username: string;
+  /**
+   * 'stub' = identity only (what anonymous returns today); 'full' = counts and profile detail were disclosed
+   */
+  detailLevel: string;
+  fullName?: string | null;
+  biography?: string | null;
+  isPrivate?: boolean | null;
+  isVerified?: boolean | null;
+  isBusiness?: boolean | null;
+  isProfessional?: boolean | null;
+  category?: string | null;
+  businessEmail?: string | null;
+  publicEmail?: string | null;
+  businessPhone?: string | null;
+  externalUrl?: string | null;
+  bioLinks: Array<string>;
+  /**
+   * null = not disclosed by this surface, never 'zero followers'
+   */
+  followerCount?: number | null;
+  followingCount?: number | null;
+  mediaCount?: number | null;
+  profilePicUrl?: string | null;
+  fbid?: string | null;
   fetchedAt: string;
   elapsedMs: number;
 }
@@ -2450,6 +3514,67 @@ export interface TiktokDiscoverUsersPostOutput {
   videoId: string;
   users: Array<TiktokDiscoverUsersPostOutputDiscoveredUser>;
   commentsScanned: number;
+  /**
+   * False when a block or upstream failure cut the scan short — the users listed are real but the list is partial.
+   */
+  complete: boolean;
+  /**
+   * "limit-reached", "exhausted", or "blocked-mid-scan"
+   */
+  stopReason: string;
+  fetchedAt: string;
+  elapsedMs: number;
+}
+
+// ── tiktok-get-comment-replies.get ──────────────────────────────────────
+
+export interface TiktokGetCommentRepliesGetInput {
+  /**
+   * Parent video id (aweme_id / item_id)
+   */
+  videoId: string;
+  /**
+   * Comment id whose replies to fetch
+   */
+  commentId: string;
+  /**
+   * Replies per page (max 50)
+   */
+  count?: number;
+  /**
+   * Pagination cursor (0 for first page)
+   */
+  cursor?: number;
+  /**
+   * Optional proxy URL
+   */
+  proxyUrl?: string | null;
+}
+
+export interface TiktokGetCommentRepliesGetOutputCommentUser {
+  uniqueId: string;
+  nickname: string;
+  secUid: string;
+  verified: boolean;
+}
+
+export interface TiktokGetCommentRepliesGetOutputReplyItem {
+  commentId: string;
+  text: string;
+  likes: number;
+  replyCount: number;
+  createTime: number;
+  user: TiktokGetCommentRepliesGetOutputCommentUser;
+}
+
+export interface TiktokGetCommentRepliesGetOutput {
+  success: boolean;
+  videoId: string;
+  commentId: string;
+  replies: Array<TiktokGetCommentRepliesGetOutputReplyItem>;
+  hasMore: boolean;
+  cursor: number;
+  total: number;
   fetchedAt: string;
   elapsedMs: number;
 }
@@ -2555,6 +3680,86 @@ export interface TiktokGetVideoDetailPostOutput {
   elapsedMs: number;
 }
 
+// ── tiktok-get-video-embed.get ──────────────────────────────────────────
+
+export interface TiktokGetVideoEmbedGetInput {
+  /**
+   * TikTok video id (the numeric aweme id)
+   */
+  videoId: string;
+  /**
+   * Optional proxy URL
+   */
+  proxyUrl?: string | null;
+}
+
+export interface TiktokGetVideoEmbedGetOutputAuthor {
+  uniqueId: string;
+  nickname: string;
+  signature: string;
+  verified: boolean;
+  secUid: string;
+  followers: number;
+  following: number;
+  likes: number;
+  videos: number;
+}
+
+export interface TiktokGetVideoEmbedGetOutputStats {
+  plays: number;
+  likes: number;
+  comments: number;
+  shares: number;
+}
+
+export interface TiktokGetVideoEmbedGetOutput {
+  success: boolean;
+  videoId: string;
+  description: string;
+  createTime: string;
+  author: TiktokGetVideoEmbedGetOutputAuthor;
+  stats: TiktokGetVideoEmbedGetOutputStats;
+  hashtags: Array<string>;
+  musicTitle?: string | null;
+  musicAuthor?: string | null;
+  durationSeconds: number;
+  thumbnailUrl?: string | null;
+  locationCreated: string;
+  fetchedAt: string;
+  elapsedMs: number;
+}
+
+// ── tiktok-oembed.get ───────────────────────────────────────────────────
+
+export interface TiktokOembedGetInput {
+  /**
+   * Any TikTok profile or video URL, e.g. https://www.tiktok.com/@tiktok
+   */
+  url: string;
+  /**
+   * Optional proxy URL. "none" forces a direct request; omit to auto-pick.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface TiktokOembedGetOutput {
+  success: boolean;
+  /**
+   * "video" for a video URL, otherwise "profile"
+   */
+  urlType: string;
+  title: string;
+  authorName: string;
+  authorUrl: string;
+  thumbnailUrl?: string | null;
+  thumbnailWidth?: number | null;
+  thumbnailHeight?: number | null;
+  embedProductId: string;
+  providerName: string;
+  fetchedAt: string;
+  elapsedMs: number;
+}
+
 // ── timezone-lookup.get ─────────────────────────────────────────────────
 
 export interface TimezoneLookupGetInput {
@@ -2611,6 +3816,102 @@ export interface TranslateTextGetOutput {
   quality: number;
   matches: Array<TranslateTextGetOutputMatch>;
   fetchedAt: string;
+}
+
+// ── upwork-jobs-detail.get ──────────────────────────────────────────────
+
+export interface UpworkJobsDetailGetInput {
+  /**
+   * An Upwork job: its ciphertext ("~021234…"), or the job URL that upwork-jobs-search returns.
+   */
+  job: string;
+  /**
+   * User-provided proxy URL. Omit to use the operation's own pool.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface UpworkJobsDetailGetOutput {
+  ciphertext: string;
+  title: string | null;
+  description: string | null;
+  status: string | null;
+  jobType: string | null;
+  contractorTier: string | null;
+  postedOn: string | null;
+  publishTime: string | null;
+  skills: Array<string>;
+  hourlyBudgetMin: number | null;
+  hourlyBudgetMax: number | null;
+  totalApplicants: number | null;
+  totalHired: number | null;
+  totalInvitedToInterview: number | null;
+  lastBuyerActivity: string | null;
+  buyerCountry: string | null;
+  buyerScore: number | null;
+  buyerTotalJobsWithHires: number | null;
+  buyerTotalSpent: number | null;
+  jobUrl: string | null;
+  fetchedAt: string;
+  elapsedMs: number;
+}
+
+// ── upwork-jobs-search.get ──────────────────────────────────────────────
+
+export interface UpworkJobsSearchGetInput {
+  /**
+   * What to search for (e.g. "python developer", "react native app")
+   */
+  query: string;
+  /**
+   * 1-based results page.
+   */
+  page?: number;
+  /**
+   * Postings per page, 1-50.
+   */
+  pageSize?: number;
+  /**
+   * Result order: recency (newest first) or relevance.
+   */
+  sort?: string;
+  /**
+   * Contract type filter: any, hourly or fixed.
+   */
+  jobType?: string;
+  /**
+   * Required experience: any, entry, intermediate or expert.
+   */
+  experienceLevel?: string;
+  /**
+   * User-provided proxy URL. Omit to use the operation's own pool.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface UpworkJobsSearchGetOutputJobResult {
+  jobId: string;
+  ciphertext: string | null;
+  title: string;
+  description: string | null;
+  jobType: string | null;
+  publishTime: string | null;
+  hourlyBudgetMin: number | null;
+  hourlyBudgetMax: number | null;
+  fixedPriceAmount: number | null;
+  jobUrl: string | null;
+}
+
+export interface UpworkJobsSearchGetOutput {
+  query: string;
+  page: number;
+  pageSize: number;
+  resultCount: number;
+  totalFound: number | null;
+  hasMore: boolean | null;
+  jobs: Array<UpworkJobsSearchGetOutputJobResult>;
+  fetchedAt: string;
+  elapsedMs: number;
 }
 
 // ── weather-current.get ─────────────────────────────────────────────────
@@ -2681,6 +3982,574 @@ export interface WebSearchPostOutput {
   message: string;
   fetchedAt: string;
   elapsedMs: number;
+}
+
+// ── wellfound-application-modal.post ────────────────────────────────────
+
+export interface WellfoundApplicationModalPostInput {
+  /**
+   * Authenticated blob from wellfound-login.
+   */
+  session: string;
+  /**
+   * Wellfound job listing id.
+   */
+  jobId: string;
+  /**
+   * Same exit the session was minted on. Omit to send directly.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface WellfoundApplicationModalPostOutputQuestion {
+  id: string;
+  question?: string;
+  /**
+   * Answer kind, for example freeform.
+   */
+  kind?: string;
+  required?: boolean;
+  options?: Array<WellfoundApplicationModalPostOutputQuestionOption>;
+}
+
+export interface WellfoundApplicationModalPostOutputQuestionOption {
+  id?: string;
+  text?: string;
+}
+
+export interface WellfoundApplicationModalPostOutput {
+  questions?: Array<WellfoundApplicationModalPostOutputQuestion>;
+  currentUserApplied?: boolean;
+  /**
+   * Reasons Wellfound would refuse this application, empty when qualified.
+   */
+  qualificationErrors?: Array<string>;
+  /**
+   * Refreshed blob carrying rotated cookies. Persist THIS one, not the input.
+   */
+  session?: string;
+}
+
+// ── wellfound-browse-jobs.post ──────────────────────────────────────────
+
+export interface WellfoundBrowseJobsPostInput {
+  /**
+   * Blob from wellfound-public-session.
+   */
+  session: string;
+  /**
+   * Role slug to search, for example software-engineer.
+   */
+  roleSlug: string;
+  /**
+   * Use remote for the remote search, otherwise a Wellfound location slug.
+   */
+  scope?: string;
+  /**
+   * 1-based page number.
+   */
+  page?: number;
+  /**
+   * Same exit the session was minted on. Omit to send directly.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface WellfoundBrowseJobsPostOutputJobSummary {
+  id: string;
+  title?: string;
+  slug?: string;
+  startupId?: string;
+  jobUrl?: string;
+  compensation?: string;
+  equity?: string;
+  jobType?: string;
+  /**
+   * True or False as Wellfound disclosed it. Null means Wellfound did not say -- it is NOT inferred from the scope you searched.
+   */
+  remote?: boolean | null;
+  /**
+   * REMOTE, ONSITE or ONSITE_OR_REMOTE. Empty when undisclosed.
+   */
+  remoteConfigKind?: string;
+  locationNames?: Array<string>;
+  liveStartAt?: number | null;
+  /**
+   * Full listing description; the SEO search returns it inline.
+   */
+  description?: string;
+  startupName?: string;
+  startupSlug?: string;
+  startupLogoUrl?: string;
+  startupCompanySize?: string;
+  startupHighConcept?: string;
+  /**
+   * Empty on anonymous results; use wellfound-company-overview.
+   */
+  startupFundingStage?: string;
+  /**
+   * Empty on anonymous results; use wellfound-company-overview.
+   */
+  startupTotalRaised?: string;
+}
+
+export interface WellfoundBrowseJobsPostOutput {
+  jobs?: Array<WellfoundBrowseJobsPostOutputJobSummary>;
+  /**
+   * False when Wellfound sent no page count, so a paginating caller stops.
+   */
+  hasNextPage?: boolean;
+  totalJobCount?: number;
+  /**
+   * Refreshed blob carrying rotated cookies. Persist THIS one, not the input.
+   */
+  session?: string;
+  elapsedMs?: number;
+}
+
+// ── wellfound-company-overview.post ─────────────────────────────────────
+
+export interface WellfoundCompanyOverviewPostInput {
+  /**
+   * Blob from wellfound-public-session (anonymous) or wellfound-login.
+   */
+  session: string;
+  /**
+   * Wellfound company (startup) id.
+   */
+  startupId: string;
+  /**
+   * Same exit the session was minted on. Omit to send directly.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface WellfoundCompanyOverviewPostOutputCompanyOverview {
+  id?: string;
+  name?: string;
+  slug?: string;
+  productDescription?: string;
+  companySize?: string;
+  /**
+   * Formatted, for example $104.7M. Empty when not disclosed.
+   */
+  totalRaised?: string;
+  marketTags?: Array<string>;
+  locationTags?: Array<string>;
+  websiteUrl?: string;
+  linkedinUrl?: string;
+  twitterUrl?: string;
+  blogUrl?: string;
+}
+
+export interface WellfoundCompanyOverviewPostOutput {
+  company?: WellfoundCompanyOverviewPostOutputCompanyOverview;
+  /**
+   * Refreshed blob carrying rotated cookies. Persist THIS one, not the input.
+   */
+  session?: string;
+}
+
+// ── wellfound-conversation-detail.post ──────────────────────────────────
+
+export interface WellfoundConversationDetailPostInput {
+  /**
+   * Authenticated blob from wellfound-login.
+   */
+  session: string;
+  /**
+   * The BARE modelId from wellfound-list-conversations, for example 982616801. Not the prefixed node id, which this query rejects.
+   */
+  conversationId: string;
+  /**
+   * Company id for this conversation.
+   */
+  startupId: string;
+  /**
+   * Wellfound ConversationTypeEnum value.
+   */
+  conversationType?: string;
+  /**
+   * Same exit the session was minted on. Omit to send directly.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface WellfoundConversationDetailPostOutput {
+  id?: string;
+  /**
+   * Message nodes, oldest first as Wellfound returns them.
+   */
+  messages?: Array<Record<string, unknown>>;
+  /**
+   * Refreshed blob carrying rotated cookies. Persist THIS one, not the input.
+   */
+  session?: string;
+}
+
+// ── wellfound-job-detail.post ───────────────────────────────────────────
+
+export interface WellfoundJobDetailPostInput {
+  /**
+   * Blob from wellfound-public-session (anonymous) or wellfound-login.
+   */
+  session: string;
+  /**
+   * Wellfound job listing id.
+   */
+  jobId: string;
+  /**
+   * Listing slug, used for the URL and referer.
+   */
+  slug?: string;
+  /**
+   * Same exit the session was minted on. Omit to send directly.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface WellfoundJobDetailPostOutputCompany {
+  id?: string;
+  name?: string;
+  slug?: string;
+  highConcept?: string;
+  productDescription?: string;
+  companySize?: string;
+  totalRaised?: string;
+  fundingStage?: string;
+  marketTags?: Array<string>;
+  locationTags?: Array<string>;
+  founderNames?: Array<string>;
+  perks?: Array<string>;
+  logoUrl?: string;
+}
+
+export interface WellfoundJobDetailPostOutputJobDetail {
+  id: string;
+  title?: string;
+  slug?: string;
+  startupId?: string;
+  description?: string;
+  descriptionHtml?: string;
+  jobUrl?: string;
+  /**
+   * Always false on an anonymous session.
+   */
+  currentUserApplied?: boolean;
+  /**
+   * Empty on an anonymous session.
+   */
+  currentUserQualificationReport?: Record<string, unknown>;
+  skills?: Array<string>;
+  compensation?: string;
+  equity?: string;
+  jobType?: string;
+  /**
+   * True or False as Wellfound disclosed it; null when it did not.
+   */
+  remote?: boolean | null;
+  /**
+   * REMOTE, ONSITE or ONSITE_OR_REMOTE, read from remoteConfig. Empty when undisclosed, which the anonymous surface often is.
+   */
+  remoteConfigKind?: string;
+  locationNames?: Array<string>;
+  acceptedRemoteLocations?: Array<string>;
+  yearsExperienceMin?: number | null;
+  yearsExperienceMax?: number | null;
+  liveStartAt?: number | null;
+}
+
+export interface WellfoundJobDetailPostOutput {
+  job: WellfoundJobDetailPostOutputJobDetail;
+  company?: WellfoundJobDetailPostOutputCompany;
+  /**
+   * Refreshed blob carrying rotated cookies. Persist THIS one, not the input.
+   */
+  session?: string;
+}
+
+// ── wellfound-list-applications.post ────────────────────────────────────
+
+export interface WellfoundListApplicationsPostInput {
+  /**
+   * Authenticated blob from wellfound-login.
+   */
+  session: string;
+  /**
+   * 1-based page number. The response carries no pageInfo: a page with no new applications means the end.
+   */
+  page?: number;
+  /**
+   * Same exit the session was minted on. Omit to send directly.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface WellfoundListApplicationsPostOutput {
+  /**
+   * Application nodes, each with status, createdAt, jobListing and startup.
+   */
+  applications?: Array<Record<string, unknown>>;
+  /**
+   * Refreshed blob carrying rotated cookies. Persist THIS one, not the input.
+   */
+  session?: string;
+}
+
+// ── wellfound-list-conversations.post ───────────────────────────────────
+
+export interface WellfoundListConversationsPostInput {
+  /**
+   * Authenticated blob from wellfound-login.
+   */
+  session: string;
+  /**
+   * ONGOING or ARCHIVED.
+   */
+  scope?: string;
+  /**
+   * 1-based page number.
+   */
+  page?: number;
+  /**
+   * Same exit the session was minted on. Omit to send directly.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface WellfoundListConversationsPostOutputConversationSummary {
+  /**
+   * Prefixed node id.
+   */
+  id?: string;
+  /**
+   * Bare conversation id. This is the value wellfound-conversation-detail and wellfound-send-message take, NOT the prefixed id above.
+   */
+  modelId?: string;
+  modelType?: string;
+  unread?: boolean;
+  /**
+   * The company on the other side.
+   */
+  startup?: Record<string, unknown>;
+  /**
+   * The latest message in the thread.
+   */
+  message?: Record<string, unknown>;
+}
+
+export interface WellfoundListConversationsPostOutput {
+  conversations?: Array<WellfoundListConversationsPostOutputConversationSummary>;
+  hasNextPage?: boolean;
+  /**
+   * Refreshed blob carrying rotated cookies. Persist THIS one, not the input.
+   */
+  session?: string;
+}
+
+// ── wellfound-pipeline-stats.post ───────────────────────────────────────
+
+export interface WellfoundPipelineStatsPostInput {
+  /**
+   * Authenticated blob from wellfound-login.
+   */
+  session: string;
+  /**
+   * Wellfound viewer id, available from wellfound-viewer.
+   */
+  userId: string;
+  /**
+   * Same exit the session was minted on. Omit to send directly.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface WellfoundPipelineStatsPostOutput {
+  /**
+   * Pipeline counts, for example interested, matched, messages, savedJobListings.
+   */
+  stats?: Record<string, unknown>;
+  /**
+   * Refreshed blob carrying rotated cookies. Persist THIS one, not the input.
+   */
+  session?: string;
+}
+
+// ── wellfound-public-session.post ───────────────────────────────────────
+
+export interface WellfoundPublicSessionPostInput {
+  /**
+   * curl_cffi browser-impersonation target used to mint the session.
+   */
+  impersonate?: string;
+  /**
+   * Exit to mint from (http://user:pass@host:port). Omit to send directly. The returned session is bound to whatever exit minted it, so every later call must pass the SAME value.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface WellfoundPublicSessionPostOutput {
+  /**
+   * Opaque anonymous session blob. Pass to wellfound-browse-jobs, wellfound-job-detail and wellfound-company-overview. Carries no account credentials.
+   */
+  session: string;
+  /**
+   * Persisted queries discovered in Wellfound's bundle (a health signal).
+   */
+  operationCount: number;
+  /**
+   * Wall-clock time spent minting.
+   */
+  elapsedMs: number;
+}
+
+// ── wellfound-refresh-ops.post ──────────────────────────────────────────
+
+export interface WellfoundRefreshOpsPostInput {
+  /**
+   * Session blob from wellfound-public-session or wellfound-login.
+   */
+  session: string;
+  /**
+   * Same exit the blob was minted on. Omit to send directly.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface WellfoundRefreshOpsPostOutput {
+  /**
+   * Refreshed blob: the same cookies, a new signature and op-id map.
+   */
+  session: string;
+  /**
+   * Persisted queries in the refreshed map.
+   */
+  operationCount: number;
+  /**
+   * Wall-clock time spent re-scanning.
+   */
+  elapsedMs: number;
+}
+
+// ── wellfound-search-jobs.post ──────────────────────────────────────────
+
+export interface WellfoundSearchJobsPostInput {
+  /**
+   * Authenticated blob from wellfound-login.
+   */
+  session: string;
+  /**
+   * 1-based page number.
+   */
+  page?: number;
+  /**
+   * Wellfound role tag ids.
+   */
+  roleTagIds?: Array<string> | null;
+  /**
+   * Wellfound skill tag ids.
+   */
+  skillTagIds?: Array<string> | null;
+  /**
+   * Job types, for example full-time or contract.
+   */
+  jobTypes?: Array<string> | null;
+  /**
+   * Wellfound remote preference enum value.
+   */
+  remotePreference?: string | null;
+  /**
+   * Wellfound location id.
+   */
+  locationId?: string | null;
+  /**
+   * Hide listings that redirect off Wellfound.
+   */
+  hideOffPlatform?: boolean;
+  /**
+   * Same exit the session was minted on. Omit to send directly.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface WellfoundSearchJobsPostOutputJobSummary {
+  id: string;
+  title?: string;
+  slug?: string;
+  startupId?: string;
+  jobUrl?: string;
+  /**
+   * True when this account has already applied.
+   */
+  currentUserApplied?: boolean;
+  compensation?: string;
+  equity?: string;
+  jobType?: string;
+  /**
+   * True or False as Wellfound disclosed it; null when it did not.
+   */
+  remote?: boolean | null;
+  /**
+   * REMOTE, ONSITE or ONSITE_OR_REMOTE. Empty when undisclosed.
+   */
+  remoteConfigKind?: string;
+  locationNames?: Array<string>;
+  liveStartAt?: number | null;
+  description?: string;
+  startupName?: string;
+  startupSlug?: string;
+  startupLogoUrl?: string;
+  startupCompanySize?: string;
+  startupHighConcept?: string;
+  startupFundingStage?: string;
+  startupTotalRaised?: string;
+}
+
+export interface WellfoundSearchJobsPostOutput {
+  jobs?: Array<WellfoundSearchJobsPostOutputJobSummary>;
+  page?: number;
+  hasNextPage?: boolean;
+  /**
+   * Companies matched, which is what Wellfound counts here.
+   */
+  totalStartupCount?: number;
+  /**
+   * Refreshed blob carrying rotated cookies. Persist THIS one, not the input.
+   */
+  session?: string;
+}
+
+// ── wellfound-viewer.post ───────────────────────────────────────────────
+
+export interface WellfoundViewerPostInput {
+  /**
+   * Authenticated blob from wellfound-login.
+   */
+  session: string;
+  /**
+   * Same exit the session was minted on. Omit to send directly.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface WellfoundViewerPostOutput {
+  /**
+   * Wellfound user id behind this session.
+   */
+  viewerId?: string;
+  /**
+   * False when Wellfound has restricted this account.
+   */
+  canApplyToJobs?: boolean;
+  candidateState?: string;
+  /**
+   * Decoded analytics traits, empty when absent or undecodable.
+   */
+  traits?: Record<string, unknown>;
+  /**
+   * Refreshed blob carrying rotated cookies. Persist THIS one, not the input.
+   */
+  session?: string;
 }
 
 // ── wikipedia-article.get ───────────────────────────────────────────────

@@ -18,8 +18,20 @@ import type {
   BbcNewsGetOutput,
   BlueskyProfileGetInput,
   BlueskyProfileGetOutput,
+  ChatousCheckSessionGetInput,
+  ChatousCheckSessionGetOutput,
+  ChatousGetAccountStateGetInput,
+  ChatousGetAccountStateGetOutput,
+  ChatousPollEventsGetInput,
+  ChatousPollEventsGetOutput,
   CloudflarePageTitleGetInput,
   CloudflarePageTitleGetOutput,
+  ContraCompanyProfileGetInput,
+  ContraCompanyProfileGetOutput,
+  ContraDiscoverPeopleGetInput,
+  ContraDiscoverPeopleGetOutput,
+  ContraJobDetailGetInput,
+  ContraJobDetailGetOutput,
   CryptoPriceGetInput,
   CryptoPriceGetOutput,
   CurrencyConvertGetInput,
@@ -34,10 +46,26 @@ import type {
   EmailReadVerificationLinkPostOutput,
   FetchMarkdownPostInput,
   FetchMarkdownPostOutput,
+  GithubIssueCommentsGetInput,
+  GithubIssueCommentsGetOutput,
+  GithubRepoContributorsGetInput,
+  GithubRepoContributorsGetOutput,
+  GithubRepoIssuesGetInput,
+  GithubRepoIssuesGetOutput,
   GithubRepoGetInput,
   GithubRepoGetOutput,
+  GithubSearchDiscussionsGetInput,
+  GithubSearchDiscussionsGetOutput,
+  GithubSearchIssuesGetInput,
+  GithubSearchIssuesGetOutput,
+  GithubSearchReposGetInput,
+  GithubSearchReposGetOutput,
+  GithubSearchUsersGetInput,
+  GithubSearchUsersGetOutput,
   GithubTrendingGetInput,
   GithubTrendingGetOutput,
+  GithubUserEmailsGetInput,
+  GithubUserEmailsGetOutput,
   GithubUserGetInput,
   GithubUserGetOutput,
   GoogleAutocompletePostInput,
@@ -64,6 +92,8 @@ import type {
   InstagramGetPostCommentersPostOutput,
   InstagramGetPostInfoPostInput,
   InstagramGetPostInfoPostOutput,
+  InstagramGetUserByIdPostInput,
+  InstagramGetUserByIdPostOutput,
   InstagramGetUserPostsPostInput,
   InstagramGetUserPostsPostOutput,
   InstagramGetUserProfilePostInput,
@@ -118,20 +148,54 @@ import type {
   TiktokCheckAccountHealthGetOutput,
   TiktokDiscoverUsersPostInput,
   TiktokDiscoverUsersPostOutput,
+  TiktokGetCommentRepliesGetInput,
+  TiktokGetCommentRepliesGetOutput,
   TiktokGetCommentsPostInput,
   TiktokGetCommentsPostOutput,
   TiktokGetUserProfilePostInput,
   TiktokGetUserProfilePostOutput,
   TiktokGetVideoDetailPostInput,
   TiktokGetVideoDetailPostOutput,
+  TiktokGetVideoEmbedGetInput,
+  TiktokGetVideoEmbedGetOutput,
+  TiktokOembedGetInput,
+  TiktokOembedGetOutput,
   TimezoneLookupGetInput,
   TimezoneLookupGetOutput,
   TranslateTextGetInput,
   TranslateTextGetOutput,
+  UpworkJobsDetailGetInput,
+  UpworkJobsDetailGetOutput,
+  UpworkJobsSearchGetInput,
+  UpworkJobsSearchGetOutput,
   WeatherCurrentGetInput,
   WeatherCurrentGetOutput,
   WebSearchPostInput,
   WebSearchPostOutput,
+  WellfoundApplicationModalPostInput,
+  WellfoundApplicationModalPostOutput,
+  WellfoundBrowseJobsPostInput,
+  WellfoundBrowseJobsPostOutput,
+  WellfoundCompanyOverviewPostInput,
+  WellfoundCompanyOverviewPostOutput,
+  WellfoundConversationDetailPostInput,
+  WellfoundConversationDetailPostOutput,
+  WellfoundJobDetailPostInput,
+  WellfoundJobDetailPostOutput,
+  WellfoundListApplicationsPostInput,
+  WellfoundListApplicationsPostOutput,
+  WellfoundListConversationsPostInput,
+  WellfoundListConversationsPostOutput,
+  WellfoundPipelineStatsPostInput,
+  WellfoundPipelineStatsPostOutput,
+  WellfoundPublicSessionPostInput,
+  WellfoundPublicSessionPostOutput,
+  WellfoundRefreshOpsPostInput,
+  WellfoundRefreshOpsPostOutput,
+  WellfoundSearchJobsPostInput,
+  WellfoundSearchJobsPostOutput,
+  WellfoundViewerPostInput,
+  WellfoundViewerPostOutput,
   WikipediaArticleGetInput,
   WikipediaArticleGetOutput,
 } from './types.js';
@@ -163,11 +227,41 @@ export type Operations = {
     input: BlueskyProfileGetInput,
     options?: CallOptions,
   ) => Promise<BlueskyProfileGetOutput>;
+  /** Chatous Check Session — Check whether a Chatous connect.sid cookie is still accepted. Returns Chatous's own verdict (0 authenticated, 1111 anonymous or expired) so an expired session is reported as data rather than as a failure. */
+  'chatous-check-session.get': (
+    input: ChatousCheckSessionGetInput,
+    options?: CallOptions,
+  ) => Promise<ChatousCheckSessionGetOutput>;
+  /** Chatous Get Account State — Read a Chatous account's own profile, its open conversations and their message history in one bounded WebSocket read. Chatous exposes no REST endpoint for any of this, so the socket's opening burst is the only source. */
+  'chatous-get-account-state.get': (
+    input: ChatousGetAccountStateGetInput,
+    options?: CallOptions,
+  ) => Promise<ChatousGetAccountStateGetOutput>;
+  /** Chatous Poll Events — Listen on a Chatous account's WebSocket for a bounded window and return the events that arrived: new matches with the partner's profile, incoming messages, chat disconnects and queue acknowledgements. */
+  'chatous-poll-events.get': (
+    input: ChatousPollEventsGetInput,
+    options?: CallOptions,
+  ) => Promise<ChatousPollEventsGetOutput>;
   /** Get Cloudflare Page Title — Fetch the <title> of a URL using curl-cffi with browser TLS impersonation. Handles sites that block plain-requests but allow browser-like TLS fingerprints. */
   'cloudflare-page-title.get': (
     input: CloudflarePageTitleGetInput,
     options?: CallOptions,
   ) => Promise<CloudflarePageTitleGetOutput>;
+  /** Get Contra Company Profile — Read one contra.com company profile by its slug: name, description, website, location, year founded, verification badge, review count and the client statistics Contra publishes (average rating, projects hired, total spend). Reads Contra's public page — no Contra account is required. */
+  'contra-company-profile.get': (
+    input: ContraCompanyProfileGetInput,
+    options?: CallOptions,
+  ) => Promise<ContraCompanyProfileGetOutput>;
+  /** Search Contra Freelancers — Search contra.com's public directory of independent professionals by role or free text. Returns each profile's name, headline, roles, location, review average and count, follower and hire counts, availability and minimum hourly rate. Reads Contra's public page — no Contra account is required. */
+  'contra-discover-people.get': (
+    input: ContraDiscoverPeopleGetInput,
+    options?: CallOptions,
+  ) => Promise<ContraDiscoverPeopleGetOutput>;
+  /** Get Contra Opportunity — Read one contra.com freelance opportunity by its slug: title, full description, budget range, required roles and tools, application window, and the hiring company with its review count and spend statistics. Reads Contra's public page — no Contra account is required. */
+  'contra-job-detail.get': (
+    input: ContraJobDetailGetInput,
+    options?: CallOptions,
+  ) => Promise<ContraJobDetailGetOutput>;
   /** Get Crypto Prices — Current crypto prices (+ optional market cap and 24h change) for one or more coins across fiat or crypto quote currencies via CoinGecko's free simple-price endpoint. */
   'crypto-price.get': (
     input: CryptoPriceGetInput,
@@ -203,17 +297,57 @@ export type Operations = {
     input: FetchMarkdownPostInput,
     options?: CallOptions,
   ) => Promise<FetchMarkdownPostOutput>;
+  /** List GitHub Issue Comments — List the comments on a GitHub issue or pull request, paginated: author, association (OWNER/MEMBER/CONTRIBUTOR/NONE), body, reaction count, timestamps. Plus the rate-limit headers. */
+  'github-issue-comments.get': (
+    input: GithubIssueCommentsGetInput,
+    options?: CallOptions,
+  ) => Promise<GithubIssueCommentsGetOutput>;
+  /** List GitHub Repository Contributors — List a repository's contributors ranked by commit count, paginated: login, id, type, contributions, profile URL. Plus the rate-limit headers. */
+  'github-repo-contributors.get': (
+    input: GithubRepoContributorsGetInput,
+    options?: CallOptions,
+  ) => Promise<GithubRepoContributorsGetOutput>;
+  /** List GitHub Repository Issues — List a repository's issues with state/label/date filters and pagination. Pull requests are filtered out by default. Returns parsed rows (author, labels, comment and reaction counts) plus the rate-limit headers. */
+  'github-repo-issues.get': (
+    input: GithubRepoIssuesGetInput,
+    options?: CallOptions,
+  ) => Promise<GithubRepoIssuesGetOutput>;
   /** Get GitHub Repository — Fetch metadata (stars, forks, topics, license, dates) for a public GitHub repository via the REST API. */
   'github-repo.get': (
     input: GithubRepoGetInput,
     options?: CallOptions,
   ) => Promise<GithubRepoGetOutput>;
+  /** Search GitHub Discussions — Search GitHub Discussions across all repositories (GraphQL). Returns title, body, author, repository, category, comment count and the node id you need to reply, with cursor pagination. Requires your own GitHub token - GitHub's GraphQL API does not serve anonymous callers. */
+  'github-search-discussions.get': (
+    input: GithubSearchDiscussionsGetInput,
+    options?: CallOptions,
+  ) => Promise<GithubSearchDiscussionsGetOutput>;
+  /** Search GitHub Issues — Search issues and pull requests across all of GitHub with GitHub's search syntax. Returns parsed rows (author, repo, labels, comment count, reactions) plus the rate-limit headers so you can pace yourself. Works without a token (10 searches/min per IP); pass your own token for 30/min. */
+  'github-search-issues.get': (
+    input: GithubSearchIssuesGetInput,
+    options?: CallOptions,
+  ) => Promise<GithubSearchIssuesGetOutput>;
+  /** Search GitHub Repositories — Search repositories across GitHub with GitHub's search syntax (language, stars, topics, pushed dates). Returns parsed rows plus the rate-limit headers. Works without a token; pass your own for the higher limit. */
+  'github-search-repos.get': (
+    input: GithubSearchReposGetInput,
+    options?: CallOptions,
+  ) => Promise<GithubSearchReposGetOutput>;
+  /** Search GitHub Users — Search GitHub users and organizations by login, location, language, follower count and more. Returns login/id/type/avatar rows (follow with Get GitHub User for the full profile) plus the rate-limit headers. */
+  'github-search-users.get': (
+    input: GithubSearchUsersGetInput,
+    options?: CallOptions,
+  ) => Promise<GithubSearchUsersGetOutput>;
   /** Get GitHub Trending Repositories — Fetch the github.com/trending page for the most-starred repos in a time window, optionally filtered by language. Pure HTTP (no browser). Returns full name, URL, description, language, total stars, stars this window, forks. */
   'github-trending.get': (
     input: GithubTrendingGetInput,
     options?: CallOptions,
   ) => Promise<GithubTrendingGetOutput>;
-  /** Get GitHub User — Fetch a GitHub user or organization's public profile: name, bio, company, location, follower/repo counts, avatar, Twitter handle. */
+  /** Get GitHub User Commit Emails — Collect the public commit-author emails a GitHub user has pushed with, from their most recently updated repositories (noreply addresses dropped). One listing call plus one per repository scanned. Plus the rate-limit headers. */
+  'github-user-emails.get': (
+    input: GithubUserEmailsGetInput,
+    options?: CallOptions,
+  ) => Promise<GithubUserEmailsGetOutput>;
+  /** Get GitHub User — Fetch a GitHub user or organization's public profile: name, bio, company, location, follower/repo counts, avatar, Twitter handle, hireable flag. Plus the rate-limit headers. Works without a token; pass your own for 5,000 req/h. */
   'github-user.get': (
     input: GithubUserGetInput,
     options?: CallOptions,
@@ -278,6 +412,11 @@ export type Operations = {
     input: InstagramGetPostInfoPostInput,
     options?: CallOptions,
   ) => Promise<InstagramGetPostInfoPostOutput>;
+  /** Instagram Get User By Id — Resolve an Instagram profile from a numeric user id, no login. Anonymous returns identity (username, profile picture) — see detailLevel. */
+  'instagram-get-user-by-id.post': (
+    input: InstagramGetUserByIdPostInput,
+    options?: CallOptions,
+  ) => Promise<InstagramGetUserByIdPostOutput>;
   /** Instagram Get User Posts — Get a user's recent posts with engagement metrics. Rate-limited — use proxy rotation for bulk. No auth needed. */
   'instagram-get-user-posts.post': (
     input: InstagramGetUserPostsPostInput,
@@ -410,6 +549,11 @@ export type Operations = {
     input: TiktokDiscoverUsersPostInput,
     options?: CallOptions,
   ) => Promise<TiktokDiscoverUsersPostOutput>;
+  /** TikTok Get Comment Replies — Get the replies under a single TikTok comment, with each replier's handle and profile info. No auth needed. Paginated by cursor. */
+  'tiktok-get-comment-replies.get': (
+    input: TiktokGetCommentRepliesGetInput,
+    options?: CallOptions,
+  ) => Promise<TiktokGetCommentRepliesGetOutput>;
   /** TikTok Get Comments — Get comments on a video with commenter info. No auth needed. Supports pagination via cursor. */
   'tiktok-get-comments.post': (
     input: TiktokGetCommentsPostInput,
@@ -425,6 +569,16 @@ export type Operations = {
     input: TiktokGetVideoDetailPostInput,
     options?: CallOptions,
   ) => Promise<TiktokGetVideoDetailPostOutput>;
+  /** TikTok Get Video By Id — Full video metadata (description, hashtags, play/like/comment counts, author and author follower stats) from a video id alone — no author handle needed, no auth. */
+  'tiktok-get-video-embed.get': (
+    input: TiktokGetVideoEmbedGetInput,
+    options?: CallOptions,
+  ) => Promise<TiktokGetVideoEmbedGetOutput>;
+  /** TikTok oEmbed Lookup — Resolve any TikTok profile or video URL to its title, author and thumbnail via TikTok's public oEmbed endpoint. No auth, no signing. */
+  'tiktok-oembed.get': (
+    input: TiktokOembedGetInput,
+    options?: CallOptions,
+  ) => Promise<TiktokOembedGetOutput>;
   /** Look Up Timezone — Resolve a lat/long to its IANA timezone, country, current local time, UTC offset (with DST detection), and standard offset. Uses the free timeapi.io. */
   'timezone-lookup.get': (
     input: TimezoneLookupGetInput,
@@ -435,6 +589,16 @@ export type Operations = {
     input: TranslateTextGetInput,
     options?: CallOptions,
   ) => Promise<TranslateTextGetOutput>;
+  /** Get Upwork Job Details — Read one Upwork job posting in full: the complete description, required skills, budget, how many freelancers have applied and been interviewed, and the client's country, rating, hire count and total spend. Accepts the job ciphertext or the job URL. Reads Upwork's public visitor surface — no Upwork account is required. */
+  'upwork-jobs-detail.get': (
+    input: UpworkJobsDetailGetInput,
+    options?: CallOptions,
+  ) => Promise<UpworkJobsDetailGetOutput>;
+  /** Search Upwork Jobs — Search Upwork job postings by keyword. Returns title, description, contract type, budget, publish time and the job reference you pass to upwork-jobs-detail. Reads Upwork's public visitor surface — no Upwork account or cookie is required. */
+  'upwork-jobs-search.get': (
+    input: UpworkJobsSearchGetInput,
+    options?: CallOptions,
+  ) => Promise<UpworkJobsSearchGetOutput>;
   /** Get Current Weather — Current temperature, humidity, wind, precipitation, and condition code at the given lat/long via Open-Meteo (free, no auth). Metric or imperial units. */
   'weather-current.get': (
     input: WeatherCurrentGetInput,
@@ -445,6 +609,66 @@ export type Operations = {
     input: WebSearchPostInput,
     options?: CallOptions,
   ) => Promise<WebSearchPostOutput>;
+  /** Wellfound Application Modal — Read a Wellfound listing's application modal: its screening questions with option ids, whether this account has already applied, and the qualification report. Read-only, and the intended step immediately before wellfound-apply. Requires an authenticated session blob from wellfound-login. */
+  'wellfound-application-modal.post': (
+    input: WellfoundApplicationModalPostInput,
+    options?: CallOptions,
+  ) => Promise<WellfoundApplicationModalPostOutput>;
+  /** Wellfound Browse Jobs — Browse public Wellfound job listings through the anonymous SEO GraphQL search: job id, slug, title, compensation, equity, locations, full description and the hiring company, with deep pagination. No login. Takes a blob from wellfound-public-session and must run on the exit that minted it. Company funding fields are empty on anonymous results; use wellfound-company-overview for those. */
+  'wellfound-browse-jobs.post': (
+    input: WellfoundBrowseJobsPostInput,
+    options?: CallOptions,
+  ) => Promise<WellfoundBrowseJobsPostOutput>;
+  /** Wellfound Company Overview — Fetch a Wellfound company overview: product description, headcount band, total raised, market and location tags, and the website, LinkedIn, X and blog links. Read-only, and works with an anonymous session from wellfound-public-session. */
+  'wellfound-company-overview.post': (
+    input: WellfoundCompanyOverviewPostInput,
+    options?: CallOptions,
+  ) => Promise<WellfoundCompanyOverviewPostOutput>;
+  /** Wellfound Conversation Detail — Fetch one Wellfound recruiter conversation with its full message history. Takes the bare conversation modelId from wellfound-list-conversations. Read-only. Requires an authenticated session blob from wellfound-login. */
+  'wellfound-conversation-detail.post': (
+    input: WellfoundConversationDetailPostInput,
+    options?: CallOptions,
+  ) => Promise<WellfoundConversationDetailPostOutput>;
+  /** Wellfound Job Detail — Fetch one Wellfound job listing in full (description, skills, compensation, equity, remote configuration, locations) together with the hiring company, including funding stage and total raised. Read-only, and works with an anonymous session from wellfound-public-session. An expired or removed listing is reported as such rather than returned as an empty job. */
+  'wellfound-job-detail.post': (
+    input: WellfoundJobDetailPostInput,
+    options?: CallOptions,
+  ) => Promise<WellfoundJobDetailPostOutput>;
+  /** Wellfound List Applications — List one page of the signed-in candidate's Wellfound job applications, each with its status, the listing and the company. The response carries no page info, so a page with no new applications means the end. Read-only. Requires an authenticated session blob from wellfound-login. */
+  'wellfound-list-applications.post': (
+    input: WellfoundListApplicationsPostInput,
+    options?: CallOptions,
+  ) => Promise<WellfoundListApplicationsPostOutput>;
+  /** Wellfound List Conversations — List the signed-in candidate's Wellfound recruiter conversations with the company, the unread flag and the latest message in each thread. Read-only. Requires an authenticated session blob from wellfound-login. */
+  'wellfound-list-conversations.post': (
+    input: WellfoundListConversationsPostInput,
+    options?: CallOptions,
+  ) => Promise<WellfoundListConversationsPostOutput>;
+  /** Wellfound Pipeline Stats — Fetch the signed-in candidate's Wellfound pipeline counts: interested, matched, messages and saved listings. Read-only. Requires an authenticated session blob from wellfound-login and the viewer id from wellfound-viewer. */
+  'wellfound-pipeline-stats.post': (
+    input: WellfoundPipelineStatsPostInput,
+    options?: CallOptions,
+  ) => Promise<WellfoundPipelineStatsPostOutput>;
+  /** Wellfound Public Session — Mint an anonymous Wellfound browsing session (DataDome cookie, Apollo signature and persisted-query map) with no credentials and no account. Returns an opaque blob for the Wellfound read operations. The blob is bound to the exit IP that minted it: pass the same proxyUrl to every call in a chain, or omit it on all of them. */
+  'wellfound-public-session.post': (
+    input: WellfoundPublicSessionPostInput,
+    options?: CallOptions,
+  ) => Promise<WellfoundPublicSessionPostOutput>;
+  /** Wellfound Refresh Operations — Re-scan Wellfound's public JS bundle for the current Apollo signature and persisted-query op-id map after a frontend deploy, and return the session blob with that material refreshed. No login and no credentials. A Wellfound deploy invalidates every persisted-query hash at once and looks identical to an expired session, so run this before concluding a session died. */
+  'wellfound-refresh-ops.post': (
+    input: WellfoundRefreshOpsPostInput,
+    options?: CallOptions,
+  ) => Promise<WellfoundRefreshOpsPostOutput>;
+  /** Wellfound Search Jobs — Search Wellfound job listings as a signed-in candidate, with role, skill, job-type, remote-preference and location filters, and an already-applied flag per listing. Read-only. Requires an authenticated session blob from wellfound-login; for public browsing with no account use wellfound-browse-jobs. */
+  'wellfound-search-jobs.post': (
+    input: WellfoundSearchJobsPostInput,
+    options?: CallOptions,
+  ) => Promise<WellfoundSearchJobsPostOutput>;
+  /** Wellfound Viewer — Fetch the signed-in Wellfound viewer: user id, whether the account may still apply to jobs, candidate state and analytics traits. The cheapest way to check that a session is alive and the account is unrestricted. Read-only. Requires an authenticated session blob from wellfound-login. */
+  'wellfound-viewer.post': (
+    input: WellfoundViewerPostInput,
+    options?: CallOptions,
+  ) => Promise<WellfoundViewerPostOutput>;
   /** Get Wikipedia Article Summary — Fetch a Wikipedia article summary (description + extract + thumbnail + coordinates) from any supported language via the public REST API. */
   'wikipedia-article.get': (
     input: WikipediaArticleGetInput,
@@ -480,9 +704,45 @@ export function buildOperations(client: UpAPI): Operations {
         input,
         options,
       ),
+    'chatous-check-session.get': (input, options) =>
+      client.call<ChatousCheckSessionGetOutput, ChatousCheckSessionGetInput>(
+        'chatous-check-session.get',
+        input,
+        options,
+      ),
+    'chatous-get-account-state.get': (input, options) =>
+      client.call<ChatousGetAccountStateGetOutput, ChatousGetAccountStateGetInput>(
+        'chatous-get-account-state.get',
+        input,
+        options,
+      ),
+    'chatous-poll-events.get': (input, options) =>
+      client.call<ChatousPollEventsGetOutput, ChatousPollEventsGetInput>(
+        'chatous-poll-events.get',
+        input,
+        options,
+      ),
     'cloudflare-page-title.get': (input, options) =>
       client.call<CloudflarePageTitleGetOutput, CloudflarePageTitleGetInput>(
         'cloudflare-page-title.get',
+        input,
+        options,
+      ),
+    'contra-company-profile.get': (input, options) =>
+      client.call<ContraCompanyProfileGetOutput, ContraCompanyProfileGetInput>(
+        'contra-company-profile.get',
+        input,
+        options,
+      ),
+    'contra-discover-people.get': (input, options) =>
+      client.call<ContraDiscoverPeopleGetOutput, ContraDiscoverPeopleGetInput>(
+        'contra-discover-people.get',
+        input,
+        options,
+      ),
+    'contra-job-detail.get': (input, options) =>
+      client.call<ContraJobDetailGetOutput, ContraJobDetailGetInput>(
+        'contra-job-detail.get',
         input,
         options,
       ),
@@ -524,11 +784,59 @@ export function buildOperations(client: UpAPI): Operations {
         input,
         options,
       ),
+    'github-issue-comments.get': (input, options) =>
+      client.call<GithubIssueCommentsGetOutput, GithubIssueCommentsGetInput>(
+        'github-issue-comments.get',
+        input,
+        options,
+      ),
+    'github-repo-contributors.get': (input, options) =>
+      client.call<GithubRepoContributorsGetOutput, GithubRepoContributorsGetInput>(
+        'github-repo-contributors.get',
+        input,
+        options,
+      ),
+    'github-repo-issues.get': (input, options) =>
+      client.call<GithubRepoIssuesGetOutput, GithubRepoIssuesGetInput>(
+        'github-repo-issues.get',
+        input,
+        options,
+      ),
     'github-repo.get': (input, options) =>
       client.call<GithubRepoGetOutput, GithubRepoGetInput>('github-repo.get', input, options),
+    'github-search-discussions.get': (input, options) =>
+      client.call<GithubSearchDiscussionsGetOutput, GithubSearchDiscussionsGetInput>(
+        'github-search-discussions.get',
+        input,
+        options,
+      ),
+    'github-search-issues.get': (input, options) =>
+      client.call<GithubSearchIssuesGetOutput, GithubSearchIssuesGetInput>(
+        'github-search-issues.get',
+        input,
+        options,
+      ),
+    'github-search-repos.get': (input, options) =>
+      client.call<GithubSearchReposGetOutput, GithubSearchReposGetInput>(
+        'github-search-repos.get',
+        input,
+        options,
+      ),
+    'github-search-users.get': (input, options) =>
+      client.call<GithubSearchUsersGetOutput, GithubSearchUsersGetInput>(
+        'github-search-users.get',
+        input,
+        options,
+      ),
     'github-trending.get': (input, options) =>
       client.call<GithubTrendingGetOutput, GithubTrendingGetInput>(
         'github-trending.get',
+        input,
+        options,
+      ),
+    'github-user-emails.get': (input, options) =>
+      client.call<GithubUserEmailsGetOutput, GithubUserEmailsGetInput>(
+        'github-user-emails.get',
         input,
         options,
       ),
@@ -595,6 +903,12 @@ export function buildOperations(client: UpAPI): Operations {
     'instagram-get-post-info.post': (input, options) =>
       client.call<InstagramGetPostInfoPostOutput, InstagramGetPostInfoPostInput>(
         'instagram-get-post-info.post',
+        input,
+        options,
+      ),
+    'instagram-get-user-by-id.post': (input, options) =>
+      client.call<InstagramGetUserByIdPostOutput, InstagramGetUserByIdPostInput>(
+        'instagram-get-user-by-id.post',
         input,
         options,
       ),
@@ -736,6 +1050,12 @@ export function buildOperations(client: UpAPI): Operations {
         input,
         options,
       ),
+    'tiktok-get-comment-replies.get': (input, options) =>
+      client.call<TiktokGetCommentRepliesGetOutput, TiktokGetCommentRepliesGetInput>(
+        'tiktok-get-comment-replies.get',
+        input,
+        options,
+      ),
     'tiktok-get-comments.post': (input, options) =>
       client.call<TiktokGetCommentsPostOutput, TiktokGetCommentsPostInput>(
         'tiktok-get-comments.post',
@@ -754,6 +1074,14 @@ export function buildOperations(client: UpAPI): Operations {
         input,
         options,
       ),
+    'tiktok-get-video-embed.get': (input, options) =>
+      client.call<TiktokGetVideoEmbedGetOutput, TiktokGetVideoEmbedGetInput>(
+        'tiktok-get-video-embed.get',
+        input,
+        options,
+      ),
+    'tiktok-oembed.get': (input, options) =>
+      client.call<TiktokOembedGetOutput, TiktokOembedGetInput>('tiktok-oembed.get', input, options),
     'timezone-lookup.get': (input, options) =>
       client.call<TimezoneLookupGetOutput, TimezoneLookupGetInput>(
         'timezone-lookup.get',
@@ -766,6 +1094,18 @@ export function buildOperations(client: UpAPI): Operations {
         input,
         options,
       ),
+    'upwork-jobs-detail.get': (input, options) =>
+      client.call<UpworkJobsDetailGetOutput, UpworkJobsDetailGetInput>(
+        'upwork-jobs-detail.get',
+        input,
+        options,
+      ),
+    'upwork-jobs-search.get': (input, options) =>
+      client.call<UpworkJobsSearchGetOutput, UpworkJobsSearchGetInput>(
+        'upwork-jobs-search.get',
+        input,
+        options,
+      ),
     'weather-current.get': (input, options) =>
       client.call<WeatherCurrentGetOutput, WeatherCurrentGetInput>(
         'weather-current.get',
@@ -774,6 +1114,78 @@ export function buildOperations(client: UpAPI): Operations {
       ),
     'web-search.post': (input, options) =>
       client.call<WebSearchPostOutput, WebSearchPostInput>('web-search.post', input, options),
+    'wellfound-application-modal.post': (input, options) =>
+      client.call<WellfoundApplicationModalPostOutput, WellfoundApplicationModalPostInput>(
+        'wellfound-application-modal.post',
+        input,
+        options,
+      ),
+    'wellfound-browse-jobs.post': (input, options) =>
+      client.call<WellfoundBrowseJobsPostOutput, WellfoundBrowseJobsPostInput>(
+        'wellfound-browse-jobs.post',
+        input,
+        options,
+      ),
+    'wellfound-company-overview.post': (input, options) =>
+      client.call<WellfoundCompanyOverviewPostOutput, WellfoundCompanyOverviewPostInput>(
+        'wellfound-company-overview.post',
+        input,
+        options,
+      ),
+    'wellfound-conversation-detail.post': (input, options) =>
+      client.call<WellfoundConversationDetailPostOutput, WellfoundConversationDetailPostInput>(
+        'wellfound-conversation-detail.post',
+        input,
+        options,
+      ),
+    'wellfound-job-detail.post': (input, options) =>
+      client.call<WellfoundJobDetailPostOutput, WellfoundJobDetailPostInput>(
+        'wellfound-job-detail.post',
+        input,
+        options,
+      ),
+    'wellfound-list-applications.post': (input, options) =>
+      client.call<WellfoundListApplicationsPostOutput, WellfoundListApplicationsPostInput>(
+        'wellfound-list-applications.post',
+        input,
+        options,
+      ),
+    'wellfound-list-conversations.post': (input, options) =>
+      client.call<WellfoundListConversationsPostOutput, WellfoundListConversationsPostInput>(
+        'wellfound-list-conversations.post',
+        input,
+        options,
+      ),
+    'wellfound-pipeline-stats.post': (input, options) =>
+      client.call<WellfoundPipelineStatsPostOutput, WellfoundPipelineStatsPostInput>(
+        'wellfound-pipeline-stats.post',
+        input,
+        options,
+      ),
+    'wellfound-public-session.post': (input, options) =>
+      client.call<WellfoundPublicSessionPostOutput, WellfoundPublicSessionPostInput>(
+        'wellfound-public-session.post',
+        input,
+        options,
+      ),
+    'wellfound-refresh-ops.post': (input, options) =>
+      client.call<WellfoundRefreshOpsPostOutput, WellfoundRefreshOpsPostInput>(
+        'wellfound-refresh-ops.post',
+        input,
+        options,
+      ),
+    'wellfound-search-jobs.post': (input, options) =>
+      client.call<WellfoundSearchJobsPostOutput, WellfoundSearchJobsPostInput>(
+        'wellfound-search-jobs.post',
+        input,
+        options,
+      ),
+    'wellfound-viewer.post': (input, options) =>
+      client.call<WellfoundViewerPostOutput, WellfoundViewerPostInput>(
+        'wellfound-viewer.post',
+        input,
+        options,
+      ),
     'wikipedia-article.get': (input, options) =>
       client.call<WikipediaArticleGetOutput, WikipediaArticleGetInput>(
         'wikipedia-article.get',

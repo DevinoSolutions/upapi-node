@@ -34,7 +34,13 @@ export const OPERATION_SLUGS = [
   'audio-transcribe.post',
   'bbc-news.get',
   'bluesky-profile.get',
+  'chatous-check-session.get',
+  'chatous-get-account-state.get',
+  'chatous-poll-events.get',
   'cloudflare-page-title.get',
+  'contra-company-profile.get',
+  'contra-discover-people.get',
+  'contra-job-detail.get',
   'crypto-price.get',
   'currency-convert.get',
   'detect-tech-stack.post',
@@ -42,8 +48,16 @@ export const OPERATION_SLUGS = [
   'email-read-verification-code.post',
   'email-read-verification-link.post',
   'fetch-markdown.post',
+  'github-issue-comments.get',
+  'github-repo-contributors.get',
+  'github-repo-issues.get',
   'github-repo.get',
+  'github-search-discussions.get',
+  'github-search-issues.get',
+  'github-search-repos.get',
+  'github-search-users.get',
   'github-trending.get',
+  'github-user-emails.get',
   'github-user.get',
   'google-autocomplete.post',
   'google-maps-place.get',
@@ -57,6 +71,7 @@ export const OPERATION_SLUGS = [
   'instagram-discover-location.post',
   'instagram-get-post-commenters.post',
   'instagram-get-post-info.post',
+  'instagram-get-user-by-id.post',
   'instagram-get-user-posts.post',
   'instagram-get-user-profile.post',
   'ip-geolocation.get',
@@ -84,13 +99,30 @@ export const OPERATION_SLUGS = [
   'text-analyze.post',
   'tiktok-check-account-health.get',
   'tiktok-discover-users.post',
+  'tiktok-get-comment-replies.get',
   'tiktok-get-comments.post',
   'tiktok-get-user-profile.post',
   'tiktok-get-video-detail.post',
+  'tiktok-get-video-embed.get',
+  'tiktok-oembed.get',
   'timezone-lookup.get',
   'translate-text.get',
+  'upwork-jobs-detail.get',
+  'upwork-jobs-search.get',
   'weather-current.get',
   'web-search.post',
+  'wellfound-application-modal.post',
+  'wellfound-browse-jobs.post',
+  'wellfound-company-overview.post',
+  'wellfound-conversation-detail.post',
+  'wellfound-job-detail.post',
+  'wellfound-list-applications.post',
+  'wellfound-list-conversations.post',
+  'wellfound-pipeline-stats.post',
+  'wellfound-public-session.post',
+  'wellfound-refresh-ops.post',
+  'wellfound-search-jobs.post',
+  'wellfound-viewer.post',
   'wikipedia-article.get',
 ] as const;
 
@@ -730,6 +762,662 @@ export const OPERATIONS: readonly OperationMeta[] = [
     },
   },
   {
+    slug: 'chatous-check-session.get',
+    operationId: 'chatous_check_session_get',
+    name: 'Chatous Check Session',
+    description:
+      "Check whether a Chatous connect.sid cookie is still accepted. Returns Chatous's own verdict (0 authenticated, 1111 anonymous or expired) so an expired session is reported as data rather than as a failure.",
+    category: 'Social Media',
+    tags: ['chatous', 'session', 'auth'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        connectSid: {
+          description:
+            "The account's `connect.sid` cookie value, as set on chatous.com when the account signed in.",
+          minLength: 1,
+          title: 'Connectsid',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Optional proxy URL to send this request through. Omit to call Chatous directly. Pass the exit the account normally uses if you keep one per account.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['connectSid'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        valid: {
+          description: 'True when Chatous still accepts this connectSid.',
+          title: 'Valid',
+          type: 'boolean',
+        },
+        returnCode: {
+          description:
+            "Chatous's own verdict: 0 = authenticated, 1111 = anonymous or expired. Returned so a caller can tell those two apart from any future third value.",
+          title: 'Returncode',
+          type: 'integer',
+        },
+        checkedAt: {
+          title: 'Checkedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['valid', 'returnCode', 'checkedAt', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'chatous-get-account-state.get',
+    operationId: 'chatous_get_account_state_get',
+    name: 'Chatous Get Account State',
+    description:
+      "Read a Chatous account's own profile, its open conversations and their message history in one bounded WebSocket read. Chatous exposes no REST endpoint for any of this, so the socket's opening burst is the only source.",
+    category: 'Social Media',
+    tags: ['chatous', 'profile', 'conversations', 'messages'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        connectSid: {
+          description:
+            "The account's `connect.sid` cookie value, as set on chatous.com when the account signed in.",
+          minLength: 1,
+          title: 'Connectsid',
+          type: 'string',
+        },
+        maxSeconds: {
+          default: 12,
+          description:
+            'How long to hold the socket open collecting the opening burst. Raise it for an account with many conversations; the call returns early once the server stops sending.',
+          maximum: 25,
+          minimum: 2,
+          title: 'Maxseconds',
+          type: 'number',
+        },
+        maxMessages: {
+          default: 300,
+          description: 'Cap on collected socket frames, so a very busy account cannot stream on.',
+          maximum: 500,
+          minimum: 1,
+          title: 'Maxmessages',
+          type: 'integer',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Optional proxy URL for the WebSocket. Omit to connect directly. Pass the exit the account normally uses if you keep one per account.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['connectSid'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        Conversation: {
+          properties: {
+            chat_id: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Chat Id',
+            },
+            user_id: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'User Id',
+            },
+            screenname: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Screenname',
+            },
+            age: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Age',
+            },
+            about: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'About',
+            },
+            gender: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Gender',
+            },
+            location: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Location',
+            },
+            profile_tags: {
+              anyOf: [
+                {
+                  items: {
+                    type: 'string',
+                  },
+                  type: 'array',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Profile Tags',
+            },
+            profile_photo_icon: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Profile Photo Icon',
+            },
+          },
+          title: 'Conversation',
+          type: 'object',
+        },
+        Message: {
+          properties: {
+            chatId: {
+              title: 'Chatid',
+              type: 'string',
+            },
+            message: {
+              title: 'Message',
+              type: 'string',
+            },
+            fromMe: {
+              description: "True when this account sent it, from Chatous's own `is_me` flag.",
+              title: 'Fromme',
+              type: 'boolean',
+            },
+          },
+          required: ['chatId', 'message', 'fromMe'],
+          title: 'Message',
+          type: 'object',
+        },
+      },
+      properties: {
+        profile: {
+          anyOf: [
+            {
+              additionalProperties: true,
+              type: 'object',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          description:
+            "The account's own profile as Chatous pushed it, or null when the burst carried none. Null means 'not sent in this window', never 'no profile'.",
+          title: 'Profile',
+        },
+        conversations: {
+          items: {
+            $ref: '#/$defs/Conversation',
+          },
+          title: 'Conversations',
+          type: 'array',
+        },
+        messages: {
+          description: 'Message history for the conversations above, oldest first as received.',
+          items: {
+            $ref: '#/$defs/Message',
+          },
+          title: 'Messages',
+          type: 'array',
+        },
+        conversationCount: {
+          title: 'Conversationcount',
+          type: 'integer',
+        },
+        messageCount: {
+          title: 'Messagecount',
+          type: 'integer',
+        },
+        socketOpened: {
+          title: 'Socketopened',
+          type: 'boolean',
+        },
+        frameCount: {
+          description: 'Raw socket frames collected, before classification.',
+          title: 'Framecount',
+          type: 'integer',
+        },
+        undecodableItemCount: {
+          description:
+            "Socket items this build could not read. Non-zero means the platform's frame shape has changed and this answer is INCOMPLETE - the account may hold conversations that are missing from the lists above.",
+          title: 'Undecodableitemcount',
+          type: 'integer',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: [
+        'profile',
+        'conversations',
+        'messages',
+        'conversationCount',
+        'messageCount',
+        'socketOpened',
+        'frameCount',
+        'undecodableItemCount',
+        'fetchedAt',
+        'elapsedMs',
+      ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'chatous-poll-events.get',
+    operationId: 'chatous_poll_events_get',
+    name: 'Chatous Poll Events',
+    description:
+      "Listen on a Chatous account's WebSocket for a bounded window and return the events that arrived: new matches with the partner's profile, incoming messages, chat disconnects and queue acknowledgements.",
+    category: 'Social Media',
+    tags: ['chatous', 'events', 'messages', 'realtime'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        connectSid: {
+          description:
+            "The account's `connect.sid` cookie value, as set on chatous.com when the account signed in.",
+          minLength: 1,
+          title: 'Connectsid',
+          type: 'string',
+        },
+        maxSeconds: {
+          default: 15,
+          description: 'How long to listen before returning whatever arrived.',
+          maximum: 25,
+          minimum: 2,
+          title: 'Maxseconds',
+          type: 'number',
+        },
+        maxEvents: {
+          default: 50,
+          description: 'Return as soon as this many socket frames have arrived.',
+          maximum: 500,
+          minimum: 1,
+          title: 'Maxevents',
+          type: 'integer',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional proxy URL for the WebSocket. Omit to connect directly.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['connectSid'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        Event: {
+          properties: {
+            type: {
+              description:
+                'chat = matched with a new person (carries their profile). message = a message in an existing chat. disconnect = a chat ended. queue = the server acknowledged a queue entry. unknown = a frame type this build does not recognise, with the raw payload.',
+              title: 'Type',
+              type: 'string',
+            },
+            chatId: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Chatid',
+            },
+            chat_id: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Chat Id',
+            },
+            user_id: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'User Id',
+            },
+            screenname: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Screenname',
+            },
+            age: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Age',
+            },
+            about: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'About',
+            },
+            gender: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Gender',
+            },
+            location: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Location',
+            },
+            profile_tags: {
+              anyOf: [
+                {
+                  items: {
+                    type: 'string',
+                  },
+                  type: 'array',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Profile Tags',
+            },
+            profile_photo_icon: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Profile Photo Icon',
+            },
+            message: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Message',
+            },
+            fromMe: {
+              anyOf: [
+                {
+                  type: 'boolean',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Fromme',
+            },
+            endedByMe: {
+              anyOf: [
+                {
+                  type: 'boolean',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Endedbyme',
+            },
+            queueId: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Queueid',
+            },
+            raw: {
+              anyOf: [
+                {
+                  additionalProperties: true,
+                  type: 'object',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'Present only on `unknown`: the frame exactly as Chatous sent it.',
+              title: 'Raw',
+            },
+          },
+          required: ['type'],
+          title: 'Event',
+          type: 'object',
+        },
+      },
+      properties: {
+        events: {
+          items: {
+            $ref: '#/$defs/Event',
+          },
+          title: 'Events',
+          type: 'array',
+        },
+        eventCount: {
+          title: 'Eventcount',
+          type: 'integer',
+        },
+        unknownEventCount: {
+          description:
+            'Frames whose type this build does not recognise. A non-zero value is a shape change worth investigating, not an error.',
+          title: 'Unknowneventcount',
+          type: 'integer',
+        },
+        socketOpened: {
+          title: 'Socketopened',
+          type: 'boolean',
+        },
+        undecodableItemCount: {
+          description:
+            'Socket items this build could not read at all - distinct from `unknown` events, which ARE returned with their payload. Non-zero means frames were lost to a shape change, so a zero-event answer here is not evidence the account was quiet.',
+          title: 'Undecodableitemcount',
+          type: 'integer',
+        },
+        closedByServer: {
+          title: 'Closedbyserver',
+          type: 'boolean',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: [
+        'events',
+        'eventCount',
+        'unknownEventCount',
+        'socketOpened',
+        'undecodableItemCount',
+        'closedByServer',
+        'fetchedAt',
+        'elapsedMs',
+      ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
     slug: 'cloudflare-page-title.get',
     operationId: 'cloudflare_page_title_get',
     name: 'Get Cloudflare Page Title',
@@ -785,6 +1473,1175 @@ export const OPERATIONS: readonly OperationMeta[] = [
         },
       },
       required: ['url', 'status', 'title', 'server', 'fetched_with'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'contra-company-profile.get',
+    operationId: 'contra_company_profile_get',
+    name: 'Get Contra Company Profile',
+    description:
+      "Read one contra.com company profile by its slug: name, description, website, location, year founded, verification badge, review count and the client statistics Contra publishes (average rating, projects hired, total spend). Reads Contra's public page — no Contra account is required.",
+    category: 'Social Media',
+    tags: ['contra', 'company', 'hiring', 'b2b', 'leads'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        slug: {
+          description:
+            'Company slug from a contra.com/company/<slug> URL, e.g. "ajproductions_llc_c7a4d0"',
+          maxLength: 300,
+          minLength: 1,
+          title: 'Slug',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: "User-provided proxy URL. Omit to use the operation's own datacenter pool.",
+          title: 'Proxyurl',
+        },
+      },
+      required: ['slug'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        Money: {
+          properties: {
+            currency: {
+              title: 'Currency',
+              type: 'string',
+            },
+            amount: {
+              title: 'Amount',
+              type: 'number',
+            },
+          },
+          required: ['currency', 'amount'],
+          title: 'Money',
+          type: 'object',
+        },
+        Statistics: {
+          properties: {
+            averageReviewRating: {
+              anyOf: [
+                {
+                  type: 'number',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Averagereviewrating',
+            },
+            projectCount: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Projectcount',
+            },
+            totalSpend: {
+              anyOf: [
+                {
+                  $ref: '#/$defs/Money',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+            },
+            visibility: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Visibility',
+            },
+          },
+          required: ['averageReviewRating', 'projectCount', 'totalSpend', 'visibility'],
+          title: 'Statistics',
+          type: 'object',
+        },
+      },
+      properties: {
+        slug: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Slug',
+        },
+        url: {
+          title: 'Url',
+          type: 'string',
+        },
+        id: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Id',
+        },
+        name: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Name',
+        },
+        headline: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Headline',
+        },
+        description: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Description',
+        },
+        website: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Website',
+        },
+        location: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Location',
+        },
+        yearFounded: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Yearfounded',
+        },
+        numberOfEmployees: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Numberofemployees',
+        },
+        isVerified: {
+          anyOf: [
+            {
+              type: 'boolean',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Isverified',
+        },
+        profileRoute: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Profileroute',
+        },
+        logoUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Logourl',
+        },
+        reviewCount: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Reviewcount',
+        },
+        statistics: {
+          anyOf: [
+            {
+              $ref: '#/$defs/Statistics',
+            },
+            {
+              type: 'null',
+            },
+          ],
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: [
+        'slug',
+        'url',
+        'id',
+        'name',
+        'headline',
+        'description',
+        'website',
+        'location',
+        'yearFounded',
+        'numberOfEmployees',
+        'isVerified',
+        'profileRoute',
+        'logoUrl',
+        'reviewCount',
+        'statistics',
+        'fetchedAt',
+        'elapsedMs',
+      ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'contra-discover-people.get',
+    operationId: 'contra_discover_people_get',
+    name: 'Search Contra Freelancers',
+    description:
+      "Search contra.com's public directory of independent professionals by role or free text. Returns each profile's name, headline, roles, location, review average and count, follower and hire counts, availability and minimum hourly rate. Reads Contra's public page — no Contra account is required.",
+    category: 'Social Media',
+    tags: ['contra', 'freelancers', 'directory', 'talent', 'leads'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 5,
+    inputSchema: {
+      properties: {
+        roles: {
+          description:
+            'Contra role names to filter on, e.g. ["Web Developer", "Brand Designer"]. Omit for the unfiltered directory.',
+          items: {
+            type: 'string',
+          },
+          maxItems: 5,
+          title: 'Roles',
+          type: 'array',
+        },
+        query: {
+          anyOf: [
+            {
+              maxLength: 200,
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Free-text search over profiles. Omit to browse by role only.',
+          title: 'Query',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: "User-provided proxy URL. Omit to use the operation's own datacenter pool.",
+          title: 'Proxyurl',
+        },
+      },
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        Person: {
+          properties: {
+            id: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Id',
+            },
+            username: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Username',
+            },
+            name: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Name',
+            },
+            title: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Title',
+            },
+            professionalTitle: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Professionaltitle',
+            },
+            location: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Location',
+            },
+            profileUrl: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Profileurl',
+            },
+            avatarUrl: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Avatarurl',
+            },
+            roles: {
+              items: {
+                type: 'string',
+              },
+              title: 'Roles',
+              type: 'array',
+            },
+            followerCount: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Followercount',
+            },
+            hiredCount: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Hiredcount',
+            },
+            isQuickResponder: {
+              anyOf: [
+                {
+                  type: 'boolean',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Isquickresponder',
+            },
+            isNewToContra: {
+              anyOf: [
+                {
+                  type: 'boolean',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Isnewtocontra',
+            },
+            canReceiveInquiries: {
+              anyOf: [
+                {
+                  type: 'boolean',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Canreceiveinquiries',
+            },
+            visitorIsFollowing: {
+              anyOf: [
+                {
+                  type: 'boolean',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Visitorisfollowing',
+            },
+            platformEarningsBadge: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Platformearningsbadge',
+            },
+            reviewSummary: {
+              anyOf: [
+                {
+                  $ref: '#/$defs/ReviewSummary',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+            },
+            workPreferences: {
+              anyOf: [
+                {
+                  $ref: '#/$defs/WorkPreferences',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+            },
+          },
+          required: [
+            'id',
+            'username',
+            'name',
+            'title',
+            'professionalTitle',
+            'location',
+            'profileUrl',
+            'avatarUrl',
+            'roles',
+            'followerCount',
+            'hiredCount',
+            'isQuickResponder',
+            'isNewToContra',
+            'canReceiveInquiries',
+            'visitorIsFollowing',
+            'platformEarningsBadge',
+            'reviewSummary',
+            'workPreferences',
+          ],
+          title: 'Person',
+          type: 'object',
+        },
+        ReviewSummary: {
+          properties: {
+            averageScore: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Averagescore',
+            },
+            count: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Count',
+            },
+          },
+          required: ['averageScore', 'count'],
+          title: 'ReviewSummary',
+          type: 'object',
+        },
+        WorkPreferences: {
+          properties: {
+            isCurrentlyAvailable: {
+              anyOf: [
+                {
+                  type: 'boolean',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Iscurrentlyavailable',
+            },
+            minimumHourlyRate: {
+              anyOf: [
+                {
+                  type: 'number',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Minimumhourlyrate',
+            },
+          },
+          required: ['isCurrentlyAvailable', 'minimumHourlyRate'],
+          title: 'WorkPreferences',
+          type: 'object',
+        },
+      },
+      properties: {
+        url: {
+          title: 'Url',
+          type: 'string',
+        },
+        roles: {
+          items: {
+            type: 'string',
+          },
+          title: 'Roles',
+          type: 'array',
+        },
+        query: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Query',
+        },
+        resultCount: {
+          title: 'Resultcount',
+          type: 'integer',
+        },
+        people: {
+          items: {
+            $ref: '#/$defs/Person',
+          },
+          title: 'People',
+          type: 'array',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['url', 'roles', 'query', 'resultCount', 'people', 'fetchedAt', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'contra-job-detail.get',
+    operationId: 'contra_job_detail_get',
+    name: 'Get Contra Opportunity',
+    description:
+      "Read one contra.com freelance opportunity by its slug: title, full description, budget range, required roles and tools, application window, and the hiring company with its review count and spend statistics. Reads Contra's public page — no Contra account is required.",
+    category: 'Social Media',
+    tags: ['contra', 'jobs', 'freelance', 'hiring', 'opportunity'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        slug: {
+          description:
+            'Opportunity slug from a contra.com/opportunity/<slug> URL, e.g. "vWsXX3YM-paid-ads-graphic-designer-for-meta-and-linked-in"',
+          maxLength: 300,
+          minLength: 1,
+          title: 'Slug',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: "User-provided proxy URL. Omit to use the operation's own datacenter pool.",
+          title: 'Proxyurl',
+        },
+      },
+      required: ['slug'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        Budget: {
+          properties: {
+            type: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Type',
+            },
+            min: {
+              anyOf: [
+                {
+                  $ref: '#/$defs/Money',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+            },
+            max: {
+              anyOf: [
+                {
+                  $ref: '#/$defs/Money',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+            },
+            estimatedHours: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Estimatedhours',
+            },
+          },
+          required: ['type', 'min', 'max', 'estimatedHours'],
+          title: 'Budget',
+          type: 'object',
+        },
+        Money: {
+          properties: {
+            currency: {
+              title: 'Currency',
+              type: 'string',
+            },
+            amount: {
+              title: 'Amount',
+              type: 'number',
+            },
+          },
+          required: ['currency', 'amount'],
+          title: 'Money',
+          type: 'object',
+        },
+        Organization: {
+          properties: {
+            id: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Id',
+            },
+            slug: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Slug',
+            },
+            name: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Name',
+            },
+            headline: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Headline',
+            },
+            description: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Description',
+            },
+            website: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Website',
+            },
+            location: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Location',
+            },
+            yearFounded: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Yearfounded',
+            },
+            numberOfEmployees: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Numberofemployees',
+            },
+            isVerified: {
+              anyOf: [
+                {
+                  type: 'boolean',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Isverified',
+            },
+            profileRoute: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Profileroute',
+            },
+            logoUrl: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Logourl',
+            },
+            reviewCount: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Reviewcount',
+            },
+            statistics: {
+              anyOf: [
+                {
+                  additionalProperties: true,
+                  type: 'object',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Statistics',
+            },
+          },
+          required: [
+            'id',
+            'slug',
+            'name',
+            'headline',
+            'description',
+            'website',
+            'location',
+            'yearFounded',
+            'numberOfEmployees',
+            'isVerified',
+            'profileRoute',
+            'logoUrl',
+            'reviewCount',
+            'statistics',
+          ],
+          title: 'Organization',
+          type: 'object',
+        },
+      },
+      properties: {
+        slug: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Slug',
+        },
+        url: {
+          title: 'Url',
+          type: 'string',
+        },
+        id: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Id',
+        },
+        title: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Title',
+        },
+        status: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Status',
+        },
+        description: {
+          title: 'Description',
+          type: 'string',
+        },
+        createdAt: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Createdat',
+        },
+        expiresAt: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Expiresat',
+        },
+        applicationsClosedAt: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Applicationsclosedat',
+        },
+        allowGuestApplications: {
+          anyOf: [
+            {
+              type: 'boolean',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Allowguestapplications',
+        },
+        externalUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Externalurl',
+        },
+        numberOfOpenPositions: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Numberofopenpositions',
+        },
+        numberOfFilledPositions: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Numberoffilledpositions',
+        },
+        hiringAsIndividual: {
+          anyOf: [
+            {
+              type: 'boolean',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Hiringasindividual',
+        },
+        visitorCanApply: {
+          title: 'Visitorcanapply',
+          type: 'boolean',
+        },
+        budget: {
+          $ref: '#/$defs/Budget',
+        },
+        roles: {
+          items: {
+            type: 'string',
+          },
+          title: 'Roles',
+          type: 'array',
+        },
+        tools: {
+          items: {
+            type: 'string',
+          },
+          title: 'Tools',
+          type: 'array',
+        },
+        organization: {
+          anyOf: [
+            {
+              $ref: '#/$defs/Organization',
+            },
+            {
+              type: 'null',
+            },
+          ],
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: [
+        'slug',
+        'url',
+        'id',
+        'title',
+        'status',
+        'description',
+        'createdAt',
+        'expiresAt',
+        'applicationsClosedAt',
+        'allowGuestApplications',
+        'externalUrl',
+        'numberOfOpenPositions',
+        'numberOfFilledPositions',
+        'hiringAsIndividual',
+        'visitorCanApply',
+        'budget',
+        'roles',
+        'tools',
+        'organization',
+        'fetchedAt',
+        'elapsedMs',
+      ],
       title: 'Output',
       type: 'object',
     },
@@ -1666,6 +3523,870 @@ export const OPERATIONS: readonly OperationMeta[] = [
     },
   },
   {
+    slug: 'github-issue-comments.get',
+    operationId: 'github_issue_comments_get',
+    name: 'List GitHub Issue Comments',
+    description:
+      'List the comments on a GitHub issue or pull request, paginated: author, association (OWNER/MEMBER/CONTRIBUTOR/NONE), body, reaction count, timestamps. Plus the rate-limit headers.',
+    category: 'Developer Tools',
+    tags: ['github', 'issues', 'comments', 'developer', 'python'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        owner: {
+          description: 'Repo owner (user or org)',
+          maxLength: 100,
+          minLength: 1,
+          title: 'Owner',
+          type: 'string',
+        },
+        repo: {
+          description: 'Repo name',
+          maxLength: 200,
+          minLength: 1,
+          title: 'Repo',
+          type: 'string',
+        },
+        issueNumber: {
+          description: 'Issue or pull request number',
+          minimum: 1,
+          title: 'Issuenumber',
+          type: 'integer',
+        },
+        since: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'ISO-8601 timestamp: only comments updated at or after this',
+          title: 'Since',
+        },
+        perPage: {
+          default: 30,
+          maximum: 100,
+          minimum: 1,
+          title: 'Perpage',
+          type: 'integer',
+        },
+        page: {
+          default: 1,
+          minimum: 1,
+          title: 'Page',
+          type: 'integer',
+        },
+        token: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional GitHub token (5,000 req/h)',
+          title: 'Token',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional exit to send from (direct otherwise)',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['owner', 'repo', 'issueNumber'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        CommentSummary: {
+          properties: {
+            id: {
+              title: 'Id',
+              type: 'integer',
+            },
+            body: {
+              title: 'Body',
+              type: 'string',
+            },
+            author: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Author',
+            },
+            authorType: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Authortype',
+            },
+            authorAssociation: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Authorassociation',
+            },
+            htmlUrl: {
+              title: 'Htmlurl',
+              type: 'string',
+            },
+            reactions: {
+              title: 'Reactions',
+              type: 'integer',
+            },
+            createdAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Createdat',
+            },
+            updatedAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Updatedat',
+            },
+          },
+          required: [
+            'id',
+            'body',
+            'author',
+            'authorType',
+            'authorAssociation',
+            'htmlUrl',
+            'reactions',
+            'createdAt',
+            'updatedAt',
+          ],
+          title: 'CommentSummary',
+          type: 'object',
+        },
+        RateLimitInfo: {
+          description:
+            'The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.',
+          properties: {
+            limit: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Limit: requests allowed per window',
+              title: 'Limit',
+            },
+            remaining: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Remaining: requests left',
+              title: 'Remaining',
+            },
+            resetAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as an ISO-8601 UTC timestamp',
+              title: 'Resetat',
+            },
+            resetEpoch: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as unix seconds',
+              title: 'Resetepoch',
+            },
+            resource: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Resource: which bucket (core, search, graphql, ...)',
+              title: 'Resource',
+            },
+          },
+          required: ['limit', 'remaining', 'resetAt', 'resetEpoch', 'resource'],
+          title: 'RateLimitInfo',
+          type: 'object',
+        },
+      },
+      properties: {
+        items: {
+          items: {
+            $ref: '#/$defs/CommentSummary',
+          },
+          title: 'Items',
+          type: 'array',
+        },
+        rateLimit: {
+          $ref: '#/$defs/RateLimitInfo',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+      },
+      required: ['items', 'rateLimit', 'fetchedAt'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'github-repo-contributors.get',
+    operationId: 'github_repo_contributors_get',
+    name: 'List GitHub Repository Contributors',
+    description:
+      "List a repository's contributors ranked by commit count, paginated: login, id, type, contributions, profile URL. Plus the rate-limit headers.",
+    category: 'Developer Tools',
+    tags: ['github', 'contributors', 'repo', 'developer', 'python'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        owner: {
+          description: 'Repo owner (user or org)',
+          maxLength: 100,
+          minLength: 1,
+          title: 'Owner',
+          type: 'string',
+        },
+        repo: {
+          description: 'Repo name',
+          maxLength: 200,
+          minLength: 1,
+          title: 'Repo',
+          type: 'string',
+        },
+        includeAnonymous: {
+          default: false,
+          description: 'Also return email-only contributors with no GitHub account',
+          title: 'Includeanonymous',
+          type: 'boolean',
+        },
+        perPage: {
+          default: 30,
+          maximum: 100,
+          minimum: 1,
+          title: 'Perpage',
+          type: 'integer',
+        },
+        page: {
+          default: 1,
+          minimum: 1,
+          title: 'Page',
+          type: 'integer',
+        },
+        token: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional GitHub token (5,000 req/h)',
+          title: 'Token',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional exit to send from (direct otherwise)',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['owner', 'repo'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        ContributorSummary: {
+          properties: {
+            id: {
+              title: 'Id',
+              type: 'integer',
+            },
+            login: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'None for anonymous (email-only) contributors',
+              title: 'Login',
+            },
+            type: {
+              title: 'Type',
+              type: 'string',
+            },
+            contributions: {
+              title: 'Contributions',
+              type: 'integer',
+            },
+            htmlUrl: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Htmlurl',
+            },
+            avatarUrl: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Avatarurl',
+            },
+          },
+          required: ['id', 'login', 'type', 'contributions', 'htmlUrl', 'avatarUrl'],
+          title: 'ContributorSummary',
+          type: 'object',
+        },
+        RateLimitInfo: {
+          description:
+            'The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.',
+          properties: {
+            limit: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Limit: requests allowed per window',
+              title: 'Limit',
+            },
+            remaining: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Remaining: requests left',
+              title: 'Remaining',
+            },
+            resetAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as an ISO-8601 UTC timestamp',
+              title: 'Resetat',
+            },
+            resetEpoch: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as unix seconds',
+              title: 'Resetepoch',
+            },
+            resource: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Resource: which bucket (core, search, graphql, ...)',
+              title: 'Resource',
+            },
+          },
+          required: ['limit', 'remaining', 'resetAt', 'resetEpoch', 'resource'],
+          title: 'RateLimitInfo',
+          type: 'object',
+        },
+      },
+      properties: {
+        items: {
+          items: {
+            $ref: '#/$defs/ContributorSummary',
+          },
+          title: 'Items',
+          type: 'array',
+        },
+        rateLimit: {
+          $ref: '#/$defs/RateLimitInfo',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+      },
+      required: ['items', 'rateLimit', 'fetchedAt'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'github-repo-issues.get',
+    operationId: 'github_repo_issues_get',
+    name: 'List GitHub Repository Issues',
+    description:
+      "List a repository's issues with state/label/date filters and pagination. Pull requests are filtered out by default. Returns parsed rows (author, labels, comment and reaction counts) plus the rate-limit headers.",
+    category: 'Developer Tools',
+    tags: ['github', 'issues', 'repo', 'developer', 'python'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        owner: {
+          description: 'Repo owner (user or org)',
+          maxLength: 100,
+          minLength: 1,
+          title: 'Owner',
+          type: 'string',
+        },
+        repo: {
+          description: 'Repo name',
+          maxLength: 200,
+          minLength: 1,
+          title: 'Repo',
+          type: 'string',
+        },
+        state: {
+          default: 'open',
+          description: 'open | closed | all',
+          title: 'State',
+          type: 'string',
+        },
+        labels: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Comma-separated label names to require',
+          title: 'Labels',
+        },
+        sort: {
+          default: 'created',
+          description: 'created | updated | comments',
+          title: 'Sort',
+          type: 'string',
+        },
+        direction: {
+          default: 'desc',
+          description: 'asc | desc',
+          title: 'Direction',
+          type: 'string',
+        },
+        since: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'ISO-8601 timestamp: only issues updated at or after this',
+          title: 'Since',
+        },
+        perPage: {
+          default: 30,
+          maximum: 100,
+          minimum: 1,
+          title: 'Perpage',
+          type: 'integer',
+        },
+        page: {
+          default: 1,
+          minimum: 1,
+          title: 'Page',
+          type: 'integer',
+        },
+        includePullRequests: {
+          default: false,
+          description:
+            'GitHub lists pull requests on this endpoint too; the default drops them so a lead hunt sees only issues',
+          title: 'Includepullrequests',
+          type: 'boolean',
+        },
+        token: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional GitHub token (5,000 req/h)',
+          title: 'Token',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional exit to send from (direct otherwise)',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['owner', 'repo'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        IssueSummary: {
+          properties: {
+            id: {
+              title: 'Id',
+              type: 'integer',
+            },
+            number: {
+              title: 'Number',
+              type: 'integer',
+            },
+            title: {
+              title: 'Title',
+              type: 'string',
+            },
+            body: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Body',
+            },
+            state: {
+              title: 'State',
+              type: 'string',
+            },
+            htmlUrl: {
+              title: 'Htmlurl',
+              type: 'string',
+            },
+            repository: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'owner/repo the issue belongs to',
+              title: 'Repository',
+            },
+            author: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Author',
+            },
+            authorType: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Authortype',
+            },
+            authorAssociation: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Authorassociation',
+            },
+            isPullRequest: {
+              description:
+                'GitHub lists pull requests on the issues endpoints; this tells them apart',
+              title: 'Ispullrequest',
+              type: 'boolean',
+            },
+            comments: {
+              title: 'Comments',
+              type: 'integer',
+            },
+            labels: {
+              items: {
+                type: 'string',
+              },
+              title: 'Labels',
+              type: 'array',
+            },
+            reactions: {
+              title: 'Reactions',
+              type: 'integer',
+            },
+            createdAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Createdat',
+            },
+            updatedAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Updatedat',
+            },
+            closedAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Closedat',
+            },
+          },
+          required: [
+            'id',
+            'number',
+            'title',
+            'body',
+            'state',
+            'htmlUrl',
+            'repository',
+            'author',
+            'authorType',
+            'authorAssociation',
+            'isPullRequest',
+            'comments',
+            'labels',
+            'reactions',
+            'createdAt',
+            'updatedAt',
+            'closedAt',
+          ],
+          title: 'IssueSummary',
+          type: 'object',
+        },
+        RateLimitInfo: {
+          description:
+            'The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.',
+          properties: {
+            limit: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Limit: requests allowed per window',
+              title: 'Limit',
+            },
+            remaining: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Remaining: requests left',
+              title: 'Remaining',
+            },
+            resetAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as an ISO-8601 UTC timestamp',
+              title: 'Resetat',
+            },
+            resetEpoch: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as unix seconds',
+              title: 'Resetepoch',
+            },
+            resource: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Resource: which bucket (core, search, graphql, ...)',
+              title: 'Resource',
+            },
+          },
+          required: ['limit', 'remaining', 'resetAt', 'resetEpoch', 'resource'],
+          title: 'RateLimitInfo',
+          type: 'object',
+        },
+      },
+      properties: {
+        items: {
+          items: {
+            $ref: '#/$defs/IssueSummary',
+          },
+          title: 'Items',
+          type: 'array',
+        },
+        rateLimit: {
+          $ref: '#/$defs/RateLimitInfo',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+      },
+      required: ['items', 'rateLimit', 'fetchedAt'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
     slug: 'github-repo.get',
     operationId: 'github_repo_get',
     name: 'Get GitHub Repository',
@@ -1833,6 +4554,1218 @@ export const OPERATIONS: readonly OperationMeta[] = [
     },
   },
   {
+    slug: 'github-search-discussions.get',
+    operationId: 'github_search_discussions_get',
+    name: 'Search GitHub Discussions',
+    description:
+      "Search GitHub Discussions across all repositories (GraphQL). Returns title, body, author, repository, category, comment count and the node id you need to reply, with cursor pagination. Requires your own GitHub token - GitHub's GraphQL API does not serve anonymous callers.",
+    category: 'Developer Tools',
+    tags: ['github', 'search', 'discussions', 'graphql', 'developer', 'python'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        q: {
+          description: 'GitHub search syntax for discussions, e.g. \'"note taking" is:open\'',
+          maxLength: 256,
+          minLength: 1,
+          title: 'Q',
+          type: 'string',
+        },
+        first: {
+          default: 30,
+          description: 'Rows to return (max 100)',
+          maximum: 100,
+          minimum: 1,
+          title: 'First',
+          type: 'integer',
+        },
+        after: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'pageInfo.endCursor from the previous page',
+          title: 'After',
+        },
+        token: {
+          description: 'GitHub token - GraphQL does not accept anonymous calls',
+          minLength: 1,
+          title: 'Token',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional exit to send from (direct otherwise)',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['q', 'token'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        DiscussionSummary: {
+          properties: {
+            id: {
+              description: 'GraphQL node id (the value addDiscussionComment takes)',
+              title: 'Id',
+              type: 'string',
+            },
+            number: {
+              title: 'Number',
+              type: 'integer',
+            },
+            title: {
+              title: 'Title',
+              type: 'string',
+            },
+            body: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Body',
+            },
+            url: {
+              title: 'Url',
+              type: 'string',
+            },
+            author: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Author',
+            },
+            repository: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Repository',
+            },
+            createdAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Createdat',
+            },
+            comments: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Comments',
+            },
+            category: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Category',
+            },
+          },
+          required: [
+            'id',
+            'number',
+            'title',
+            'body',
+            'url',
+            'author',
+            'repository',
+            'createdAt',
+            'comments',
+            'category',
+          ],
+          title: 'DiscussionSummary',
+          type: 'object',
+        },
+        RateLimitInfo: {
+          description:
+            'The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.',
+          properties: {
+            limit: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Limit: requests allowed per window',
+              title: 'Limit',
+            },
+            remaining: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Remaining: requests left',
+              title: 'Remaining',
+            },
+            resetAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as an ISO-8601 UTC timestamp',
+              title: 'Resetat',
+            },
+            resetEpoch: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as unix seconds',
+              title: 'Resetepoch',
+            },
+            resource: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Resource: which bucket (core, search, graphql, ...)',
+              title: 'Resource',
+            },
+          },
+          required: ['limit', 'remaining', 'resetAt', 'resetEpoch', 'resource'],
+          title: 'RateLimitInfo',
+          type: 'object',
+        },
+      },
+      properties: {
+        totalCount: {
+          title: 'Totalcount',
+          type: 'integer',
+        },
+        items: {
+          items: {
+            $ref: '#/$defs/DiscussionSummary',
+          },
+          title: 'Items',
+          type: 'array',
+        },
+        endCursor: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Endcursor',
+        },
+        hasNextPage: {
+          title: 'Hasnextpage',
+          type: 'boolean',
+        },
+        rateLimit: {
+          $ref: '#/$defs/RateLimitInfo',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+      },
+      required: ['totalCount', 'items', 'endCursor', 'hasNextPage', 'rateLimit', 'fetchedAt'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'github-search-issues.get',
+    operationId: 'github_search_issues_get',
+    name: 'Search GitHub Issues',
+    description:
+      "Search issues and pull requests across all of GitHub with GitHub's search syntax. Returns parsed rows (author, repo, labels, comment count, reactions) plus the rate-limit headers so you can pace yourself. Works without a token (10 searches/min per IP); pass your own token for 30/min.",
+    category: 'Developer Tools',
+    tags: ['github', 'search', 'issues', 'developer', 'python'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 6,
+    inputSchema: {
+      properties: {
+        q: {
+          description:
+            'GitHub search syntax, e.g. \'is:issue is:open "note taking app" language:python\'',
+          maxLength: 256,
+          minLength: 1,
+          title: 'Q',
+          type: 'string',
+        },
+        perPage: {
+          default: 30,
+          description: 'Rows per page (max 100)',
+          maximum: 100,
+          minimum: 1,
+          title: 'Perpage',
+          type: 'integer',
+        },
+        page: {
+          default: 1,
+          description: 'Page number (search caps at 1000 rows)',
+          maximum: 34,
+          minimum: 1,
+          title: 'Page',
+          type: 'integer',
+        },
+        sort: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'comments | reactions | created | updated | interactions (default: best match)',
+          title: 'Sort',
+        },
+        order: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'asc | desc',
+          title: 'Order',
+        },
+        includePullRequests: {
+          default: true,
+          description:
+            'GitHub returns PRs on this endpoint too; false filters them out client-side',
+          title: 'Includepullrequests',
+          type: 'boolean',
+        },
+        token: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Optional GitHub token: raises the limit from 10 to 30 searches/min and lets the search see private repos the token can read',
+          title: 'Token',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional exit to send from; a datacenter exit is leased when omitted',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['q'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        IssueSummary: {
+          properties: {
+            id: {
+              title: 'Id',
+              type: 'integer',
+            },
+            number: {
+              title: 'Number',
+              type: 'integer',
+            },
+            title: {
+              title: 'Title',
+              type: 'string',
+            },
+            body: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Body',
+            },
+            state: {
+              title: 'State',
+              type: 'string',
+            },
+            htmlUrl: {
+              title: 'Htmlurl',
+              type: 'string',
+            },
+            repository: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'owner/repo the issue belongs to',
+              title: 'Repository',
+            },
+            author: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Author',
+            },
+            authorType: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Authortype',
+            },
+            authorAssociation: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Authorassociation',
+            },
+            isPullRequest: {
+              description:
+                'GitHub lists pull requests on the issues endpoints; this tells them apart',
+              title: 'Ispullrequest',
+              type: 'boolean',
+            },
+            comments: {
+              title: 'Comments',
+              type: 'integer',
+            },
+            labels: {
+              items: {
+                type: 'string',
+              },
+              title: 'Labels',
+              type: 'array',
+            },
+            reactions: {
+              title: 'Reactions',
+              type: 'integer',
+            },
+            createdAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Createdat',
+            },
+            updatedAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Updatedat',
+            },
+            closedAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Closedat',
+            },
+          },
+          required: [
+            'id',
+            'number',
+            'title',
+            'body',
+            'state',
+            'htmlUrl',
+            'repository',
+            'author',
+            'authorType',
+            'authorAssociation',
+            'isPullRequest',
+            'comments',
+            'labels',
+            'reactions',
+            'createdAt',
+            'updatedAt',
+            'closedAt',
+          ],
+          title: 'IssueSummary',
+          type: 'object',
+        },
+        RateLimitInfo: {
+          description:
+            'The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.',
+          properties: {
+            limit: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Limit: requests allowed per window',
+              title: 'Limit',
+            },
+            remaining: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Remaining: requests left',
+              title: 'Remaining',
+            },
+            resetAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as an ISO-8601 UTC timestamp',
+              title: 'Resetat',
+            },
+            resetEpoch: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as unix seconds',
+              title: 'Resetepoch',
+            },
+            resource: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Resource: which bucket (core, search, graphql, ...)',
+              title: 'Resource',
+            },
+          },
+          required: ['limit', 'remaining', 'resetAt', 'resetEpoch', 'resource'],
+          title: 'RateLimitInfo',
+          type: 'object',
+        },
+      },
+      properties: {
+        totalCount: {
+          title: 'Totalcount',
+          type: 'integer',
+        },
+        incompleteResults: {
+          title: 'Incompleteresults',
+          type: 'boolean',
+        },
+        items: {
+          items: {
+            $ref: '#/$defs/IssueSummary',
+          },
+          title: 'Items',
+          type: 'array',
+        },
+        rateLimit: {
+          $ref: '#/$defs/RateLimitInfo',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+      },
+      required: ['totalCount', 'incompleteResults', 'items', 'rateLimit', 'fetchedAt'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'github-search-repos.get',
+    operationId: 'github_search_repos_get',
+    name: 'Search GitHub Repositories',
+    description:
+      "Search repositories across GitHub with GitHub's search syntax (language, stars, topics, pushed dates). Returns parsed rows plus the rate-limit headers. Works without a token; pass your own for the higher limit.",
+    category: 'Developer Tools',
+    tags: ['github', 'search', 'repositories', 'developer', 'python'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 6,
+    inputSchema: {
+      properties: {
+        q: {
+          description: "GitHub search syntax, e.g. 'note taking language:typescript stars:>100'",
+          maxLength: 256,
+          minLength: 1,
+          title: 'Q',
+          type: 'string',
+        },
+        perPage: {
+          default: 30,
+          maximum: 100,
+          minimum: 1,
+          title: 'Perpage',
+          type: 'integer',
+        },
+        page: {
+          default: 1,
+          maximum: 34,
+          minimum: 1,
+          title: 'Page',
+          type: 'integer',
+        },
+        sort: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'stars | forks | help-wanted-issues | updated',
+          title: 'Sort',
+        },
+        order: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'asc | desc',
+          title: 'Order',
+        },
+        token: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional GitHub token (30 searches/min)',
+          title: 'Token',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional exit to send from; a datacenter exit is leased when omitted',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['q'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        RateLimitInfo: {
+          description:
+            'The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.',
+          properties: {
+            limit: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Limit: requests allowed per window',
+              title: 'Limit',
+            },
+            remaining: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Remaining: requests left',
+              title: 'Remaining',
+            },
+            resetAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as an ISO-8601 UTC timestamp',
+              title: 'Resetat',
+            },
+            resetEpoch: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as unix seconds',
+              title: 'Resetepoch',
+            },
+            resource: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Resource: which bucket (core, search, graphql, ...)',
+              title: 'Resource',
+            },
+          },
+          required: ['limit', 'remaining', 'resetAt', 'resetEpoch', 'resource'],
+          title: 'RateLimitInfo',
+          type: 'object',
+        },
+        RepoSummary: {
+          properties: {
+            id: {
+              title: 'Id',
+              type: 'integer',
+            },
+            fullName: {
+              title: 'Fullname',
+              type: 'string',
+            },
+            owner: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Owner',
+            },
+            description: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Description',
+            },
+            htmlUrl: {
+              title: 'Htmlurl',
+              type: 'string',
+            },
+            homepage: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Homepage',
+            },
+            language: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Language',
+            },
+            stars: {
+              title: 'Stars',
+              type: 'integer',
+            },
+            forks: {
+              title: 'Forks',
+              type: 'integer',
+            },
+            openIssues: {
+              title: 'Openissues',
+              type: 'integer',
+            },
+            topics: {
+              items: {
+                type: 'string',
+              },
+              title: 'Topics',
+              type: 'array',
+            },
+            license: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'License',
+            },
+            isArchived: {
+              title: 'Isarchived',
+              type: 'boolean',
+            },
+            isFork: {
+              title: 'Isfork',
+              type: 'boolean',
+            },
+            createdAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Createdat',
+            },
+            updatedAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Updatedat',
+            },
+            pushedAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Pushedat',
+            },
+          },
+          required: [
+            'id',
+            'fullName',
+            'owner',
+            'description',
+            'htmlUrl',
+            'homepage',
+            'language',
+            'stars',
+            'forks',
+            'openIssues',
+            'topics',
+            'license',
+            'isArchived',
+            'isFork',
+            'createdAt',
+            'updatedAt',
+            'pushedAt',
+          ],
+          title: 'RepoSummary',
+          type: 'object',
+        },
+      },
+      properties: {
+        totalCount: {
+          title: 'Totalcount',
+          type: 'integer',
+        },
+        incompleteResults: {
+          title: 'Incompleteresults',
+          type: 'boolean',
+        },
+        items: {
+          items: {
+            $ref: '#/$defs/RepoSummary',
+          },
+          title: 'Items',
+          type: 'array',
+        },
+        rateLimit: {
+          $ref: '#/$defs/RateLimitInfo',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+      },
+      required: ['totalCount', 'incompleteResults', 'items', 'rateLimit', 'fetchedAt'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'github-search-users.get',
+    operationId: 'github_search_users_get',
+    name: 'Search GitHub Users',
+    description:
+      'Search GitHub users and organizations by login, location, language, follower count and more. Returns login/id/type/avatar rows (follow with Get GitHub User for the full profile) plus the rate-limit headers.',
+    category: 'Developer Tools',
+    tags: ['github', 'search', 'users', 'developer', 'python'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 6,
+    inputSchema: {
+      properties: {
+        q: {
+          description: "GitHub search syntax, e.g. 'location:berlin language:python followers:>50'",
+          maxLength: 256,
+          minLength: 1,
+          title: 'Q',
+          type: 'string',
+        },
+        perPage: {
+          default: 30,
+          maximum: 100,
+          minimum: 1,
+          title: 'Perpage',
+          type: 'integer',
+        },
+        page: {
+          default: 1,
+          maximum: 34,
+          minimum: 1,
+          title: 'Page',
+          type: 'integer',
+        },
+        sort: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'followers | repositories | joined',
+          title: 'Sort',
+        },
+        order: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'asc | desc',
+          title: 'Order',
+        },
+        token: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional GitHub token (30 searches/min)',
+          title: 'Token',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional exit to send from; a datacenter exit is leased when omitted',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['q'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        RateLimitInfo: {
+          description:
+            'The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.',
+          properties: {
+            limit: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Limit: requests allowed per window',
+              title: 'Limit',
+            },
+            remaining: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Remaining: requests left',
+              title: 'Remaining',
+            },
+            resetAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as an ISO-8601 UTC timestamp',
+              title: 'Resetat',
+            },
+            resetEpoch: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as unix seconds',
+              title: 'Resetepoch',
+            },
+            resource: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Resource: which bucket (core, search, graphql, ...)',
+              title: 'Resource',
+            },
+          },
+          required: ['limit', 'remaining', 'resetAt', 'resetEpoch', 'resource'],
+          title: 'RateLimitInfo',
+          type: 'object',
+        },
+        UserSummary: {
+          properties: {
+            id: {
+              title: 'Id',
+              type: 'integer',
+            },
+            login: {
+              title: 'Login',
+              type: 'string',
+            },
+            type: {
+              title: 'Type',
+              type: 'string',
+            },
+            htmlUrl: {
+              title: 'Htmlurl',
+              type: 'string',
+            },
+            avatarUrl: {
+              title: 'Avatarurl',
+              type: 'string',
+            },
+            score: {
+              anyOf: [
+                {
+                  type: 'number',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'Search relevance score, when the row came from search',
+              title: 'Score',
+            },
+          },
+          required: ['id', 'login', 'type', 'htmlUrl', 'avatarUrl', 'score'],
+          title: 'UserSummary',
+          type: 'object',
+        },
+      },
+      properties: {
+        totalCount: {
+          title: 'Totalcount',
+          type: 'integer',
+        },
+        incompleteResults: {
+          title: 'Incompleteresults',
+          type: 'boolean',
+        },
+        items: {
+          items: {
+            $ref: '#/$defs/UserSummary',
+          },
+          title: 'Items',
+          type: 'array',
+        },
+        rateLimit: {
+          $ref: '#/$defs/RateLimitInfo',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+      },
+      required: ['totalCount', 'incompleteResults', 'items', 'rateLimit', 'fetchedAt'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
     slug: 'github-trending.get',
     operationId: 'github_trending_get',
     name: 'Get GitHub Trending Repositories',
@@ -1941,11 +5874,211 @@ export const OPERATIONS: readonly OperationMeta[] = [
     },
   },
   {
+    slug: 'github-user-emails.get',
+    operationId: 'github_user_emails_get',
+    name: 'Get GitHub User Commit Emails',
+    description:
+      'Collect the public commit-author emails a GitHub user has pushed with, from their most recently updated repositories (noreply addresses dropped). One listing call plus one per repository scanned. Plus the rate-limit headers.',
+    category: 'Developer Tools',
+    tags: ['github', 'email', 'user', 'enrichment', 'developer', 'python'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 3,
+    inputSchema: {
+      properties: {
+        username: {
+          description: 'GitHub login',
+          maxLength: 100,
+          minLength: 1,
+          title: 'Username',
+          type: 'string',
+        },
+        maxRepos: {
+          default: 3,
+          description: "How many of the user's most recently pushed repositories to scan",
+          maximum: 10,
+          minimum: 1,
+          title: 'Maxrepos',
+          type: 'integer',
+        },
+        token: {
+          description:
+            "GitHub token. REQUIRED here, unlike the single-call reads: this operation fans out to 1 + maxRepos requests, so an anonymous call spends up to 11 of the 60 requests an hour that every keyless caller through this worker shares. With a token the budget is the caller's own 5,000/h.",
+          minLength: 1,
+          title: 'Token',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional exit to send from (direct otherwise)',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['username', 'token'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        CommitEmail: {
+          properties: {
+            email: {
+              title: 'Email',
+              type: 'string',
+            },
+            name: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Name',
+            },
+            repository: {
+              description: 'owner/repo the commit was read from',
+              title: 'Repository',
+              type: 'string',
+            },
+            sha: {
+              title: 'Sha',
+              type: 'string',
+            },
+            committedAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Committedat',
+            },
+          },
+          required: ['email', 'name', 'repository', 'sha', 'committedAt'],
+          title: 'CommitEmail',
+          type: 'object',
+        },
+        RateLimitInfo: {
+          description:
+            'The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.',
+          properties: {
+            limit: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Limit: requests allowed per window',
+              title: 'Limit',
+            },
+            remaining: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Remaining: requests left',
+              title: 'Remaining',
+            },
+            resetAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as an ISO-8601 UTC timestamp',
+              title: 'Resetat',
+            },
+            resetEpoch: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as unix seconds',
+              title: 'Resetepoch',
+            },
+            resource: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Resource: which bucket (core, search, graphql, ...)',
+              title: 'Resource',
+            },
+          },
+          required: ['limit', 'remaining', 'resetAt', 'resetEpoch', 'resource'],
+          title: 'RateLimitInfo',
+          type: 'object',
+        },
+      },
+      properties: {
+        username: {
+          title: 'Username',
+          type: 'string',
+        },
+        emails: {
+          items: {
+            $ref: '#/$defs/CommitEmail',
+          },
+          title: 'Emails',
+          type: 'array',
+        },
+        reposScanned: {
+          items: {
+            type: 'string',
+          },
+          title: 'Reposscanned',
+          type: 'array',
+        },
+        rateLimit: {
+          $ref: '#/$defs/RateLimitInfo',
+          description: 'Rate-limit headers from the LAST call made',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+      },
+      required: ['username', 'emails', 'reposScanned', 'rateLimit', 'fetchedAt'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
     slug: 'github-user.get',
     operationId: 'github_user_get',
     name: 'Get GitHub User',
     description:
-      "Fetch a GitHub user or organization's public profile: name, bio, company, location, follower/repo counts, avatar, Twitter handle.",
+      "Fetch a GitHub user or organization's public profile: name, bio, company, location, follower/repo counts, avatar, Twitter handle, hireable flag. Plus the rate-limit headers. Works without a token; pass your own for 5,000 req/h.",
     category: 'Developer Tools',
     tags: ['github', 'user', 'profile', 'python'],
     workerLanguage: 'python',
@@ -1960,16 +6093,118 @@ export const OPERATIONS: readonly OperationMeta[] = [
           title: 'Username',
           type: 'string',
         },
+        token: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Optional GitHub token: 5,000 req/h instead of 60, and sees the email field when the profile allows it',
+          title: 'Token',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional exit to send from (direct otherwise)',
+          title: 'Proxyurl',
+        },
       },
       required: ['username'],
       title: 'Input',
       type: 'object',
     },
     outputSchema: {
+      $defs: {
+        RateLimitInfo: {
+          description:
+            'The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.',
+          properties: {
+            limit: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Limit: requests allowed per window',
+              title: 'Limit',
+            },
+            remaining: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Remaining: requests left',
+              title: 'Remaining',
+            },
+            resetAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as an ISO-8601 UTC timestamp',
+              title: 'Resetat',
+            },
+            resetEpoch: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as unix seconds',
+              title: 'Resetepoch',
+            },
+            resource: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Resource: which bucket (core, search, graphql, ...)',
+              title: 'Resource',
+            },
+          },
+          required: ['limit', 'remaining', 'resetAt', 'resetEpoch', 'resource'],
+          title: 'RateLimitInfo',
+          type: 'object',
+        },
+      },
       properties: {
         login: {
           title: 'Login',
           type: 'string',
+        },
+        id: {
+          title: 'Id',
+          type: 'integer',
         },
         name: {
           anyOf: [
@@ -2052,6 +6287,17 @@ export const OPERATIONS: readonly OperationMeta[] = [
           ],
           title: 'Twitterhandle',
         },
+        hireable: {
+          anyOf: [
+            {
+              type: 'boolean',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Hireable',
+        },
         publicRepos: {
           title: 'Publicrepos',
           type: 'integer',
@@ -2080,6 +6326,20 @@ export const OPERATIONS: readonly OperationMeta[] = [
           title: 'Createdat',
           type: 'string',
         },
+        updatedAt: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Updatedat',
+        },
+        rateLimit: {
+          $ref: '#/$defs/RateLimitInfo',
+        },
         fetchedAt: {
           title: 'Fetchedat',
           type: 'string',
@@ -2087,6 +6347,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
       },
       required: [
         'login',
+        'id',
         'name',
         'type',
         'bio',
@@ -2095,6 +6356,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
         'location',
         'email',
         'twitterHandle',
+        'hireable',
         'publicRepos',
         'publicGists',
         'followers',
@@ -2102,6 +6364,8 @@ export const OPERATIONS: readonly OperationMeta[] = [
         'avatarUrl',
         'htmlUrl',
         'createdAt',
+        'updatedAt',
+        'rateLimit',
         'fetchedAt',
       ],
       title: 'Output',
@@ -4629,6 +8893,277 @@ export const OPERATIONS: readonly OperationMeta[] = [
         'fetchedAt',
         'elapsedMs',
       ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'instagram-get-user-by-id.post',
+    operationId: 'instagram_get_user_by_id_post',
+    name: 'Instagram Get User By Id',
+    description:
+      'Resolve an Instagram profile from a numeric user id, no login. Anonymous returns identity (username, profile picture) — see detailLevel.',
+    category: 'Social Media',
+    tags: ['instagram', 'profile', 'user', 'scraping', 'social', 'http'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 15,
+    inputSchema: {
+      properties: {
+        userId: {
+          description: 'Numeric Instagram user id (pk)',
+          minLength: 1,
+          title: 'Userid',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional proxy URL. Instagram 401-gates anonymous reads per egress IP.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['userId'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        success: {
+          title: 'Success',
+          type: 'boolean',
+        },
+        pk: {
+          title: 'Pk',
+          type: 'string',
+        },
+        username: {
+          title: 'Username',
+          type: 'string',
+        },
+        detailLevel: {
+          description:
+            "'stub' = identity only (what anonymous returns today); 'full' = counts and profile detail were disclosed",
+          title: 'Detaillevel',
+          type: 'string',
+        },
+        fullName: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Fullname',
+        },
+        biography: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Biography',
+        },
+        isPrivate: {
+          anyOf: [
+            {
+              type: 'boolean',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Isprivate',
+        },
+        isVerified: {
+          anyOf: [
+            {
+              type: 'boolean',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Isverified',
+        },
+        isBusiness: {
+          anyOf: [
+            {
+              type: 'boolean',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Isbusiness',
+        },
+        isProfessional: {
+          anyOf: [
+            {
+              type: 'boolean',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Isprofessional',
+        },
+        category: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Category',
+        },
+        businessEmail: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Businessemail',
+        },
+        publicEmail: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Publicemail',
+        },
+        businessPhone: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Businessphone',
+        },
+        externalUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Externalurl',
+        },
+        bioLinks: {
+          items: {
+            type: 'string',
+          },
+          title: 'Biolinks',
+          type: 'array',
+        },
+        followerCount: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: "null = not disclosed by this surface, never 'zero followers'",
+          title: 'Followercount',
+        },
+        followingCount: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Followingcount',
+        },
+        mediaCount: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Mediacount',
+        },
+        profilePicUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Profilepicurl',
+        },
+        fbid: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Fbid',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['success', 'pk', 'username', 'detailLevel', 'bioLinks', 'fetchedAt', 'elapsedMs'],
       title: 'Output',
       type: 'object',
     },
@@ -8799,6 +13334,17 @@ export const OPERATIONS: readonly OperationMeta[] = [
           title: 'Commentsscanned',
           type: 'integer',
         },
+        complete: {
+          description:
+            'False when a block or upstream failure cut the scan short — the users listed are real but the list is partial.',
+          title: 'Complete',
+          type: 'boolean',
+        },
+        stopReason: {
+          description: '"limit-reached", "exhausted", or "blocked-mid-scan"',
+          title: 'Stopreason',
+          type: 'string',
+        },
         fetchedAt: {
           title: 'Fetchedat',
           type: 'string',
@@ -8808,7 +13354,186 @@ export const OPERATIONS: readonly OperationMeta[] = [
           type: 'integer',
         },
       },
-      required: ['success', 'videoId', 'users', 'commentsScanned', 'fetchedAt', 'elapsedMs'],
+      required: [
+        'success',
+        'videoId',
+        'users',
+        'commentsScanned',
+        'complete',
+        'stopReason',
+        'fetchedAt',
+        'elapsedMs',
+      ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'tiktok-get-comment-replies.get',
+    operationId: 'tiktok_get_comment_replies_get',
+    name: 'TikTok Get Comment Replies',
+    description:
+      "Get the replies under a single TikTok comment, with each replier's handle and profile info. No auth needed. Paginated by cursor.",
+    category: 'Social Media',
+    tags: ['tiktok', 'comments', 'replies', 'scraping', 'social'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 3,
+    inputSchema: {
+      properties: {
+        videoId: {
+          description: 'Parent video id (aweme_id / item_id)',
+          minLength: 1,
+          title: 'Videoid',
+          type: 'string',
+        },
+        commentId: {
+          description: 'Comment id whose replies to fetch',
+          minLength: 1,
+          title: 'Commentid',
+          type: 'string',
+        },
+        count: {
+          default: 20,
+          description: 'Replies per page (max 50)',
+          maximum: 50,
+          minimum: 1,
+          title: 'Count',
+          type: 'integer',
+        },
+        cursor: {
+          default: 0,
+          description: 'Pagination cursor (0 for first page)',
+          minimum: 0,
+          title: 'Cursor',
+          type: 'integer',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional proxy URL',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['videoId', 'commentId'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        CommentUser: {
+          properties: {
+            uniqueId: {
+              title: 'Uniqueid',
+              type: 'string',
+            },
+            nickname: {
+              title: 'Nickname',
+              type: 'string',
+            },
+            secUid: {
+              title: 'Secuid',
+              type: 'string',
+            },
+            verified: {
+              title: 'Verified',
+              type: 'boolean',
+            },
+          },
+          required: ['uniqueId', 'nickname', 'secUid', 'verified'],
+          title: 'CommentUser',
+          type: 'object',
+        },
+        ReplyItem: {
+          properties: {
+            commentId: {
+              title: 'Commentid',
+              type: 'string',
+            },
+            text: {
+              title: 'Text',
+              type: 'string',
+            },
+            likes: {
+              title: 'Likes',
+              type: 'integer',
+            },
+            replyCount: {
+              title: 'Replycount',
+              type: 'integer',
+            },
+            createTime: {
+              title: 'Createtime',
+              type: 'integer',
+            },
+            user: {
+              $ref: '#/$defs/CommentUser',
+            },
+          },
+          required: ['commentId', 'text', 'likes', 'replyCount', 'createTime', 'user'],
+          title: 'ReplyItem',
+          type: 'object',
+        },
+      },
+      properties: {
+        success: {
+          title: 'Success',
+          type: 'boolean',
+        },
+        videoId: {
+          title: 'Videoid',
+          type: 'string',
+        },
+        commentId: {
+          title: 'Commentid',
+          type: 'string',
+        },
+        replies: {
+          items: {
+            $ref: '#/$defs/ReplyItem',
+          },
+          title: 'Replies',
+          type: 'array',
+        },
+        hasMore: {
+          title: 'Hasmore',
+          type: 'boolean',
+        },
+        cursor: {
+          title: 'Cursor',
+          type: 'integer',
+        },
+        total: {
+          title: 'Total',
+          type: 'integer',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: [
+        'success',
+        'videoId',
+        'commentId',
+        'replies',
+        'hasMore',
+        'cursor',
+        'total',
+        'fetchedAt',
+        'elapsedMs',
+      ],
       title: 'Output',
       type: 'object',
     },
@@ -9187,6 +13912,350 @@ export const OPERATIONS: readonly OperationMeta[] = [
     },
   },
   {
+    slug: 'tiktok-get-video-embed.get',
+    operationId: 'tiktok_get_video_embed_get',
+    name: 'TikTok Get Video By Id',
+    description:
+      'Full video metadata (description, hashtags, play/like/comment counts, author and author follower stats) from a video id alone — no author handle needed, no auth.',
+    category: 'Social Media',
+    tags: ['tiktok', 'video', 'embed', 'metadata', 'social', 'scraping'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 3,
+    inputSchema: {
+      properties: {
+        videoId: {
+          description: 'TikTok video id (the numeric aweme id)',
+          minLength: 1,
+          title: 'Videoid',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional proxy URL',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['videoId'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        Author: {
+          properties: {
+            uniqueId: {
+              title: 'Uniqueid',
+              type: 'string',
+            },
+            nickname: {
+              title: 'Nickname',
+              type: 'string',
+            },
+            signature: {
+              title: 'Signature',
+              type: 'string',
+            },
+            verified: {
+              title: 'Verified',
+              type: 'boolean',
+            },
+            secUid: {
+              title: 'Secuid',
+              type: 'string',
+            },
+            followers: {
+              title: 'Followers',
+              type: 'integer',
+            },
+            following: {
+              title: 'Following',
+              type: 'integer',
+            },
+            likes: {
+              title: 'Likes',
+              type: 'integer',
+            },
+            videos: {
+              title: 'Videos',
+              type: 'integer',
+            },
+          },
+          required: [
+            'uniqueId',
+            'nickname',
+            'signature',
+            'verified',
+            'secUid',
+            'followers',
+            'following',
+            'likes',
+            'videos',
+          ],
+          title: 'Author',
+          type: 'object',
+        },
+        Stats: {
+          properties: {
+            plays: {
+              title: 'Plays',
+              type: 'integer',
+            },
+            likes: {
+              title: 'Likes',
+              type: 'integer',
+            },
+            comments: {
+              title: 'Comments',
+              type: 'integer',
+            },
+            shares: {
+              title: 'Shares',
+              type: 'integer',
+            },
+          },
+          required: ['plays', 'likes', 'comments', 'shares'],
+          title: 'Stats',
+          type: 'object',
+        },
+      },
+      properties: {
+        success: {
+          title: 'Success',
+          type: 'boolean',
+        },
+        videoId: {
+          title: 'Videoid',
+          type: 'string',
+        },
+        description: {
+          title: 'Description',
+          type: 'string',
+        },
+        createTime: {
+          title: 'Createtime',
+          type: 'string',
+        },
+        author: {
+          $ref: '#/$defs/Author',
+        },
+        stats: {
+          $ref: '#/$defs/Stats',
+        },
+        hashtags: {
+          items: {
+            type: 'string',
+          },
+          title: 'Hashtags',
+          type: 'array',
+        },
+        musicTitle: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Musictitle',
+        },
+        musicAuthor: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Musicauthor',
+        },
+        durationSeconds: {
+          title: 'Durationseconds',
+          type: 'integer',
+        },
+        thumbnailUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Thumbnailurl',
+        },
+        locationCreated: {
+          title: 'Locationcreated',
+          type: 'string',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: [
+        'success',
+        'videoId',
+        'description',
+        'createTime',
+        'author',
+        'stats',
+        'hashtags',
+        'durationSeconds',
+        'locationCreated',
+        'fetchedAt',
+        'elapsedMs',
+      ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'tiktok-oembed.get',
+    operationId: 'tiktok_oembed_get',
+    name: 'TikTok oEmbed Lookup',
+    description:
+      "Resolve any TikTok profile or video URL to its title, author and thumbnail via TikTok's public oEmbed endpoint. No auth, no signing.",
+    category: 'Social Media',
+    tags: ['tiktok', 'oembed', 'metadata', 'social', 'scraping'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        url: {
+          description: 'Any TikTok profile or video URL, e.g. https://www.tiktok.com/@tiktok',
+          minLength: 1,
+          title: 'Url',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional proxy URL. "none" forces a direct request; omit to auto-pick.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['url'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        success: {
+          title: 'Success',
+          type: 'boolean',
+        },
+        urlType: {
+          description: '"video" for a video URL, otherwise "profile"',
+          title: 'Urltype',
+          type: 'string',
+        },
+        title: {
+          title: 'Title',
+          type: 'string',
+        },
+        authorName: {
+          title: 'Authorname',
+          type: 'string',
+        },
+        authorUrl: {
+          title: 'Authorurl',
+          type: 'string',
+        },
+        thumbnailUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Thumbnailurl',
+        },
+        thumbnailWidth: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Thumbnailwidth',
+        },
+        thumbnailHeight: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Thumbnailheight',
+        },
+        embedProductId: {
+          title: 'Embedproductid',
+          type: 'string',
+        },
+        providerName: {
+          title: 'Providername',
+          type: 'string',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: [
+        'success',
+        'urlType',
+        'title',
+        'authorName',
+        'authorUrl',
+        'embedProductId',
+        'providerName',
+        'fetchedAt',
+        'elapsedMs',
+      ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
     slug: 'timezone-lookup.get',
     operationId: 'timezone_lookup_get',
     name: 'Look Up Timezone',
@@ -9396,6 +14465,552 @@ export const OPERATIONS: readonly OperationMeta[] = [
         'quality',
         'matches',
         'fetchedAt',
+      ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'upwork-jobs-detail.get',
+    operationId: 'upwork_jobs_detail_get',
+    name: 'Get Upwork Job Details',
+    description:
+      "Read one Upwork job posting in full: the complete description, required skills, budget, how many freelancers have applied and been interviewed, and the client's country, rating, hire count and total spend. Accepts the job ciphertext or the job URL. Reads Upwork's public visitor surface — no Upwork account is required.",
+    category: 'Social Media',
+    tags: ['upwork', 'jobs', 'freelance', 'hiring', 'details'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 10,
+    inputSchema: {
+      properties: {
+        job: {
+          description:
+            'An Upwork job: its ciphertext ("~021234…"), or the job URL that upwork-jobs-search returns.',
+          maxLength: 300,
+          minLength: 1,
+          title: 'Job',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: "User-provided proxy URL. Omit to use the operation's own pool.",
+          title: 'Proxyurl',
+        },
+      },
+      required: ['job'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        ciphertext: {
+          title: 'Ciphertext',
+          type: 'string',
+        },
+        title: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Title',
+        },
+        description: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Description',
+        },
+        status: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Status',
+        },
+        jobType: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Jobtype',
+        },
+        contractorTier: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Contractortier',
+        },
+        postedOn: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Postedon',
+        },
+        publishTime: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Publishtime',
+        },
+        skills: {
+          items: {
+            type: 'string',
+          },
+          title: 'Skills',
+          type: 'array',
+        },
+        hourlyBudgetMin: {
+          anyOf: [
+            {
+              type: 'number',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Hourlybudgetmin',
+        },
+        hourlyBudgetMax: {
+          anyOf: [
+            {
+              type: 'number',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Hourlybudgetmax',
+        },
+        totalApplicants: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Totalapplicants',
+        },
+        totalHired: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Totalhired',
+        },
+        totalInvitedToInterview: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Totalinvitedtointerview',
+        },
+        lastBuyerActivity: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Lastbuyeractivity',
+        },
+        buyerCountry: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Buyercountry',
+        },
+        buyerScore: {
+          anyOf: [
+            {
+              type: 'number',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Buyerscore',
+        },
+        buyerTotalJobsWithHires: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Buyertotaljobswithhires',
+        },
+        buyerTotalSpent: {
+          anyOf: [
+            {
+              type: 'number',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Buyertotalspent',
+        },
+        jobUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Joburl',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: [
+        'ciphertext',
+        'title',
+        'description',
+        'status',
+        'jobType',
+        'contractorTier',
+        'postedOn',
+        'publishTime',
+        'skills',
+        'hourlyBudgetMin',
+        'hourlyBudgetMax',
+        'totalApplicants',
+        'totalHired',
+        'totalInvitedToInterview',
+        'lastBuyerActivity',
+        'buyerCountry',
+        'buyerScore',
+        'buyerTotalJobsWithHires',
+        'buyerTotalSpent',
+        'jobUrl',
+        'fetchedAt',
+        'elapsedMs',
+      ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'upwork-jobs-search.get',
+    operationId: 'upwork_jobs_search_get',
+    name: 'Search Upwork Jobs',
+    description:
+      "Search Upwork job postings by keyword. Returns title, description, contract type, budget, publish time and the job reference you pass to upwork-jobs-detail. Reads Upwork's public visitor surface — no Upwork account or cookie is required.",
+    category: 'Social Media',
+    tags: ['upwork', 'jobs', 'freelance', 'hiring', 'search'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 10,
+    inputSchema: {
+      properties: {
+        query: {
+          description: 'What to search for (e.g. "python developer", "react native app")',
+          maxLength: 200,
+          minLength: 1,
+          title: 'Query',
+          type: 'string',
+        },
+        page: {
+          default: 1,
+          description: '1-based results page.',
+          maximum: 100,
+          minimum: 1,
+          title: 'Page',
+          type: 'integer',
+        },
+        pageSize: {
+          default: 20,
+          description: 'Postings per page, 1-50.',
+          maximum: 50,
+          minimum: 1,
+          title: 'Pagesize',
+          type: 'integer',
+        },
+        sort: {
+          default: 'recency',
+          description: 'Result order: recency (newest first) or relevance.',
+          title: 'Sort',
+          type: 'string',
+        },
+        jobType: {
+          default: 'any',
+          description: 'Contract type filter: any, hourly or fixed.',
+          title: 'Jobtype',
+          type: 'string',
+        },
+        experienceLevel: {
+          default: 'any',
+          description: 'Required experience: any, entry, intermediate or expert.',
+          title: 'Experiencelevel',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: "User-provided proxy URL. Omit to use the operation's own pool.",
+          title: 'Proxyurl',
+        },
+      },
+      required: ['query'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        JobResult: {
+          properties: {
+            jobId: {
+              title: 'Jobid',
+              type: 'string',
+            },
+            ciphertext: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Ciphertext',
+            },
+            title: {
+              title: 'Title',
+              type: 'string',
+            },
+            description: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Description',
+            },
+            jobType: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Jobtype',
+            },
+            publishTime: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Publishtime',
+            },
+            hourlyBudgetMin: {
+              anyOf: [
+                {
+                  type: 'number',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Hourlybudgetmin',
+            },
+            hourlyBudgetMax: {
+              anyOf: [
+                {
+                  type: 'number',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Hourlybudgetmax',
+            },
+            fixedPriceAmount: {
+              anyOf: [
+                {
+                  type: 'number',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Fixedpriceamount',
+            },
+            jobUrl: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              title: 'Joburl',
+            },
+          },
+          required: [
+            'jobId',
+            'ciphertext',
+            'title',
+            'description',
+            'jobType',
+            'publishTime',
+            'hourlyBudgetMin',
+            'hourlyBudgetMax',
+            'fixedPriceAmount',
+            'jobUrl',
+          ],
+          title: 'JobResult',
+          type: 'object',
+        },
+      },
+      properties: {
+        query: {
+          title: 'Query',
+          type: 'string',
+        },
+        page: {
+          title: 'Page',
+          type: 'integer',
+        },
+        pageSize: {
+          title: 'Pagesize',
+          type: 'integer',
+        },
+        resultCount: {
+          title: 'Resultcount',
+          type: 'integer',
+        },
+        totalFound: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Totalfound',
+        },
+        hasMore: {
+          anyOf: [
+            {
+              type: 'boolean',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Hasmore',
+        },
+        jobs: {
+          items: {
+            $ref: '#/$defs/JobResult',
+          },
+          title: 'Jobs',
+          type: 'array',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: [
+        'query',
+        'page',
+        'pageSize',
+        'resultCount',
+        'totalFound',
+        'hasMore',
+        'jobs',
+        'fetchedAt',
+        'elapsedMs',
       ],
       title: 'Output',
       type: 'object',
@@ -9634,6 +15249,1600 @@ export const OPERATIONS: readonly OperationMeta[] = [
         'fetchedAt',
         'elapsedMs',
       ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'wellfound-application-modal.post',
+    operationId: 'wellfound_application_modal_post',
+    name: 'Wellfound Application Modal',
+    description:
+      "Read a Wellfound listing's application modal: its screening questions with option ids, whether this account has already applied, and the qualification report. Read-only, and the intended step immediately before wellfound-apply. Requires an authenticated session blob from wellfound-login.",
+    category: 'Social Media',
+    tags: ['wellfound', 'jobs', 'apply'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        session: {
+          description: 'Authenticated blob from wellfound-login.',
+          minLength: 1,
+          title: 'Session',
+          type: 'string',
+        },
+        jobId: {
+          description: 'Wellfound job listing id.',
+          minLength: 1,
+          title: 'Jobid',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Same exit the session was minted on. Omit to send directly.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['session', 'jobId'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        Question: {
+          properties: {
+            id: {
+              title: 'Id',
+              type: 'string',
+            },
+            question: {
+              default: '',
+              title: 'Question',
+              type: 'string',
+            },
+            kind: {
+              default: 'freeform',
+              description: 'Answer kind, for example freeform.',
+              title: 'Kind',
+              type: 'string',
+            },
+            required: {
+              default: false,
+              title: 'Required',
+              type: 'boolean',
+            },
+            options: {
+              items: {
+                $ref: '#/$defs/QuestionOption',
+              },
+              title: 'Options',
+              type: 'array',
+            },
+          },
+          required: ['id'],
+          title: 'Question',
+          type: 'object',
+        },
+        QuestionOption: {
+          properties: {
+            id: {
+              default: '',
+              title: 'Id',
+              type: 'string',
+            },
+            text: {
+              default: '',
+              title: 'Text',
+              type: 'string',
+            },
+          },
+          title: 'QuestionOption',
+          type: 'object',
+        },
+      },
+      properties: {
+        questions: {
+          items: {
+            $ref: '#/$defs/Question',
+          },
+          title: 'Questions',
+          type: 'array',
+        },
+        currentUserApplied: {
+          default: false,
+          title: 'Currentuserapplied',
+          type: 'boolean',
+        },
+        qualificationErrors: {
+          description: 'Reasons Wellfound would refuse this application, empty when qualified.',
+          items: {
+            type: 'string',
+          },
+          title: 'Qualificationerrors',
+          type: 'array',
+        },
+        session: {
+          default: '',
+          description: 'Refreshed blob carrying rotated cookies. Persist THIS one, not the input.',
+          title: 'Session',
+          type: 'string',
+        },
+      },
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'wellfound-browse-jobs.post',
+    operationId: 'wellfound_browse_jobs_post',
+    name: 'Wellfound Browse Jobs',
+    description:
+      'Browse public Wellfound job listings through the anonymous SEO GraphQL search: job id, slug, title, compensation, equity, locations, full description and the hiring company, with deep pagination. No login. Takes a blob from wellfound-public-session and must run on the exit that minted it. Company funding fields are empty on anonymous results; use wellfound-company-overview for those.',
+    category: 'Social Media',
+    tags: ['wellfound', 'jobs', 'search', 'public'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 6,
+    inputSchema: {
+      properties: {
+        session: {
+          description: 'Blob from wellfound-public-session.',
+          minLength: 1,
+          title: 'Session',
+          type: 'string',
+        },
+        roleSlug: {
+          description: 'Role slug to search, for example software-engineer.',
+          minLength: 1,
+          title: 'Roleslug',
+          type: 'string',
+        },
+        scope: {
+          default: 'remote',
+          description: 'Use remote for the remote search, otherwise a Wellfound location slug.',
+          title: 'Scope',
+          type: 'string',
+        },
+        page: {
+          default: 1,
+          description: '1-based page number.',
+          minimum: 1,
+          title: 'Page',
+          type: 'integer',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Same exit the session was minted on. Omit to send directly.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['session', 'roleSlug'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        JobSummary: {
+          properties: {
+            id: {
+              title: 'Id',
+              type: 'string',
+            },
+            title: {
+              default: '',
+              title: 'Title',
+              type: 'string',
+            },
+            slug: {
+              default: '',
+              title: 'Slug',
+              type: 'string',
+            },
+            startupId: {
+              default: '',
+              title: 'Startupid',
+              type: 'string',
+            },
+            jobUrl: {
+              default: '',
+              title: 'Joburl',
+              type: 'string',
+            },
+            compensation: {
+              default: '',
+              title: 'Compensation',
+              type: 'string',
+            },
+            equity: {
+              default: '',
+              title: 'Equity',
+              type: 'string',
+            },
+            jobType: {
+              default: '',
+              title: 'Jobtype',
+              type: 'string',
+            },
+            remote: {
+              anyOf: [
+                {
+                  type: 'boolean',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description:
+                'True or False as Wellfound disclosed it. Null means Wellfound did not say -- it is NOT inferred from the scope you searched.',
+              title: 'Remote',
+            },
+            remoteConfigKind: {
+              default: '',
+              description: 'REMOTE, ONSITE or ONSITE_OR_REMOTE. Empty when undisclosed.',
+              title: 'Remoteconfigkind',
+              type: 'string',
+            },
+            locationNames: {
+              items: {
+                type: 'string',
+              },
+              title: 'Locationnames',
+              type: 'array',
+            },
+            liveStartAt: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Livestartat',
+            },
+            description: {
+              default: '',
+              description: 'Full listing description; the SEO search returns it inline.',
+              title: 'Description',
+              type: 'string',
+            },
+            startupName: {
+              default: '',
+              title: 'Startupname',
+              type: 'string',
+            },
+            startupSlug: {
+              default: '',
+              title: 'Startupslug',
+              type: 'string',
+            },
+            startupLogoUrl: {
+              default: '',
+              title: 'Startuplogourl',
+              type: 'string',
+            },
+            startupCompanySize: {
+              default: '',
+              title: 'Startupcompanysize',
+              type: 'string',
+            },
+            startupHighConcept: {
+              default: '',
+              title: 'Startuphighconcept',
+              type: 'string',
+            },
+            startupFundingStage: {
+              default: '',
+              description: 'Empty on anonymous results; use wellfound-company-overview.',
+              title: 'Startupfundingstage',
+              type: 'string',
+            },
+            startupTotalRaised: {
+              default: '',
+              description: 'Empty on anonymous results; use wellfound-company-overview.',
+              title: 'Startuptotalraised',
+              type: 'string',
+            },
+          },
+          required: ['id'],
+          title: 'JobSummary',
+          type: 'object',
+        },
+      },
+      properties: {
+        jobs: {
+          items: {
+            $ref: '#/$defs/JobSummary',
+          },
+          title: 'Jobs',
+          type: 'array',
+        },
+        hasNextPage: {
+          default: false,
+          description: 'False when Wellfound sent no page count, so a paginating caller stops.',
+          title: 'Hasnextpage',
+          type: 'boolean',
+        },
+        totalJobCount: {
+          default: 0,
+          title: 'Totaljobcount',
+          type: 'integer',
+        },
+        session: {
+          default: '',
+          description: 'Refreshed blob carrying rotated cookies. Persist THIS one, not the input.',
+          title: 'Session',
+          type: 'string',
+        },
+        elapsedMs: {
+          default: 0,
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'wellfound-company-overview.post',
+    operationId: 'wellfound_company_overview_post',
+    name: 'Wellfound Company Overview',
+    description:
+      'Fetch a Wellfound company overview: product description, headcount band, total raised, market and location tags, and the website, LinkedIn, X and blog links. Read-only, and works with an anonymous session from wellfound-public-session.',
+    category: 'Social Media',
+    tags: ['wellfound', 'company', 'public'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        session: {
+          description: 'Blob from wellfound-public-session (anonymous) or wellfound-login.',
+          minLength: 1,
+          title: 'Session',
+          type: 'string',
+        },
+        startupId: {
+          description: 'Wellfound company (startup) id.',
+          minLength: 1,
+          title: 'Startupid',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Same exit the session was minted on. Omit to send directly.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['session', 'startupId'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        CompanyOverview: {
+          properties: {
+            id: {
+              default: '',
+              title: 'Id',
+              type: 'string',
+            },
+            name: {
+              default: '',
+              title: 'Name',
+              type: 'string',
+            },
+            slug: {
+              default: '',
+              title: 'Slug',
+              type: 'string',
+            },
+            productDescription: {
+              default: '',
+              title: 'Productdescription',
+              type: 'string',
+            },
+            companySize: {
+              default: '',
+              title: 'Companysize',
+              type: 'string',
+            },
+            totalRaised: {
+              default: '',
+              description: 'Formatted, for example $104.7M. Empty when not disclosed.',
+              title: 'Totalraised',
+              type: 'string',
+            },
+            marketTags: {
+              items: {
+                type: 'string',
+              },
+              title: 'Markettags',
+              type: 'array',
+            },
+            locationTags: {
+              items: {
+                type: 'string',
+              },
+              title: 'Locationtags',
+              type: 'array',
+            },
+            websiteUrl: {
+              default: '',
+              title: 'Websiteurl',
+              type: 'string',
+            },
+            linkedinUrl: {
+              default: '',
+              title: 'Linkedinurl',
+              type: 'string',
+            },
+            twitterUrl: {
+              default: '',
+              title: 'Twitterurl',
+              type: 'string',
+            },
+            blogUrl: {
+              default: '',
+              title: 'Blogurl',
+              type: 'string',
+            },
+          },
+          title: 'CompanyOverview',
+          type: 'object',
+        },
+      },
+      properties: {
+        company: {
+          $ref: '#/$defs/CompanyOverview',
+        },
+        session: {
+          default: '',
+          description: 'Refreshed blob carrying rotated cookies. Persist THIS one, not the input.',
+          title: 'Session',
+          type: 'string',
+        },
+      },
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'wellfound-conversation-detail.post',
+    operationId: 'wellfound_conversation_detail_post',
+    name: 'Wellfound Conversation Detail',
+    description:
+      'Fetch one Wellfound recruiter conversation with its full message history. Takes the bare conversation modelId from wellfound-list-conversations. Read-only. Requires an authenticated session blob from wellfound-login.',
+    category: 'Social Media',
+    tags: ['wellfound', 'messages'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        session: {
+          description: 'Authenticated blob from wellfound-login.',
+          minLength: 1,
+          title: 'Session',
+          type: 'string',
+        },
+        conversationId: {
+          description:
+            'The BARE modelId from wellfound-list-conversations, for example 982616801. Not the prefixed node id, which this query rejects.',
+          minLength: 1,
+          title: 'Conversationid',
+          type: 'string',
+        },
+        startupId: {
+          description: 'Company id for this conversation.',
+          minLength: 1,
+          title: 'Startupid',
+          type: 'string',
+        },
+        conversationType: {
+          default: 'JOBPAIRING',
+          description: 'Wellfound ConversationTypeEnum value.',
+          title: 'Conversationtype',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Same exit the session was minted on. Omit to send directly.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['session', 'conversationId', 'startupId'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        id: {
+          default: '',
+          title: 'Id',
+          type: 'string',
+        },
+        messages: {
+          description: 'Message nodes, oldest first as Wellfound returns them.',
+          items: {
+            additionalProperties: true,
+            type: 'object',
+          },
+          title: 'Messages',
+          type: 'array',
+        },
+        session: {
+          default: '',
+          description: 'Refreshed blob carrying rotated cookies. Persist THIS one, not the input.',
+          title: 'Session',
+          type: 'string',
+        },
+      },
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'wellfound-job-detail.post',
+    operationId: 'wellfound_job_detail_post',
+    name: 'Wellfound Job Detail',
+    description:
+      'Fetch one Wellfound job listing in full (description, skills, compensation, equity, remote configuration, locations) together with the hiring company, including funding stage and total raised. Read-only, and works with an anonymous session from wellfound-public-session. An expired or removed listing is reported as such rather than returned as an empty job.',
+    category: 'Social Media',
+    tags: ['wellfound', 'jobs', 'public'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 6,
+    inputSchema: {
+      properties: {
+        session: {
+          description: 'Blob from wellfound-public-session (anonymous) or wellfound-login.',
+          minLength: 1,
+          title: 'Session',
+          type: 'string',
+        },
+        jobId: {
+          description: 'Wellfound job listing id.',
+          minLength: 1,
+          title: 'Jobid',
+          type: 'string',
+        },
+        slug: {
+          default: '',
+          description: 'Listing slug, used for the URL and referer.',
+          title: 'Slug',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Same exit the session was minted on. Omit to send directly.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['session', 'jobId'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        Company: {
+          properties: {
+            id: {
+              default: '',
+              title: 'Id',
+              type: 'string',
+            },
+            name: {
+              default: '',
+              title: 'Name',
+              type: 'string',
+            },
+            slug: {
+              default: '',
+              title: 'Slug',
+              type: 'string',
+            },
+            highConcept: {
+              default: '',
+              title: 'Highconcept',
+              type: 'string',
+            },
+            productDescription: {
+              default: '',
+              title: 'Productdescription',
+              type: 'string',
+            },
+            companySize: {
+              default: '',
+              title: 'Companysize',
+              type: 'string',
+            },
+            totalRaised: {
+              default: '',
+              title: 'Totalraised',
+              type: 'string',
+            },
+            fundingStage: {
+              default: '',
+              title: 'Fundingstage',
+              type: 'string',
+            },
+            marketTags: {
+              items: {
+                type: 'string',
+              },
+              title: 'Markettags',
+              type: 'array',
+            },
+            locationTags: {
+              items: {
+                type: 'string',
+              },
+              title: 'Locationtags',
+              type: 'array',
+            },
+            founderNames: {
+              items: {
+                type: 'string',
+              },
+              title: 'Foundernames',
+              type: 'array',
+            },
+            perks: {
+              items: {
+                type: 'string',
+              },
+              title: 'Perks',
+              type: 'array',
+            },
+            logoUrl: {
+              default: '',
+              title: 'Logourl',
+              type: 'string',
+            },
+          },
+          title: 'Company',
+          type: 'object',
+        },
+        JobDetail: {
+          properties: {
+            id: {
+              title: 'Id',
+              type: 'string',
+            },
+            title: {
+              default: '',
+              title: 'Title',
+              type: 'string',
+            },
+            slug: {
+              default: '',
+              title: 'Slug',
+              type: 'string',
+            },
+            startupId: {
+              default: '',
+              title: 'Startupid',
+              type: 'string',
+            },
+            description: {
+              default: '',
+              title: 'Description',
+              type: 'string',
+            },
+            descriptionHtml: {
+              default: '',
+              title: 'Descriptionhtml',
+              type: 'string',
+            },
+            jobUrl: {
+              default: '',
+              title: 'Joburl',
+              type: 'string',
+            },
+            currentUserApplied: {
+              default: false,
+              description: 'Always false on an anonymous session.',
+              title: 'Currentuserapplied',
+              type: 'boolean',
+            },
+            currentUserQualificationReport: {
+              additionalProperties: true,
+              description: 'Empty on an anonymous session.',
+              title: 'Currentuserqualificationreport',
+              type: 'object',
+            },
+            skills: {
+              items: {
+                type: 'string',
+              },
+              title: 'Skills',
+              type: 'array',
+            },
+            compensation: {
+              default: '',
+              title: 'Compensation',
+              type: 'string',
+            },
+            equity: {
+              default: '',
+              title: 'Equity',
+              type: 'string',
+            },
+            jobType: {
+              default: '',
+              title: 'Jobtype',
+              type: 'string',
+            },
+            remote: {
+              anyOf: [
+                {
+                  type: 'boolean',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'True or False as Wellfound disclosed it; null when it did not.',
+              title: 'Remote',
+            },
+            remoteConfigKind: {
+              default: '',
+              description:
+                'REMOTE, ONSITE or ONSITE_OR_REMOTE, read from remoteConfig. Empty when undisclosed, which the anonymous surface often is.',
+              title: 'Remoteconfigkind',
+              type: 'string',
+            },
+            locationNames: {
+              items: {
+                type: 'string',
+              },
+              title: 'Locationnames',
+              type: 'array',
+            },
+            acceptedRemoteLocations: {
+              items: {
+                type: 'string',
+              },
+              title: 'Acceptedremotelocations',
+              type: 'array',
+            },
+            yearsExperienceMin: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Yearsexperiencemin',
+            },
+            yearsExperienceMax: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Yearsexperiencemax',
+            },
+            liveStartAt: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Livestartat',
+            },
+          },
+          required: ['id'],
+          title: 'JobDetail',
+          type: 'object',
+        },
+      },
+      properties: {
+        job: {
+          $ref: '#/$defs/JobDetail',
+        },
+        company: {
+          $ref: '#/$defs/Company',
+        },
+        session: {
+          default: '',
+          description: 'Refreshed blob carrying rotated cookies. Persist THIS one, not the input.',
+          title: 'Session',
+          type: 'string',
+        },
+      },
+      required: ['job'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'wellfound-list-applications.post',
+    operationId: 'wellfound_list_applications_post',
+    name: 'Wellfound List Applications',
+    description:
+      "List one page of the signed-in candidate's Wellfound job applications, each with its status, the listing and the company. The response carries no page info, so a page with no new applications means the end. Read-only. Requires an authenticated session blob from wellfound-login.",
+    category: 'Social Media',
+    tags: ['wellfound', 'jobs', 'applications'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        session: {
+          description: 'Authenticated blob from wellfound-login.',
+          minLength: 1,
+          title: 'Session',
+          type: 'string',
+        },
+        page: {
+          default: 1,
+          description:
+            '1-based page number. The response carries no pageInfo: a page with no new applications means the end.',
+          minimum: 1,
+          title: 'Page',
+          type: 'integer',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Same exit the session was minted on. Omit to send directly.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['session'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        applications: {
+          description: 'Application nodes, each with status, createdAt, jobListing and startup.',
+          items: {
+            additionalProperties: true,
+            type: 'object',
+          },
+          title: 'Applications',
+          type: 'array',
+        },
+        session: {
+          default: '',
+          description: 'Refreshed blob carrying rotated cookies. Persist THIS one, not the input.',
+          title: 'Session',
+          type: 'string',
+        },
+      },
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'wellfound-list-conversations.post',
+    operationId: 'wellfound_list_conversations_post',
+    name: 'Wellfound List Conversations',
+    description:
+      "List the signed-in candidate's Wellfound recruiter conversations with the company, the unread flag and the latest message in each thread. Read-only. Requires an authenticated session blob from wellfound-login.",
+    category: 'Social Media',
+    tags: ['wellfound', 'messages'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        session: {
+          description: 'Authenticated blob from wellfound-login.',
+          minLength: 1,
+          title: 'Session',
+          type: 'string',
+        },
+        scope: {
+          default: 'ONGOING',
+          description: 'ONGOING or ARCHIVED.',
+          title: 'Scope',
+          type: 'string',
+        },
+        page: {
+          default: 1,
+          description: '1-based page number.',
+          minimum: 1,
+          title: 'Page',
+          type: 'integer',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Same exit the session was minted on. Omit to send directly.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['session'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        ConversationSummary: {
+          properties: {
+            id: {
+              default: '',
+              description: 'Prefixed node id.',
+              title: 'Id',
+              type: 'string',
+            },
+            modelId: {
+              default: '',
+              description:
+                'Bare conversation id. This is the value wellfound-conversation-detail and wellfound-send-message take, NOT the prefixed id above.',
+              title: 'Modelid',
+              type: 'string',
+            },
+            modelType: {
+              default: '',
+              title: 'Modeltype',
+              type: 'string',
+            },
+            unread: {
+              default: false,
+              title: 'Unread',
+              type: 'boolean',
+            },
+            startup: {
+              additionalProperties: true,
+              description: 'The company on the other side.',
+              title: 'Startup',
+              type: 'object',
+            },
+            message: {
+              additionalProperties: true,
+              description: 'The latest message in the thread.',
+              title: 'Message',
+              type: 'object',
+            },
+          },
+          title: 'ConversationSummary',
+          type: 'object',
+        },
+      },
+      properties: {
+        conversations: {
+          items: {
+            $ref: '#/$defs/ConversationSummary',
+          },
+          title: 'Conversations',
+          type: 'array',
+        },
+        hasNextPage: {
+          default: false,
+          title: 'Hasnextpage',
+          type: 'boolean',
+        },
+        session: {
+          default: '',
+          description: 'Refreshed blob carrying rotated cookies. Persist THIS one, not the input.',
+          title: 'Session',
+          type: 'string',
+        },
+      },
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'wellfound-pipeline-stats.post',
+    operationId: 'wellfound_pipeline_stats_post',
+    name: 'Wellfound Pipeline Stats',
+    description:
+      "Fetch the signed-in candidate's Wellfound pipeline counts: interested, matched, messages and saved listings. Read-only. Requires an authenticated session blob from wellfound-login and the viewer id from wellfound-viewer.",
+    category: 'Social Media',
+    tags: ['wellfound', 'jobs', 'stats'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        session: {
+          description: 'Authenticated blob from wellfound-login.',
+          minLength: 1,
+          title: 'Session',
+          type: 'string',
+        },
+        userId: {
+          description: 'Wellfound viewer id, available from wellfound-viewer.',
+          minLength: 1,
+          title: 'Userid',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Same exit the session was minted on. Omit to send directly.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['session', 'userId'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        stats: {
+          additionalProperties: true,
+          description:
+            'Pipeline counts, for example interested, matched, messages, savedJobListings.',
+          title: 'Stats',
+          type: 'object',
+        },
+        session: {
+          default: '',
+          description: 'Refreshed blob carrying rotated cookies. Persist THIS one, not the input.',
+          title: 'Session',
+          type: 'string',
+        },
+      },
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'wellfound-public-session.post',
+    operationId: 'wellfound_public_session_post',
+    name: 'Wellfound Public Session',
+    description:
+      'Mint an anonymous Wellfound browsing session (DataDome cookie, Apollo signature and persisted-query map) with no credentials and no account. Returns an opaque blob for the Wellfound read operations. The blob is bound to the exit IP that minted it: pass the same proxyUrl to every call in a chain, or omit it on all of them.',
+    category: 'Social Media',
+    tags: ['wellfound', 'jobs', 'session', 'public'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 6,
+    inputSchema: {
+      properties: {
+        impersonate: {
+          default: 'chrome146',
+          description: 'curl_cffi browser-impersonation target used to mint the session.',
+          title: 'Impersonate',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Exit to mint from (http://user:pass@host:port). Omit to send directly. The returned session is bound to whatever exit minted it, so every later call must pass the SAME value.',
+          title: 'Proxyurl',
+        },
+      },
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        session: {
+          description:
+            'Opaque anonymous session blob. Pass to wellfound-browse-jobs, wellfound-job-detail and wellfound-company-overview. Carries no account credentials.',
+          title: 'Session',
+          type: 'string',
+        },
+        operationCount: {
+          description: "Persisted queries discovered in Wellfound's bundle (a health signal).",
+          title: 'Operationcount',
+          type: 'integer',
+        },
+        elapsedMs: {
+          description: 'Wall-clock time spent minting.',
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['session', 'operationCount', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'wellfound-refresh-ops.post',
+    operationId: 'wellfound_refresh_ops_post',
+    name: 'Wellfound Refresh Operations',
+    description:
+      "Re-scan Wellfound's public JS bundle for the current Apollo signature and persisted-query op-id map after a frontend deploy, and return the session blob with that material refreshed. No login and no credentials. A Wellfound deploy invalidates every persisted-query hash at once and looks identical to an expired session, so run this before concluding a session died.",
+    category: 'Social Media',
+    tags: ['wellfound', 'jobs', 'session', 'maintenance'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 6,
+    inputSchema: {
+      properties: {
+        session: {
+          description: 'Session blob from wellfound-public-session or wellfound-login.',
+          minLength: 1,
+          title: 'Session',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Same exit the blob was minted on. Omit to send directly.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['session'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        session: {
+          description: 'Refreshed blob: the same cookies, a new signature and op-id map.',
+          title: 'Session',
+          type: 'string',
+        },
+        operationCount: {
+          description: 'Persisted queries in the refreshed map.',
+          title: 'Operationcount',
+          type: 'integer',
+        },
+        elapsedMs: {
+          description: 'Wall-clock time spent re-scanning.',
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['session', 'operationCount', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'wellfound-search-jobs.post',
+    operationId: 'wellfound_search_jobs_post',
+    name: 'Wellfound Search Jobs',
+    description:
+      'Search Wellfound job listings as a signed-in candidate, with role, skill, job-type, remote-preference and location filters, and an already-applied flag per listing. Read-only. Requires an authenticated session blob from wellfound-login; for public browsing with no account use wellfound-browse-jobs.',
+    category: 'Social Media',
+    tags: ['wellfound', 'jobs', 'search'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 6,
+    inputSchema: {
+      properties: {
+        session: {
+          description: 'Authenticated blob from wellfound-login.',
+          minLength: 1,
+          title: 'Session',
+          type: 'string',
+        },
+        page: {
+          default: 1,
+          description: '1-based page number.',
+          minimum: 1,
+          title: 'Page',
+          type: 'integer',
+        },
+        roleTagIds: {
+          anyOf: [
+            {
+              items: {
+                type: 'string',
+              },
+              type: 'array',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Wellfound role tag ids.',
+          title: 'Roletagids',
+        },
+        skillTagIds: {
+          anyOf: [
+            {
+              items: {
+                type: 'string',
+              },
+              type: 'array',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Wellfound skill tag ids.',
+          title: 'Skilltagids',
+        },
+        jobTypes: {
+          anyOf: [
+            {
+              items: {
+                type: 'string',
+              },
+              type: 'array',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Job types, for example full-time or contract.',
+          title: 'Jobtypes',
+        },
+        remotePreference: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Wellfound remote preference enum value.',
+          title: 'Remotepreference',
+        },
+        locationId: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Wellfound location id.',
+          title: 'Locationid',
+        },
+        hideOffPlatform: {
+          default: true,
+          description: 'Hide listings that redirect off Wellfound.',
+          title: 'Hideoffplatform',
+          type: 'boolean',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Same exit the session was minted on. Omit to send directly.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['session'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        JobSummary: {
+          properties: {
+            id: {
+              title: 'Id',
+              type: 'string',
+            },
+            title: {
+              default: '',
+              title: 'Title',
+              type: 'string',
+            },
+            slug: {
+              default: '',
+              title: 'Slug',
+              type: 'string',
+            },
+            startupId: {
+              default: '',
+              title: 'Startupid',
+              type: 'string',
+            },
+            jobUrl: {
+              default: '',
+              title: 'Joburl',
+              type: 'string',
+            },
+            currentUserApplied: {
+              default: false,
+              description: 'True when this account has already applied.',
+              title: 'Currentuserapplied',
+              type: 'boolean',
+            },
+            compensation: {
+              default: '',
+              title: 'Compensation',
+              type: 'string',
+            },
+            equity: {
+              default: '',
+              title: 'Equity',
+              type: 'string',
+            },
+            jobType: {
+              default: '',
+              title: 'Jobtype',
+              type: 'string',
+            },
+            remote: {
+              anyOf: [
+                {
+                  type: 'boolean',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'True or False as Wellfound disclosed it; null when it did not.',
+              title: 'Remote',
+            },
+            remoteConfigKind: {
+              default: '',
+              description: 'REMOTE, ONSITE or ONSITE_OR_REMOTE. Empty when undisclosed.',
+              title: 'Remoteconfigkind',
+              type: 'string',
+            },
+            locationNames: {
+              items: {
+                type: 'string',
+              },
+              title: 'Locationnames',
+              type: 'array',
+            },
+            liveStartAt: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              title: 'Livestartat',
+            },
+            description: {
+              default: '',
+              title: 'Description',
+              type: 'string',
+            },
+            startupName: {
+              default: '',
+              title: 'Startupname',
+              type: 'string',
+            },
+            startupSlug: {
+              default: '',
+              title: 'Startupslug',
+              type: 'string',
+            },
+            startupLogoUrl: {
+              default: '',
+              title: 'Startuplogourl',
+              type: 'string',
+            },
+            startupCompanySize: {
+              default: '',
+              title: 'Startupcompanysize',
+              type: 'string',
+            },
+            startupHighConcept: {
+              default: '',
+              title: 'Startuphighconcept',
+              type: 'string',
+            },
+            startupFundingStage: {
+              default: '',
+              title: 'Startupfundingstage',
+              type: 'string',
+            },
+            startupTotalRaised: {
+              default: '',
+              title: 'Startuptotalraised',
+              type: 'string',
+            },
+          },
+          required: ['id'],
+          title: 'JobSummary',
+          type: 'object',
+        },
+      },
+      properties: {
+        jobs: {
+          items: {
+            $ref: '#/$defs/JobSummary',
+          },
+          title: 'Jobs',
+          type: 'array',
+        },
+        page: {
+          default: 1,
+          title: 'Page',
+          type: 'integer',
+        },
+        hasNextPage: {
+          default: false,
+          title: 'Hasnextpage',
+          type: 'boolean',
+        },
+        totalStartupCount: {
+          default: 0,
+          description: 'Companies matched, which is what Wellfound counts here.',
+          title: 'Totalstartupcount',
+          type: 'integer',
+        },
+        session: {
+          default: '',
+          description: 'Refreshed blob carrying rotated cookies. Persist THIS one, not the input.',
+          title: 'Session',
+          type: 'string',
+        },
+      },
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'wellfound-viewer.post',
+    operationId: 'wellfound_viewer_post',
+    name: 'Wellfound Viewer',
+    description:
+      'Fetch the signed-in Wellfound viewer: user id, whether the account may still apply to jobs, candidate state and analytics traits. The cheapest way to check that a session is alive and the account is unrestricted. Read-only. Requires an authenticated session blob from wellfound-login.',
+    category: 'Social Media',
+    tags: ['wellfound', 'viewer', 'health'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        session: {
+          description: 'Authenticated blob from wellfound-login.',
+          minLength: 1,
+          title: 'Session',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Same exit the session was minted on. Omit to send directly.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['session'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        viewerId: {
+          default: '',
+          description: 'Wellfound user id behind this session.',
+          title: 'Viewerid',
+          type: 'string',
+        },
+        canApplyToJobs: {
+          default: true,
+          description: 'False when Wellfound has restricted this account.',
+          title: 'Canapplytojobs',
+          type: 'boolean',
+        },
+        candidateState: {
+          default: '',
+          title: 'Candidatestate',
+          type: 'string',
+        },
+        traits: {
+          additionalProperties: true,
+          description: 'Decoded analytics traits, empty when absent or undecodable.',
+          title: 'Traits',
+          type: 'object',
+        },
+        session: {
+          default: '',
+          description: 'Refreshed blob carrying rotated cookies. Persist THIS one, not the input.',
+          title: 'Session',
+          type: 'string',
+        },
+      },
       title: 'Output',
       type: 'object',
     },
