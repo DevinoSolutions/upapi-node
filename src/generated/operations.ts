@@ -130,6 +130,10 @@ import type {
   RedditCheckCommentVisibilityGetOutput,
   RedditGetTrendingGetInput,
   RedditGetTrendingGetOutput,
+  RedditOauthMeGetInput,
+  RedditOauthMeGetOutput,
+  RedditOauthPostCommentPostInput,
+  RedditOauthPostCommentPostOutput,
   RedditScrapePostGetInput,
   RedditScrapePostGetOutput,
   RedditSearchPostsGetInput,
@@ -504,6 +508,16 @@ export type Operations = {
     input: RedditGetTrendingGetInput,
     options?: CallOptions,
   ) => Promise<RedditGetTrendingGetOutput>;
+  /** Reddit - who does this OAuth app speak as? — Exchanges a Reddit OAuth2 refresh token and reads the account it belongs to over Reddit's documented API: username, suspension state, verified email, karma, account age and the token's scopes. Reads only -- it creates nothing. The access token and the supplied secrets are never returned or logged. */
+  'reddit-oauth-me.get': (
+    input: RedditOauthMeGetInput,
+    options?: CallOptions,
+  ) => Promise<RedditOauthMeGetOutput>;
+  /** Reddit - post a comment as a registered app — Posts a comment through Reddit's documented OAuth2 API using a refresh token, with the caller's own User-Agent. Verifies the token's account against expectedUsername before creating anything, and turns Reddit's HTTP-200 `json.errors` refusals (locked thread, subreddit ban, rate limit) into classified failures. No browser, no captcha, no cookies. */
+  'reddit-oauth-post-comment.post': (
+    input: RedditOauthPostCommentPostInput,
+    options?: CallOptions,
+  ) => Promise<RedditOauthPostCommentPostOutput>;
   /** Scrape Reddit Post & Comments — Fetch a Reddit post with its comment tree: post metadata, selftext, and nested comments with scores and authorship. Requires a Reddit session cookie in sessionCookies (obtain it from reddit-login.post, or copy reddit_session out of a signed-in browser) — Reddit has blocked every anonymous read surface since 2026-07-30. */
   'reddit-scrape-post.get': (
     input: RedditScrapePostGetInput,
@@ -1005,6 +1019,18 @@ export function buildOperations(client: UpAPI): Operations {
     'reddit-get-trending.get': (input, options) =>
       client.call<RedditGetTrendingGetOutput, RedditGetTrendingGetInput>(
         'reddit-get-trending.get',
+        input,
+        options,
+      ),
+    'reddit-oauth-me.get': (input, options) =>
+      client.call<RedditOauthMeGetOutput, RedditOauthMeGetInput>(
+        'reddit-oauth-me.get',
+        input,
+        options,
+      ),
+    'reddit-oauth-post-comment.post': (input, options) =>
+      client.call<RedditOauthPostCommentPostOutput, RedditOauthPostCommentPostInput>(
+        'reddit-oauth-post-comment.post',
         input,
         options,
       ),

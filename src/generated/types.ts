@@ -3132,6 +3132,129 @@ export interface RedditGetTrendingGetOutput {
   elapsedMs: number;
 }
 
+// ── reddit-oauth-me.get ─────────────────────────────────────────────────
+
+export interface RedditOauthMeGetInput {
+  /**
+   * Reddit app client id
+   */
+  clientId: string;
+  /**
+   * Reddit app client secret. Never logged.
+   */
+  clientSecret: string;
+  /**
+   * OAuth2 refresh token for the account. Never logged, never returned.
+   */
+  refreshToken: string;
+  /**
+   * The User-Agent this request is made with, sent verbatim. REQUIRED and never defaulted: Reddit's API rules ask for a descriptive UA that names the app and its contact, and a shared default would put every caller of this worker behind one identity.
+   */
+  userAgent: string;
+  /**
+   * Optional exit IP. Omit for the worker's default egress -- the OAuth lane has no per-account IP requirement of its own.
+   */
+  proxyUrl?: string | null;
+  /**
+   * When given, the call FAILS unless Reddit reports this exact username. Use it whenever the credentials were looked up by account, so a mis-filed token is a loud refusal rather than a silent identity swap.
+   */
+  expectedUsername?: string | null;
+}
+
+export interface RedditOauthMeGetOutput {
+  /**
+   * The Reddit username these credentials speak as
+   */
+  name: string;
+  /**
+   * Reddit's own account id (the t2 id, without the prefix)
+   */
+  id: string;
+  isSuspended: boolean;
+  hasVerifiedEmail: boolean;
+  linkKarma: number;
+  commentKarma: number;
+  /**
+   * Account creation time, epoch seconds UTC
+   */
+  created: number;
+  /**
+   * The OAuth scopes this token carries, sorted. A caller planning to comment should see 'submit' here; its absence is why an otherwise-valid token will be refused at the write.
+   */
+  scopes: Array<string>;
+  /**
+   * Lifetime Reddit gave the access token that was minted for this call. Reported so a caller can reason about how long a token is good for; the token itself is never returned.
+   */
+  tokenExpiresInSec: number;
+  fetchedAt: string;
+  elapsedMs: number;
+}
+
+// ── reddit-oauth-post-comment.post ──────────────────────────────────────
+
+export interface RedditOauthPostCommentPostInput {
+  /**
+   * Reddit app client id
+   */
+  clientId: string;
+  /**
+   * Reddit app client secret. Never logged.
+   */
+  clientSecret: string;
+  /**
+   * OAuth2 refresh token for the posting account. Never logged, never returned.
+   */
+  refreshToken: string;
+  /**
+   * The User-Agent this request is made with, sent verbatim. REQUIRED and never defaulted -- Reddit's API rules ask for a descriptive UA naming the app.
+   */
+  userAgent: string;
+  /**
+   * Fullname of what is being replied to: `t3_<id>` for a post, `t1_<id>` for another comment. This is the complete address of the parent -- unlike the cookie path, no page URL is needed or accepted.
+   */
+  thingId: string;
+  /**
+   * The comment body, markdown, exactly as it will appear.
+   */
+  text: string;
+  /**
+   * The account this comment must be attributed to. REQUIRED, unlike on the read operation: a refresh token is opaque, so without this a mis-filed credential posts under an identity nobody chose -- and every gate upstream reasoned about a different account. Compared against the name Reddit itself reports, before anything is created.
+   */
+  expectedUsername: string;
+  /**
+   * Optional exit IP. Omit for the worker's default egress -- the OAuth lane has no per-account IP requirement of its own.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface RedditOauthPostCommentPostOutput {
+  /**
+   * The new comment's id, without the `t1_` prefix
+   */
+  commentId: string;
+  /**
+   * The new comment's fullname, e.g. `t1_abc123`
+   */
+  commentFullname: string;
+  /**
+   * Absolute permalink to the comment. Reddit returns a site-relative path; it is made absolute here so no caller has to know which host to prepend.
+   */
+  permalink: string;
+  /**
+   * Creation time Reddit recorded, epoch seconds UTC
+   */
+  createdUtc: number;
+  /**
+   * The username Reddit reported for the token, echoed so a caller records who actually spoke rather than who it believed it had asked for.
+   */
+  postedAs: string;
+  /**
+   * The fullname this comment replies to
+   */
+  parentThingId: string;
+  elapsedMs: number;
+}
+
 // ── reddit-scrape-post.get ──────────────────────────────────────────────
 
 export interface RedditScrapePostGetInput {
@@ -4060,6 +4183,9 @@ export interface WellfoundBrowseJobsPostOutputJobSummary {
   title?: string;
   slug?: string;
   startupId?: string;
+  /**
+   * Canonical listing page, https://wellfound.com/jobs/<id>-<slug>. Empty when Wellfound disclosed no slug, because both halves are required: the id alone 404s.
+   */
   jobUrl?: string;
   compensation?: string;
   equity?: string;
@@ -4231,6 +4357,9 @@ export interface WellfoundJobDetailPostOutputJobDetail {
   startupId?: string;
   description?: string;
   descriptionHtml?: string;
+  /**
+   * Canonical listing page, https://wellfound.com/jobs/<id>-<slug>. Empty when Wellfound disclosed no slug, because both halves are required: the id alone 404s.
+   */
   jobUrl?: string;
   /**
    * Always false on an anonymous session.
@@ -4477,6 +4606,9 @@ export interface WellfoundSearchJobsPostOutputJobSummary {
   title?: string;
   slug?: string;
   startupId?: string;
+  /**
+   * Canonical listing page, https://wellfound.com/jobs/<id>-<slug>. Empty when Wellfound disclosed no slug, because both halves are required: the id alone 404s.
+   */
   jobUrl?: string;
   /**
    * True when this account has already applied.

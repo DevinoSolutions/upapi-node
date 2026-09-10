@@ -90,6 +90,8 @@ export const OPERATION_SLUGS = [
   'reddit-check-account-health.get',
   'reddit-check-comment-visibility.get',
   'reddit-get-trending.get',
+  'reddit-oauth-me.get',
+  'reddit-oauth-post-comment.post',
   'reddit-scrape-post.get',
   'reddit-search-posts.get',
   'reddit-subreddit-info.get',
@@ -12017,6 +12019,301 @@ export const OPERATIONS: readonly OperationMeta[] = [
     },
   },
   {
+    slug: 'reddit-oauth-me.get',
+    operationId: 'reddit_oauth_me_get',
+    name: 'Reddit - who does this OAuth app speak as?',
+    description:
+      "Exchanges a Reddit OAuth2 refresh token and reads the account it belongs to over Reddit's documented API: username, suspension state, verified email, karma, account age and the token's scopes. Reads only -- it creates nothing. The access token and the supplied secrets are never returned or logged.",
+    category: 'Social Media',
+    tags: ['reddit', 'oauth', 'account', 'identity', 'social'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        clientId: {
+          description: 'Reddit app client id',
+          maxLength: 200,
+          minLength: 1,
+          title: 'Clientid',
+          type: 'string',
+        },
+        clientSecret: {
+          description: 'Reddit app client secret. Never logged.',
+          maxLength: 400,
+          minLength: 1,
+          title: 'Clientsecret',
+          type: 'string',
+        },
+        refreshToken: {
+          description: 'OAuth2 refresh token for the account. Never logged, never returned.',
+          maxLength: 1000,
+          minLength: 1,
+          title: 'Refreshtoken',
+          type: 'string',
+        },
+        userAgent: {
+          description:
+            "The User-Agent this request is made with, sent verbatim. REQUIRED and never defaulted: Reddit's API rules ask for a descriptive UA that names the app and its contact, and a shared default would put every caller of this worker behind one identity.",
+          maxLength: 256,
+          minLength: 1,
+          title: 'Useragent',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            "Optional exit IP. Omit for the worker's default egress -- the OAuth lane has no per-account IP requirement of its own.",
+          title: 'Proxyurl',
+        },
+        expectedUsername: {
+          anyOf: [
+            {
+              maxLength: 100,
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'When given, the call FAILS unless Reddit reports this exact username. Use it whenever the credentials were looked up by account, so a mis-filed token is a loud refusal rather than a silent identity swap.',
+          title: 'Expectedusername',
+        },
+      },
+      required: ['clientId', 'clientSecret', 'refreshToken', 'userAgent'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        name: {
+          description: 'The Reddit username these credentials speak as',
+          title: 'Name',
+          type: 'string',
+        },
+        id: {
+          description: "Reddit's own account id (the t2 id, without the prefix)",
+          title: 'Id',
+          type: 'string',
+        },
+        isSuspended: {
+          title: 'Issuspended',
+          type: 'boolean',
+        },
+        hasVerifiedEmail: {
+          title: 'Hasverifiedemail',
+          type: 'boolean',
+        },
+        linkKarma: {
+          title: 'Linkkarma',
+          type: 'integer',
+        },
+        commentKarma: {
+          title: 'Commentkarma',
+          type: 'integer',
+        },
+        created: {
+          description: 'Account creation time, epoch seconds UTC',
+          title: 'Created',
+          type: 'number',
+        },
+        scopes: {
+          description:
+            "The OAuth scopes this token carries, sorted. A caller planning to comment should see 'submit' here; its absence is why an otherwise-valid token will be refused at the write.",
+          items: {
+            type: 'string',
+          },
+          title: 'Scopes',
+          type: 'array',
+        },
+        tokenExpiresInSec: {
+          description:
+            'Lifetime Reddit gave the access token that was minted for this call. Reported so a caller can reason about how long a token is good for; the token itself is never returned.',
+          title: 'Tokenexpiresinsec',
+          type: 'integer',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: [
+        'name',
+        'id',
+        'isSuspended',
+        'hasVerifiedEmail',
+        'linkKarma',
+        'commentKarma',
+        'created',
+        'scopes',
+        'tokenExpiresInSec',
+        'fetchedAt',
+        'elapsedMs',
+      ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'reddit-oauth-post-comment.post',
+    operationId: 'reddit_oauth_post_comment_post',
+    name: 'Reddit - post a comment as a registered app',
+    description:
+      "Posts a comment through Reddit's documented OAuth2 API using a refresh token, with the caller's own User-Agent. Verifies the token's account against expectedUsername before creating anything, and turns Reddit's HTTP-200 `json.errors` refusals (locked thread, subreddit ban, rate limit) into classified failures. No browser, no captcha, no cookies.",
+    category: 'Social Media',
+    tags: ['reddit', 'oauth', 'comment', 'social'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        clientId: {
+          description: 'Reddit app client id',
+          maxLength: 200,
+          minLength: 1,
+          title: 'Clientid',
+          type: 'string',
+        },
+        clientSecret: {
+          description: 'Reddit app client secret. Never logged.',
+          maxLength: 400,
+          minLength: 1,
+          title: 'Clientsecret',
+          type: 'string',
+        },
+        refreshToken: {
+          description:
+            'OAuth2 refresh token for the posting account. Never logged, never returned.',
+          maxLength: 1000,
+          minLength: 1,
+          title: 'Refreshtoken',
+          type: 'string',
+        },
+        userAgent: {
+          description:
+            "The User-Agent this request is made with, sent verbatim. REQUIRED and never defaulted -- Reddit's API rules ask for a descriptive UA naming the app.",
+          maxLength: 256,
+          minLength: 1,
+          title: 'Useragent',
+          type: 'string',
+        },
+        thingId: {
+          description:
+            'Fullname of what is being replied to: `t3_<id>` for a post, `t1_<id>` for another comment. This is the complete address of the parent -- unlike the cookie path, no page URL is needed or accepted.',
+          maxLength: 50,
+          minLength: 4,
+          title: 'Thingid',
+          type: 'string',
+        },
+        text: {
+          description: 'The comment body, markdown, exactly as it will appear.',
+          maxLength: 10000,
+          minLength: 1,
+          title: 'Text',
+          type: 'string',
+        },
+        expectedUsername: {
+          description:
+            'The account this comment must be attributed to. REQUIRED, unlike on the read operation: a refresh token is opaque, so without this a mis-filed credential posts under an identity nobody chose -- and every gate upstream reasoned about a different account. Compared against the name Reddit itself reports, before anything is created.',
+          maxLength: 100,
+          minLength: 1,
+          title: 'Expectedusername',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            "Optional exit IP. Omit for the worker's default egress -- the OAuth lane has no per-account IP requirement of its own.",
+          title: 'Proxyurl',
+        },
+      },
+      required: [
+        'clientId',
+        'clientSecret',
+        'refreshToken',
+        'userAgent',
+        'thingId',
+        'text',
+        'expectedUsername',
+      ],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        commentId: {
+          description: "The new comment's id, without the `t1_` prefix",
+          title: 'Commentid',
+          type: 'string',
+        },
+        commentFullname: {
+          description: "The new comment's fullname, e.g. `t1_abc123`",
+          title: 'Commentfullname',
+          type: 'string',
+        },
+        permalink: {
+          description:
+            'Absolute permalink to the comment. Reddit returns a site-relative path; it is made absolute here so no caller has to know which host to prepend.',
+          title: 'Permalink',
+          type: 'string',
+        },
+        createdUtc: {
+          description: 'Creation time Reddit recorded, epoch seconds UTC',
+          title: 'Createdutc',
+          type: 'number',
+        },
+        postedAs: {
+          description:
+            'The username Reddit reported for the token, echoed so a caller records who actually spoke rather than who it believed it had asked for.',
+          title: 'Postedas',
+          type: 'string',
+        },
+        parentThingId: {
+          description: 'The fullname this comment replies to',
+          title: 'Parentthingid',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: [
+        'commentId',
+        'commentFullname',
+        'permalink',
+        'createdUtc',
+        'postedAs',
+        'parentThingId',
+        'elapsedMs',
+      ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
     slug: 'reddit-scrape-post.get',
     operationId: 'reddit_scrape_post_get',
     name: 'Scrape Reddit Post & Comments',
@@ -15462,6 +15759,8 @@ export const OPERATIONS: readonly OperationMeta[] = [
             },
             jobUrl: {
               default: '',
+              description:
+                'Canonical listing page, https://wellfound.com/jobs/<id>-<slug>. Empty when Wellfound disclosed no slug, because both halves are required: the id alone 404s.',
               title: 'Joburl',
               type: 'string',
             },
@@ -15981,6 +16280,8 @@ export const OPERATIONS: readonly OperationMeta[] = [
             },
             jobUrl: {
               default: '',
+              description:
+                'Canonical listing page, https://wellfound.com/jobs/<id>-<slug>. Empty when Wellfound disclosed no slug, because both halves are required: the id alone 404s.',
               title: 'Joburl',
               type: 'string',
             },
@@ -16631,6 +16932,8 @@ export const OPERATIONS: readonly OperationMeta[] = [
             },
             jobUrl: {
               default: '',
+              description:
+                'Canonical listing page, https://wellfound.com/jobs/<id>-<slug>. Empty when Wellfound disclosed no slug, because both halves are required: the id alone 404s.',
               title: 'Joburl',
               type: 'string',
             },
