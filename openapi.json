@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "upAPI",
-    "description": "Browser-powered API marketplace. 97 of 97 APIs included (capped at 449 for RapidAPI compatibility).\n\nBilling: a call spends WEIGHTED UNITS against your plan's monthly quota — not a flat one call = one unit. A light HTTP relay costs 1 unit; heavy work costs more, up to 25 (search-engine result pages 25, headless-browser renders and page scrapes 20, residential-proxy social reads 15, LLM completions 10, datacenter social/media reads 4). Every operation declares its own price as `x-upapi-unit-weight`, so a workload can be costed before it is run. Quota state rides on every response in the `RateLimit` / `RateLimit-Policy` headers.",
+    "description": "Browser-powered API marketplace. 99 of 99 APIs included (capped at 449 for RapidAPI compatibility).\n\nBilling: a call spends WEIGHTED UNITS against your plan's monthly quota — not a flat one call = one unit. A light HTTP relay costs 1 unit; heavy work costs more, up to 25 (search-engine result pages 25, headless-browser renders and page scrapes 20, residential-proxy social reads 15, LLM completions 10, datacenter social/media reads 4). Every operation declares its own price as `x-upapi-unit-weight`, so a workload can be costed before it is run. Quota state rides on every response in the `RateLimit` / `RateLimit-Policy` headers.",
     "version": "1.0.0"
   },
   "servers": [
@@ -5094,6 +5094,413 @@
                     }
                   },
                   "required": ["totalReturned", "articles", "fetchedAt"],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/email-generate-address.post": {
+      "post": {
+        "operationId": "email_generate_address_post",
+        "summary": "Email Generate Address",
+        "description": "Generate a fresh disposable email address for account signup. Supports catch-all domains, plus-addressing, and pre-created Outlook aliases.",
+        "tags": ["Utility", "email", "signup", "account-creation", "utility"],
+        "x-upapi-unit-weight": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "strategy": {
+                    "default": "catch_all",
+                    "description": "Email strategy: catch_all, plus_address, or outlook_alias",
+                    "title": "Strategy",
+                    "type": "string"
+                  },
+                  "domain": {
+                    "default": null,
+                    "description": "Domain for catch_all (e.g. locj.space); plus_address uses baseAddress",
+                    "title": "Domain",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "baseAddress": {
+                    "default": null,
+                    "description": "Base email for plus_address strategy (e.g. julia.sousa938@outlook.com)",
+                    "title": "Baseaddress",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "aliasAddress": {
+                    "default": null,
+                    "description": "Pre-created alias for outlook_alias strategy",
+                    "title": "Aliasaddress",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "platform": {
+                    "default": null,
+                    "description": "Target platform hint (GITHUB, TIKTOK, INSTAGRAM, LINKEDIN, REDDIT)",
+                    "title": "Platform",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "success": {
+                      "title": "Success",
+                      "type": "boolean"
+                    },
+                    "email": {
+                      "title": "Email",
+                      "type": "string"
+                    },
+                    "firstName": {
+                      "title": "Firstname",
+                      "type": "string"
+                    },
+                    "lastName": {
+                      "title": "Lastname",
+                      "type": "string"
+                    },
+                    "username": {
+                      "title": "Username",
+                      "type": "string"
+                    },
+                    "strategy": {
+                      "title": "Strategy",
+                      "type": "string"
+                    },
+                    "readTransport": {
+                      "title": "Readtransport",
+                      "type": "string"
+                    },
+                    "generatedAt": {
+                      "title": "Generatedat",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "email",
+                    "firstName",
+                    "lastName",
+                    "username",
+                    "strategy",
+                    "readTransport",
+                    "generatedAt"
+                  ],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/email-read-verification-code-graph.post": {
+      "post": {
+        "operationId": "email_read_verification_code_graph_post",
+        "summary": "Email Read Verification Code (Microsoft Graph)",
+        "description": "Poll an outlook.com mailbox over Microsoft Graph for a verification code. For accounts whose IMAP switch is off. Returns the code or an error.",
+        "tags": ["Utility", "email", "verification", "otp", "outlook", "graph", "utility"],
+        "x-upapi-unit-weight": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "graphClientId": {
+                    "description": "Microsoft public app client_id",
+                    "minLength": 1,
+                    "title": "Graphclientid",
+                    "type": "string"
+                  },
+                  "graphRefreshToken": {
+                    "description": "OAuth refresh token (Mail.Read offline_access)",
+                    "minLength": 1,
+                    "title": "Graphrefreshtoken",
+                    "type": "string"
+                  },
+                  "senderContains": {
+                    "description": "Substring to match in the From header (e.g. 'tiktok', 'github')",
+                    "minLength": 1,
+                    "title": "Sendercontains",
+                    "type": "string"
+                  },
+                  "recipientContains": {
+                    "default": null,
+                    "description": "Substring to match in the To header — REQUIRED to tell plus-addresses (base+alias@outlook.com) apart when many accounts share one inbox",
+                    "title": "Recipientcontains",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "codePattern": {
+                    "default": null,
+                    "description": "Regex pattern for the code (default: 6-digit number)",
+                    "title": "Codepattern",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "timeoutSeconds": {
+                    "default": 120,
+                    "description": "Max seconds to poll",
+                    "maximum": 300,
+                    "minimum": 5,
+                    "title": "Timeoutseconds",
+                    "type": "number"
+                  },
+                  "pollSeconds": {
+                    "default": 5,
+                    "description": "Seconds between polls",
+                    "maximum": 30,
+                    "minimum": 1,
+                    "title": "Pollseconds",
+                    "type": "number"
+                  },
+                  "minEpochSeconds": {
+                    "default": null,
+                    "description": "Ignore messages received before this Unix timestamp",
+                    "title": "Minepochseconds",
+                    "type": "number",
+                    "nullable": true
+                  }
+                },
+                "required": ["graphClientId", "graphRefreshToken", "senderContains"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "success": {
+                      "title": "Success",
+                      "type": "boolean"
+                    },
+                    "code": {
+                      "default": null,
+                      "title": "Code",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "error": {
+                      "default": null,
+                      "title": "Error",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "elapsedMs": {
+                      "title": "Elapsedms",
+                      "type": "integer"
+                    }
+                  },
+                  "required": ["success", "elapsedMs"],
                   "title": "Output",
                   "type": "object"
                 }
@@ -10595,6 +11002,13 @@
                     "title": "Proxyurl",
                     "type": "string",
                     "nullable": true
+                  },
+                  "sessionCookies": {
+                    "default": null,
+                    "description": "JSON-serialized dict of web session cookies for authenticated reads",
+                    "title": "Sessioncookies",
+                    "type": "string",
+                    "nullable": true
                   }
                 },
                 "required": ["shortcode"],
@@ -11334,6 +11748,13 @@
                     "title": "Proxyurl",
                     "type": "string",
                     "nullable": true
+                  },
+                  "sessionCookies": {
+                    "default": null,
+                    "description": "JSON-serialized dict of web session cookies for authenticated reads",
+                    "title": "Sessioncookies",
+                    "type": "string",
+                    "nullable": true
                   }
                 },
                 "required": ["userId"],
@@ -11555,6 +11976,13 @@
                     "default": null,
                     "description": "Optional proxy URL",
                     "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "sessionCookies": {
+                    "default": null,
+                    "description": "JSON-serialized dict of web session cookies (sessionid, csrftoken, etc.) for authenticated reads. When absent the read is unauthenticated.",
+                    "title": "Sessioncookies",
                     "type": "string",
                     "nullable": true
                   }
@@ -12938,6 +13366,13 @@
                     "minimum": 1,
                     "title": "Maxresults",
                     "type": "integer"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Residential exit to route the web search through (DDG blocks datacenter IPs). Falls back to the DDGS_PROXY env var.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
                   }
                 },
                 "required": ["keyword"],

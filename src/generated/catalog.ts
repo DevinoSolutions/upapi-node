@@ -45,6 +45,8 @@ export const OPERATION_SLUGS = [
   'currency-convert.get',
   'detect-tech-stack.post',
   'devto-articles-search.get',
+  'email-generate-address.post',
+  'email-read-verification-code-graph.post',
   'email-read-verification-code.post',
   'email-read-verification-link.post',
   'fetch-markdown.post',
@@ -3122,6 +3124,262 @@ export const OPERATIONS: readonly OperationMeta[] = [
         },
       },
       required: ['totalReturned', 'articles', 'fetchedAt'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'email-generate-address.post',
+    operationId: 'email_generate_address_post',
+    name: 'Email Generate Address',
+    description:
+      'Generate a fresh disposable email address for account signup. Supports catch-all domains, plus-addressing, and pre-created Outlook aliases.',
+    category: 'Utility',
+    tags: ['email', 'signup', 'account-creation', 'utility'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        strategy: {
+          default: 'catch_all',
+          description: 'Email strategy: catch_all, plus_address, or outlook_alias',
+          title: 'Strategy',
+          type: 'string',
+        },
+        domain: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Domain for catch_all (e.g. locj.space); plus_address uses baseAddress',
+          title: 'Domain',
+        },
+        baseAddress: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Base email for plus_address strategy (e.g. julia.sousa938@outlook.com)',
+          title: 'Baseaddress',
+        },
+        aliasAddress: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Pre-created alias for outlook_alias strategy',
+          title: 'Aliasaddress',
+        },
+        platform: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Target platform hint (GITHUB, TIKTOK, INSTAGRAM, LINKEDIN, REDDIT)',
+          title: 'Platform',
+        },
+      },
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        success: {
+          title: 'Success',
+          type: 'boolean',
+        },
+        email: {
+          title: 'Email',
+          type: 'string',
+        },
+        firstName: {
+          title: 'Firstname',
+          type: 'string',
+        },
+        lastName: {
+          title: 'Lastname',
+          type: 'string',
+        },
+        username: {
+          title: 'Username',
+          type: 'string',
+        },
+        strategy: {
+          title: 'Strategy',
+          type: 'string',
+        },
+        readTransport: {
+          title: 'Readtransport',
+          type: 'string',
+        },
+        generatedAt: {
+          title: 'Generatedat',
+          type: 'string',
+        },
+      },
+      required: [
+        'success',
+        'email',
+        'firstName',
+        'lastName',
+        'username',
+        'strategy',
+        'readTransport',
+        'generatedAt',
+      ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'email-read-verification-code-graph.post',
+    operationId: 'email_read_verification_code_graph_post',
+    name: 'Email Read Verification Code (Microsoft Graph)',
+    description:
+      'Poll an outlook.com mailbox over Microsoft Graph for a verification code. For accounts whose IMAP switch is off. Returns the code or an error.',
+    category: 'Utility',
+    tags: ['email', 'verification', 'otp', 'outlook', 'graph', 'utility'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        graphClientId: {
+          description: 'Microsoft public app client_id',
+          minLength: 1,
+          title: 'Graphclientid',
+          type: 'string',
+        },
+        graphRefreshToken: {
+          description: 'OAuth refresh token (Mail.Read offline_access)',
+          minLength: 1,
+          title: 'Graphrefreshtoken',
+          type: 'string',
+        },
+        senderContains: {
+          description: "Substring to match in the From header (e.g. 'tiktok', 'github')",
+          minLength: 1,
+          title: 'Sendercontains',
+          type: 'string',
+        },
+        recipientContains: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Substring to match in the To header — REQUIRED to tell plus-addresses (base+alias@outlook.com) apart when many accounts share one inbox',
+          title: 'Recipientcontains',
+        },
+        codePattern: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Regex pattern for the code (default: 6-digit number)',
+          title: 'Codepattern',
+        },
+        timeoutSeconds: {
+          default: 120,
+          description: 'Max seconds to poll',
+          maximum: 300,
+          minimum: 5,
+          title: 'Timeoutseconds',
+          type: 'number',
+        },
+        pollSeconds: {
+          default: 5,
+          description: 'Seconds between polls',
+          maximum: 30,
+          minimum: 1,
+          title: 'Pollseconds',
+          type: 'number',
+        },
+        minEpochSeconds: {
+          anyOf: [
+            {
+              type: 'number',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Ignore messages received before this Unix timestamp',
+          title: 'Minepochseconds',
+        },
+      },
+      required: ['graphClientId', 'graphRefreshToken', 'senderContains'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        success: {
+          title: 'Success',
+          type: 'boolean',
+        },
+        code: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Code',
+        },
+        error: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Error',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['success', 'elapsedMs'],
       title: 'Output',
       type: 'object',
     },
@@ -8648,6 +8906,19 @@ export const OPERATIONS: readonly OperationMeta[] = [
           description: 'Optional proxy URL',
           title: 'Proxyurl',
         },
+        sessionCookies: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'JSON-serialized dict of web session cookies for authenticated reads',
+          title: 'Sessioncookies',
+        },
       },
       required: ['shortcode'],
       title: 'Input',
@@ -9223,6 +9494,19 @@ export const OPERATIONS: readonly OperationMeta[] = [
           description: 'Optional proxy URL (recommended — endpoint rate-limits aggressively)',
           title: 'Proxyurl',
         },
+        sessionCookies: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'JSON-serialized dict of web session cookies for authenticated reads',
+          title: 'Sessioncookies',
+        },
       },
       required: ['userId'],
       title: 'Input',
@@ -9352,6 +9636,20 @@ export const OPERATIONS: readonly OperationMeta[] = [
           default: null,
           description: 'Optional proxy URL',
           title: 'Proxyurl',
+        },
+        sessionCookies: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'JSON-serialized dict of web session cookies (sessionid, csrftoken, etc.) for authenticated reads. When absent the read is unauthenticated.',
+          title: 'Sessioncookies',
         },
       },
       required: ['username'],
@@ -10337,6 +10635,20 @@ export const OPERATIONS: readonly OperationMeta[] = [
           minimum: 1,
           title: 'Maxresults',
           type: 'integer',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Residential exit to route the web search through (DDG blocks datacenter IPs). Falls back to the DDGS_PROXY env var.',
+          title: 'Proxyurl',
         },
       },
       required: ['keyword'],

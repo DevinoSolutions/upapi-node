@@ -40,6 +40,10 @@ import type {
   DetectTechStackPostOutput,
   DevtoArticlesSearchGetInput,
   DevtoArticlesSearchGetOutput,
+  EmailGenerateAddressPostInput,
+  EmailGenerateAddressPostOutput,
+  EmailReadVerificationCodeGraphPostInput,
+  EmailReadVerificationCodeGraphPostOutput,
   EmailReadVerificationCodePostInput,
   EmailReadVerificationCodePostOutput,
   EmailReadVerificationLinkPostInput,
@@ -286,6 +290,16 @@ export type Operations = {
     input: DevtoArticlesSearchGetInput,
     options?: CallOptions,
   ) => Promise<DevtoArticlesSearchGetOutput>;
+  /** Email Generate Address — Generate a fresh disposable email address for account signup. Supports catch-all domains, plus-addressing, and pre-created Outlook aliases. */
+  'email-generate-address.post': (
+    input: EmailGenerateAddressPostInput,
+    options?: CallOptions,
+  ) => Promise<EmailGenerateAddressPostOutput>;
+  /** Email Read Verification Code (Microsoft Graph) — Poll an outlook.com mailbox over Microsoft Graph for a verification code. For accounts whose IMAP switch is off. Returns the code or an error. */
+  'email-read-verification-code-graph.post': (
+    input: EmailReadVerificationCodeGraphPostInput,
+    options?: CallOptions,
+  ) => Promise<EmailReadVerificationCodeGraphPostOutput>;
   /** Read Email Verification Code — Connect to an IMAP mailbox and extract a verification code from the SUBJECT of a recent email. Polls with retries. Supports Gmail (with App Password), Outlook, and any IMAP server. Generic — works for any platform that puts its code in the subject line; for a token that only appears in the body, use email-read-verification-link. */
   'email-read-verification-code.post': (
     input: EmailReadVerificationCodePostInput,
@@ -780,6 +794,17 @@ export function buildOperations(client: UpAPI): Operations {
         input,
         options,
       ),
+    'email-generate-address.post': (input, options) =>
+      client.call<EmailGenerateAddressPostOutput, EmailGenerateAddressPostInput>(
+        'email-generate-address.post',
+        input,
+        options,
+      ),
+    'email-read-verification-code-graph.post': (input, options) =>
+      client.call<
+        EmailReadVerificationCodeGraphPostOutput,
+        EmailReadVerificationCodeGraphPostInput
+      >('email-read-verification-code-graph.post', input, options),
     'email-read-verification-code.post': (input, options) =>
       client.call<EmailReadVerificationCodePostOutput, EmailReadVerificationCodePostInput>(
         'email-read-verification-code.post',

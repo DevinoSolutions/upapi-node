@@ -669,6 +669,86 @@ export interface DevtoArticlesSearchGetOutput {
   fetchedAt: string;
 }
 
+// ── email-generate-address.post ─────────────────────────────────────────
+
+export interface EmailGenerateAddressPostInput {
+  /**
+   * Email strategy: catch_all, plus_address, or outlook_alias
+   */
+  strategy?: string;
+  /**
+   * Domain for catch_all (e.g. locj.space); plus_address uses baseAddress
+   */
+  domain?: string | null;
+  /**
+   * Base email for plus_address strategy (e.g. julia.sousa938@outlook.com)
+   */
+  baseAddress?: string | null;
+  /**
+   * Pre-created alias for outlook_alias strategy
+   */
+  aliasAddress?: string | null;
+  /**
+   * Target platform hint (GITHUB, TIKTOK, INSTAGRAM, LINKEDIN, REDDIT)
+   */
+  platform?: string | null;
+}
+
+export interface EmailGenerateAddressPostOutput {
+  success: boolean;
+  email: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  strategy: string;
+  readTransport: string;
+  generatedAt: string;
+}
+
+// ── email-read-verification-code-graph.post ─────────────────────────────
+
+export interface EmailReadVerificationCodeGraphPostInput {
+  /**
+   * Microsoft public app client_id
+   */
+  graphClientId: string;
+  /**
+   * OAuth refresh token (Mail.Read offline_access)
+   */
+  graphRefreshToken: string;
+  /**
+   * Substring to match in the From header (e.g. 'tiktok', 'github')
+   */
+  senderContains: string;
+  /**
+   * Substring to match in the To header — REQUIRED to tell plus-addresses (base+alias@outlook.com) apart when many accounts share one inbox
+   */
+  recipientContains?: string | null;
+  /**
+   * Regex pattern for the code (default: 6-digit number)
+   */
+  codePattern?: string | null;
+  /**
+   * Max seconds to poll
+   */
+  timeoutSeconds?: number;
+  /**
+   * Seconds between polls
+   */
+  pollSeconds?: number;
+  /**
+   * Ignore messages received before this Unix timestamp
+   */
+  minEpochSeconds?: number | null;
+}
+
+export interface EmailReadVerificationCodeGraphPostOutput {
+  success: boolean;
+  code?: string | null;
+  error?: string | null;
+  elapsedMs: number;
+}
+
 // ── email-read-verification-code.post ───────────────────────────────────
 
 export interface EmailReadVerificationCodePostInput {
@@ -2374,6 +2454,10 @@ export interface InstagramGetPostCommentersPostInput {
    * Optional proxy URL
    */
   proxyUrl?: string | null;
+  /**
+   * JSON-serialized dict of web session cookies for authenticated reads
+   */
+  sessionCookies?: string | null;
 }
 
 export interface InstagramGetPostCommentersPostOutputComment {
@@ -2493,6 +2577,10 @@ export interface InstagramGetUserPostsPostInput {
    * Optional proxy URL (recommended — endpoint rate-limits aggressively)
    */
   proxyUrl?: string | null;
+  /**
+   * JSON-serialized dict of web session cookies for authenticated reads
+   */
+  sessionCookies?: string | null;
 }
 
 export interface InstagramGetUserPostsPostOutputPostItem {
@@ -2527,6 +2615,10 @@ export interface InstagramGetUserProfilePostInput {
    * Optional proxy URL
    */
   proxyUrl?: string | null;
+  /**
+   * JSON-serialized dict of web session cookies (sessionid, csrftoken, etc.) for authenticated reads. When absent the read is unauthenticated.
+   */
+  sessionCookies?: string | null;
 }
 
 export interface InstagramGetUserProfilePostOutput {
@@ -2741,6 +2833,10 @@ export interface LinkedinProfileSearchPostInput {
    * Max profiles to return
    */
   maxResults?: number;
+  /**
+   * Residential exit to route the web search through (DDG blocks datacenter IPs). Falls back to the DDGS_PROXY env var.
+   */
+  proxyUrl?: string | null;
 }
 
 export interface LinkedinProfileSearchPostOutputLinkedInProfile {
