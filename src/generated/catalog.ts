@@ -128,6 +128,7 @@ export const OPERATION_SLUGS = [
   'wellfound-search-jobs.post',
   'wellfound-viewer.post',
   'wikipedia-article.get',
+  'youtube-get-transcript.get',
 ] as const;
 
 export type OperationSlug = (typeof OPERATION_SLUGS)[number];
@@ -17610,6 +17611,70 @@ export const OPERATIONS: readonly OperationMeta[] = [
         'coordinates',
         'fetchedAt',
       ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'youtube-get-transcript.get',
+    operationId: 'youtube_get_transcript_get',
+    name: 'YouTube Get Transcript',
+    description:
+      'Best-effort video transcript/captions via youtube-transcript-api. No API key or auth needed (no quota). Returns empty transcript on failure.',
+    category: 'YouTube',
+    tags: ['youtube', 'transcript', 'captions'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        videoId: {
+          description: 'YouTube video ID',
+          minLength: 1,
+          title: 'Videoid',
+          type: 'string',
+        },
+        maxChars: {
+          default: 4000,
+          description: 'Max transcript length',
+          maximum: 20000,
+          minimum: 100,
+          title: 'Maxchars',
+          type: 'integer',
+        },
+      },
+      required: ['videoId'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        success: {
+          title: 'Success',
+          type: 'boolean',
+        },
+        videoId: {
+          title: 'Videoid',
+          type: 'string',
+        },
+        transcript: {
+          title: 'Transcript',
+          type: 'string',
+        },
+        language: {
+          title: 'Language',
+          type: 'string',
+        },
+        charCount: {
+          title: 'Charcount',
+          type: 'integer',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['success', 'videoId', 'transcript', 'language', 'charCount', 'elapsedMs'],
       title: 'Output',
       type: 'object',
     },

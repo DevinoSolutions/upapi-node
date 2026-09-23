@@ -4808,3 +4808,25 @@ export interface WikipediaArticleGetOutput {
   coordinates: Record<string, number> | null;
   fetchedAt: string;
 }
+
+// ── youtube-get-transcript.get ──────────────────────────────────────────
+
+export interface YoutubeGetTranscriptGetInput {
+  /**
+   * YouTube video ID
+   */
+  videoId: string;
+  /**
+   * Max transcript length
+   */
+  maxChars?: number;
+}
+
+export interface YoutubeGetTranscriptGetOutput {
+  success: boolean;
+  videoId: string;
+  transcript: string;
+  language: string;
+  charCount: number;
+  elapsedMs: number;
+}
