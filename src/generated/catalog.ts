@@ -6785,7 +6785,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     description:
       'Look up one Google Maps place by place id, CID, feature id or a pasted Maps link, and get its name, full address, coordinates, categories, rating, review count, phone, website and opening hours. Pairs with Google Maps Business Search, which returns the identifiers this accepts.',
     category: 'Maps',
-    tags: ['google', 'maps', 'places', 'local', 'business', 'details', 'geo'],
+    tags: ['google', 'maps', 'places', 'local', 'business', 'details', 'geo', 'scraping'],
     workerLanguage: 'python',
     publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 4,
@@ -7204,7 +7204,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     description:
       "Read the reviews on any Google Maps place by place id, CID, feature id or a pasted Maps link. Returns each review's rating, full text, author, photos, timestamp and the owner's reply, sorted by relevance, date or rating, with cursor pagination through the whole feed.",
     category: 'Maps',
-    tags: ['google', 'maps', 'reviews', 'ratings', 'local', 'business', 'reputation'],
+    tags: ['google', 'maps', 'reviews', 'ratings', 'local', 'business', 'reputation', 'scraping'],
     workerLanguage: 'python',
     publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 6,
@@ -7681,7 +7681,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     description:
       'Search Google Maps for businesses by text query, optionally centred on coordinates. Returns each place with its name, address, coordinates, category, rating, review count, opening hours, website and phone where Google publishes them, plus the place id you can pass to Google Maps Place Details.',
     category: 'Maps',
-    tags: ['google', 'maps', 'places', 'local', 'business', 'leads', 'geo'],
+    tags: ['google', 'maps', 'places', 'local', 'business', 'leads', 'geo', 'scraping'],
     workerLanguage: 'python',
     publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 6,
@@ -10180,7 +10180,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     description:
       "Fetch one LinkedIn job posting: full description, seniority level, employment type, job function, industries, applicant count and posting age. Accepts the job id from linkedin-jobs-search, a job URL or a urn:li:jobPosting URN. Reads LinkedIn's public guest surface — no LinkedIn account or cookie is required.",
     category: 'Social Media',
-    tags: ['linkedin', 'jobs', 'hiring', 'recruiting', 'job-description'],
+    tags: ['linkedin', 'jobs', 'hiring', 'recruiting', 'job-description', 'scraping'],
     workerLanguage: 'python',
     publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 6,
@@ -10376,7 +10376,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     description:
       "Search LinkedIn job postings by keyword and location. Returns title, company, location, posting date, salary hint and the job id you pass to linkedin-jobs-detail. Reads LinkedIn's public guest surface — no LinkedIn account or cookie is required.",
     category: 'Social Media',
-    tags: ['linkedin', 'jobs', 'hiring', 'recruiting', 'search'],
+    tags: ['linkedin', 'jobs', 'hiring', 'recruiting', 'search', 'scraping'],
     workerLanguage: 'python',
     publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 6,
@@ -15087,7 +15087,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     description:
       "Read one Upwork job posting in full: the complete description, required skills, budget, how many freelancers have applied and been interviewed, and the client's country, rating, hire count and total spend. Accepts the job ciphertext or the job URL. Reads Upwork's public visitor surface — no Upwork account is required.",
     category: 'Social Media',
-    tags: ['upwork', 'jobs', 'freelance', 'hiring', 'details'],
+    tags: ['upwork', 'jobs', 'freelance', 'hiring', 'details', 'scraping'],
     workerLanguage: 'python',
     publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 10,
@@ -15374,7 +15374,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     description:
       "Search Upwork job postings by keyword. Returns title, description, contract type, budget, publish time and the job reference you pass to upwork-jobs-detail. Reads Upwork's public visitor surface — no Upwork account or cookie is required.",
     category: 'Social Media',
-    tags: ['upwork', 'jobs', 'freelance', 'hiring', 'search'],
+    tags: ['upwork', 'jobs', 'freelance', 'hiring', 'search', 'scraping'],
     workerLanguage: 'python',
     publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 10,
