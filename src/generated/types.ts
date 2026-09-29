@@ -909,6 +909,38 @@ export interface EmailReadVerificationLinkPostOutput {
   elapsedMs: number;
 }
 
+// ── facebook-post-comment.post ──────────────────────────────────────────
+
+export interface FacebookPostCommentPostInput {
+  /**
+   * Facebook post ID to comment on
+   */
+  postId: string;
+  /**
+   * Comment text
+   */
+  text: string;
+  /**
+   * JSON dict of Facebook session cookies (must include c_user and xs)
+   */
+  sessionCookies: string;
+  /**
+   * Direct URL to the post (used to find the comment form)
+   */
+  postUrl?: string | null;
+  /**
+   * Optional proxy URL
+   */
+  proxyUrl?: string | null;
+}
+
+export interface FacebookPostCommentPostOutput {
+  success: boolean;
+  commentId?: string | null;
+  message: string;
+  elapsedMs: number;
+}
+
 // ── fetch-markdown.post ─────────────────────────────────────────────────
 
 export interface FetchMarkdownPostInput {

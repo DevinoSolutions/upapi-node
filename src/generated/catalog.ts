@@ -49,6 +49,7 @@ export const OPERATION_SLUGS = [
   'email-read-verification-code-graph.post',
   'email-read-verification-code.post',
   'email-read-verification-link.post',
+  'facebook-post-comment.post',
   'fetch-markdown.post',
   'github-issue-comments.get',
   'github-repo-contributors.get',
@@ -3626,6 +3627,101 @@ export const OPERATIONS: readonly OperationMeta[] = [
       ],
       additionalProperties: false,
       $schema: 'http://json-schema.org/draft-07/schema#',
+    },
+  },
+  {
+    slug: 'facebook-post-comment.post',
+    operationId: 'facebook_post_comment_post',
+    name: 'Facebook Post Comment',
+    description:
+      'Post a comment on a Facebook post via mbasic.facebook.com (requires auth cookies)',
+    category: 'Social Media',
+    tags: ['facebook', 'comment', 'social', 'engage'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        postId: {
+          description: 'Facebook post ID to comment on',
+          minLength: 1,
+          title: 'Postid',
+          type: 'string',
+        },
+        text: {
+          description: 'Comment text',
+          maxLength: 8000,
+          minLength: 1,
+          title: 'Text',
+          type: 'string',
+        },
+        sessionCookies: {
+          description: 'JSON dict of Facebook session cookies (must include c_user and xs)',
+          minLength: 1,
+          title: 'Sessioncookies',
+          type: 'string',
+        },
+        postUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Direct URL to the post (used to find the comment form)',
+          title: 'Posturl',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional proxy URL',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['postId', 'text', 'sessionCookies'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        success: {
+          title: 'Success',
+          type: 'boolean',
+        },
+        commentId: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Commentid',
+        },
+        message: {
+          title: 'Message',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['success', 'message', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
     },
   },
   {
