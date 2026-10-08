@@ -48,8 +48,6 @@ import type {
   EmailReadVerificationCodePostOutput,
   EmailReadVerificationLinkPostInput,
   EmailReadVerificationLinkPostOutput,
-  FacebookPostCommentPostInput,
-  FacebookPostCommentPostOutput,
   FetchMarkdownPostInput,
   FetchMarkdownPostOutput,
   GithubIssueCommentsGetInput,
@@ -314,11 +312,6 @@ export type Operations = {
     input: EmailReadVerificationLinkPostInput,
     options?: CallOptions,
   ) => Promise<EmailReadVerificationLinkPostOutput>;
-  /** Facebook Post Comment — Post a comment on a Facebook post via mbasic.facebook.com (requires auth cookies) */
-  'facebook-post-comment.post': (
-    input: FacebookPostCommentPostInput,
-    options?: CallOptions,
-  ) => Promise<FacebookPostCommentPostOutput>;
   /** Fetch URL as Markdown — Convert any web page into clean, LLM-ready Markdown. Fetches over plain HTTP with browser headers (retrying once through a residential or datacenter proxy when the origin serves a bot wall), removes boilerplate with Mozilla Readability, and converts with GitHub-flavored Markdown tables, lists and code blocks. Article mode is verified against a whole-page conversion and downgrades itself when Readability strips too much, so you are never handed a gutted page. Returns the markdown plus title, byline, language, excerpt, the extracted link list, the final URL after redirects, and which transport served the body. No browser is used, so a client-rendered page is reported as an error rather than as empty content. */
   'fetch-markdown.post': (
     input: FetchMarkdownPostInput,
@@ -828,12 +821,6 @@ export function buildOperations(client: UpAPI): Operations {
     'email-read-verification-link.post': (input, options) =>
       client.call<EmailReadVerificationLinkPostOutput, EmailReadVerificationLinkPostInput>(
         'email-read-verification-link.post',
-        input,
-        options,
-      ),
-    'facebook-post-comment.post': (input, options) =>
-      client.call<FacebookPostCommentPostOutput, FacebookPostCommentPostInput>(
-        'facebook-post-comment.post',
         input,
         options,
       ),
