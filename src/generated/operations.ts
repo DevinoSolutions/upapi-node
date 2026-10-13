@@ -206,8 +206,6 @@ import type {
   WellfoundViewerPostOutput,
   WikipediaArticleGetInput,
   WikipediaArticleGetOutput,
-  YoutubeGetTranscriptGetInput,
-  YoutubeGetTranscriptGetOutput,
 } from './types.js';
 
 /**
@@ -704,11 +702,6 @@ export type Operations = {
     input: WikipediaArticleGetInput,
     options?: CallOptions,
   ) => Promise<WikipediaArticleGetOutput>;
-  /** YouTube Get Transcript — Best-effort video transcript/captions via youtube-transcript-api. No API key or auth needed (no quota). Returns empty transcript on failure. */
-  'youtube-get-transcript.get': (
-    input: YoutubeGetTranscriptGetInput,
-    options?: CallOptions,
-  ) => Promise<YoutubeGetTranscriptGetOutput>;
 };
 
 export function buildOperations(client: UpAPI): Operations {
@@ -1247,12 +1240,6 @@ export function buildOperations(client: UpAPI): Operations {
     'wikipedia-article.get': (input, options) =>
       client.call<WikipediaArticleGetOutput, WikipediaArticleGetInput>(
         'wikipedia-article.get',
-        input,
-        options,
-      ),
-    'youtube-get-transcript.get': (input, options) =>
-      client.call<YoutubeGetTranscriptGetOutput, YoutubeGetTranscriptGetInput>(
-        'youtube-get-transcript.get',
         input,
         options,
       ),
