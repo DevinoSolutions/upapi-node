@@ -9123,6 +9123,14 @@ export const OPERATIONS: readonly OperationMeta[] = [
           default: null,
           title: 'Commentcount',
         },
+        previewCommenters: {
+          default: [],
+          items: {
+            type: 'string',
+          },
+          title: 'Previewcommenters',
+          type: 'array',
+        },
         mediaUrls: {
           items: {
             type: 'string',

@@ -2506,6 +2506,7 @@ export interface InstagramGetPostInfoPostOutput {
   ownerUsername: string;
   caption: string;
   commentCount?: number | null;
+  previewCommenters?: Array<string>;
   mediaUrls: Array<string>;
   isVideo?: boolean;
   videoUrl?: string | null;

@@ -11323,6 +11323,14 @@
                       "type": "integer",
                       "nullable": true
                     },
+                    "previewCommenters": {
+                      "default": [],
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Previewcommenters",
+                      "type": "array"
+                    },
                     "mediaUrls": {
                       "items": {
                         "type": "string"
