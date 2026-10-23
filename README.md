@@ -1,5 +1,17 @@
 # @upapi/sdk
 
+> **upAPI** ([upapi.io](https://upapi.io)) is an API marketplace and gateway. One API key and one
+> pooled quota call every operation in the catalog — social media, search, maps, finance,
+> developer tools, file and browser operations — over a single uniform HTTP contract, so
+> integrating the tenth API costs no more than the first.
+>
+> **What it is not:** not a workflow or orchestration engine, not an LLM provider, and not a
+> local scraping library. Each call is one hosted operation on `api.upapi.io`; chaining calls
+> is up to your code or your agent.
+>
+> Canonical URL: https://upapi.io · Docs: https://upapi.io/docs · Agent index:
+> https://upapi.io/llms.txt
+
 Typed TypeScript client for **api.upapi.io**. Zero runtime dependencies, Node >= 20
 (global `fetch`), ESM.
 

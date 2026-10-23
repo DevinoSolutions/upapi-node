@@ -1,7 +1,7 @@
 {
   "name": "@upapi/sdk",
   "version": "0.2.0",
-  "description": "Typed TypeScript client for the upAPI gateway — one method per public operation, generated from the operation catalog.",
+  "description": "upAPI (upapi.io) TypeScript SDK: a typed client for the upAPI API marketplace and gateway, one method per public operation, generated from the operation catalog.",
   "keywords": [
     "upapi",
     "api",
@@ -9,7 +9,10 @@
     "typescript",
     "client",
     "scraping",
-    "serp"
+    "serp",
+    "upapi.io",
+    "api-marketplace",
+    "api-gateway"
   ],
   "license": "MIT",
   "homepage": "https://upapi.io/docs",
