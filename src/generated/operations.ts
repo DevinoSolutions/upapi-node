@@ -250,7 +250,7 @@ export type Operations = {
     input: ChatousPollEventsGetInput,
     options?: CallOptions,
   ) => Promise<ChatousPollEventsGetOutput>;
-  /** Get Cloudflare Page Title — Fetch the <title> of a URL using curl-cffi with browser TLS impersonation. Handles sites that block plain-requests but allow browser-like TLS fingerprints. */
+  /** Get Cloudflare Page Title — Fetch the <title> of a URL, with the HTTP status and Server header. The URL is read through an SSRF guard: private addresses and redirects to them are refused. */
   'cloudflare-page-title.get': (
     input: CloudflarePageTitleGetInput,
     options?: CallOptions,

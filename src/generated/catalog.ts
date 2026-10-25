@@ -1426,9 +1426,9 @@ export const OPERATIONS: readonly OperationMeta[] = [
     operationId: 'cloudflare_page_title_get',
     name: 'Get Cloudflare Page Title',
     description:
-      'Fetch the <title> of a URL using curl-cffi with browser TLS impersonation. Handles sites that block plain-requests but allow browser-like TLS fingerprints.',
+      'Fetch the <title> of a URL, with the HTTP status and Server header. The URL is read through an SSRF guard: private addresses and redirects to them are refused.',
     category: 'Tools',
-    tags: ['cloudflare', 'scraping', 'anti-bot', 'python', 'curl-cffi'],
+    tags: ['cloudflare', 'scraping', 'anti-bot', 'python'],
     workerLanguage: 'python',
     publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 1,
@@ -1444,7 +1444,8 @@ export const OPERATIONS: readonly OperationMeta[] = [
         },
         impersonate: {
           default: 'chrome131',
-          description: 'curl-cffi browser profile',
+          description:
+            'Currently ignored: the guarded fetch is httpx-only, so no browser TLS profile is impersonated.',
           title: 'Impersonate',
           type: 'string',
         },

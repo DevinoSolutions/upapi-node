@@ -371,7 +371,7 @@ export interface CloudflarePageTitleGetInput {
    */
   url: string;
   /**
-   * curl-cffi browser profile
+   * Currently ignored: the guarded fetch is httpx-only, so no browser TLS profile is impersonated.
    */
   impersonate?: string;
 }
