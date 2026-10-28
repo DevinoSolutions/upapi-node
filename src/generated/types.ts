@@ -2369,6 +2369,10 @@ export interface InstagramCheckAccountHealthGetInput {
    * Optional proxy URL
    */
   proxyUrl?: string | null;
+  /**
+   * The account's OWN session cookies (JSON string of {name: value}). When provided, an AUTHENTICATED probe detects UFAC self-suspension (/accounts/suspended/) that the public web_profile_info read CANNOT see — a suspended account's public profile stays fully visible; the 'Confirm you're human' wall is shown only to its own session (measured 2026-10-27, the inverse of the Reddit self-read shadowban blind spot). It MUST ride the account's OWN pinned exit (the caller enforces this) — never a non-own IP.
+   */
+  sessionCookies?: string | null;
 }
 
 export interface InstagramCheckAccountHealthGetOutput {
