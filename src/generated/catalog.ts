@@ -13803,6 +13803,18 @@ export const OPERATIONS: readonly OperationMeta[] = [
           title: 'Username',
           type: 'string',
         },
+        nickname: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Nickname',
+        },
         accountActive: {
           title: 'Accountactive',
           type: 'boolean',

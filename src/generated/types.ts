@@ -3696,6 +3696,7 @@ export interface TiktokCheckAccountHealthGetInput {
 export interface TiktokCheckAccountHealthGetOutput {
   success: boolean;
   username: string;
+  nickname?: string | null;
   accountActive: boolean;
   isSuspended: boolean;
   isPrivate: boolean;
