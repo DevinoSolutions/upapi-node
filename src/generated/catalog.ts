@@ -83,6 +83,7 @@ export const OPERATION_SLUGS = [
   'ip-geolocation.get',
   'linkedin-check-account-health.post',
   'linkedin-get-profile.post',
+  'linkedin-get-sent-invitations.post',
   'linkedin-jobs-detail.get',
   'linkedin-jobs-search.get',
   'linkedin-profile-search.post',
@@ -10593,6 +10594,129 @@ export const OPERATIONS: readonly OperationMeta[] = [
           description: 'Additional raw scalar fields extracted from the profile object.',
           title: 'Fields',
           type: 'object',
+        },
+        message: {
+          default: '',
+          title: 'Message',
+          type: 'string',
+        },
+        fetchedAt: {
+          default: '',
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          default: 0,
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'linkedin-get-sent-invitations.post',
+    operationId: 'linkedin_get_sent_invitations_post',
+    name: 'LinkedIn Get Sent Invitations',
+    description:
+      'List the connection invitations the logged-in member has sent (still pending), with the resolved invitee for each. Cookie-authenticated. The read-side confirmation that a send actually created an invitation on-platform.',
+    category: 'Social Media',
+    tags: ['linkedin', 'invitations', 'connection', 'voyager'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 15,
+    inputSchema: {
+      properties: {
+        sessionCookies: {
+          description: 'JSON of session cookies: li_at, JSESSIONID, bcookie.',
+          minLength: 1,
+          title: 'Sessioncookies',
+          type: 'string',
+        },
+        count: {
+          default: 40,
+          description: 'Max invitations to return.',
+          maximum: 100,
+          minimum: 1,
+          title: 'Count',
+          type: 'integer',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional user-provided proxy URL.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['sessionCookies'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        SentInvitation: {
+          properties: {
+            inviteeName: {
+              default: '',
+              title: 'Inviteename',
+              type: 'string',
+            },
+            inviteePublicIdentifier: {
+              default: '',
+              title: 'Inviteepublicidentifier',
+              type: 'string',
+            },
+            inviteeUrn: {
+              default: '',
+              title: 'Inviteeurn',
+              type: 'string',
+            },
+            invitationUrn: {
+              default: '',
+              title: 'Invitationurn',
+              type: 'string',
+            },
+            sentAt: {
+              default: '',
+              title: 'Sentat',
+              type: 'string',
+            },
+          },
+          title: 'SentInvitation',
+          type: 'object',
+        },
+      },
+      properties: {
+        success: {
+          default: false,
+          title: 'Success',
+          type: 'boolean',
+        },
+        count: {
+          default: 0,
+          title: 'Count',
+          type: 'integer',
+        },
+        invitations: {
+          items: {
+            $ref: '#/$defs/SentInvitation',
+          },
+          title: 'Invitations',
+          type: 'array',
+        },
+        endpoint: {
+          default: '',
+          description: 'Which ladder endpoint returned the data.',
+          title: 'Endpoint',
+          type: 'string',
         },
         message: {
           default: '',

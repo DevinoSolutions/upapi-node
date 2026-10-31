@@ -116,6 +116,8 @@ import type {
   LinkedinCheckAccountHealthPostOutput,
   LinkedinGetProfilePostInput,
   LinkedinGetProfilePostOutput,
+  LinkedinGetSentInvitationsPostInput,
+  LinkedinGetSentInvitationsPostOutput,
   LinkedinJobsDetailGetInput,
   LinkedinJobsDetailGetOutput,
   LinkedinJobsSearchGetInput,
@@ -485,6 +487,11 @@ export type Operations = {
     input: LinkedinGetProfilePostInput,
     options?: CallOptions,
   ) => Promise<LinkedinGetProfilePostOutput>;
+  /** LinkedIn Get Sent Invitations — List the connection invitations the logged-in member has sent (still pending), with the resolved invitee for each. Cookie-authenticated. The read-side confirmation that a send actually created an invitation on-platform. */
+  'linkedin-get-sent-invitations.post': (
+    input: LinkedinGetSentInvitationsPostInput,
+    options?: CallOptions,
+  ) => Promise<LinkedinGetSentInvitationsPostOutput>;
   /** Get LinkedIn Job Details — Fetch one LinkedIn job posting: full description, seniority level, employment type, job function, industries, applicant count and posting age. Accepts the job id from linkedin-jobs-search, a job URL or a urn:li:jobPosting URN. Reads LinkedIn's public guest surface — no LinkedIn account or cookie is required. */
   'linkedin-jobs-detail.get': (
     input: LinkedinJobsDetailGetInput,
@@ -1019,6 +1026,12 @@ export function buildOperations(client: UpAPI): Operations {
     'linkedin-get-profile.post': (input, options) =>
       client.call<LinkedinGetProfilePostOutput, LinkedinGetProfilePostInput>(
         'linkedin-get-profile.post',
+        input,
+        options,
+      ),
+    'linkedin-get-sent-invitations.post': (input, options) =>
+      client.call<LinkedinGetSentInvitationsPostOutput, LinkedinGetSentInvitationsPostInput>(
+        'linkedin-get-sent-invitations.post',
         input,
         options,
       ),

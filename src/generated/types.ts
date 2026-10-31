@@ -2880,6 +2880,44 @@ export interface LinkedinGetProfilePostOutput {
   elapsedMs?: number;
 }
 
+// ── linkedin-get-sent-invitations.post ──────────────────────────────────
+
+export interface LinkedinGetSentInvitationsPostInput {
+  /**
+   * JSON of session cookies: li_at, JSESSIONID, bcookie.
+   */
+  sessionCookies: string;
+  /**
+   * Max invitations to return.
+   */
+  count?: number;
+  /**
+   * Optional user-provided proxy URL.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface LinkedinGetSentInvitationsPostOutputSentInvitation {
+  inviteeName?: string;
+  inviteePublicIdentifier?: string;
+  inviteeUrn?: string;
+  invitationUrn?: string;
+  sentAt?: string;
+}
+
+export interface LinkedinGetSentInvitationsPostOutput {
+  success?: boolean;
+  count?: number;
+  invitations?: Array<LinkedinGetSentInvitationsPostOutputSentInvitation>;
+  /**
+   * Which ladder endpoint returned the data.
+   */
+  endpoint?: string;
+  message?: string;
+  fetchedAt?: string;
+  elapsedMs?: number;
+}
+
 // ── linkedin-jobs-detail.get ────────────────────────────────────────────
 
 export interface LinkedinJobsDetailGetInput {
