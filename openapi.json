@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "upAPI",
-    "description": "Browser-powered API marketplace. 104 of 104 APIs included (capped at 449 for RapidAPI compatibility).\n\nBilling: a call spends WEIGHTED UNITS against your plan's monthly quota — not a flat one call = one unit. A light HTTP relay costs 1 unit; heavy work costs more, up to 25 (search-engine result pages 25, headless-browser renders and page scrapes 20, residential-proxy social reads 15, LLM completions 10, datacenter social/media reads 4). Every operation declares its own price as `x-upapi-unit-weight`, so a workload can be costed before it is run. Quota state rides on every response in the `RateLimit` / `RateLimit-Policy` headers.",
+    "description": "Browser-powered API marketplace. 112 of 112 APIs included (capped at 449 for RapidAPI compatibility).\n\nBilling: a call spends WEIGHTED UNITS against your plan's monthly quota — not a flat one call = one unit. A light HTTP relay costs 1 unit; heavy work costs more, up to 25 (search-engine result pages 25, headless-browser renders and page scrapes 20, residential-proxy social reads 15, LLM completions 10, datacenter social/media reads 4). Every operation declares its own price as `x-upapi-unit-weight`, so a workload can be costed before it is run. Quota state rides on every response in the `RateLimit` / `RateLimit-Policy` headers.",
     "version": "1.0.0"
   },
   "servers": [
@@ -3935,6 +3935,379 @@
         }
       }
     },
+    "/contra-apply-to-job.post": {
+      "post": {
+        "operationId": "contra_apply_to_job_post",
+        "summary": "Apply To Contra Job",
+        "description": "Submit an application to a Contra job posting with a cover letter and optional portfolio attachments, from your own signed-in Contra account. Returns applied=true only when Contra records the application. Uses your own Contra account; upAPI stores nothing.",
+        "tags": ["Social Media", "contra", "jobs", "write"],
+        "x-upapi-unit-weight": 6,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "sessionCookies": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Contra session cookies for the applicant. Your own Contra account's cookies; upAPI stores nothing.",
+                    "title": "Sessioncookies",
+                    "type": "object"
+                  },
+                  "jobPostingId": {
+                    "description": "Contra JobPosting id to apply to.",
+                    "maxLength": 200,
+                    "minLength": 1,
+                    "title": "Jobpostingid",
+                    "type": "string"
+                  },
+                  "actorWorkspaceId": {
+                    "description": "The applicant's workspace id. REQUIRED by Contra: omitting it fails the mutation with a generic error that names nothing.",
+                    "maxLength": 200,
+                    "minLength": 1,
+                    "title": "Actorworkspaceid",
+                    "type": "string"
+                  },
+                  "message": {
+                    "description": "Cover letter as plain text. Converted to Contra's BlockNote format.",
+                    "maxLength": 10000,
+                    "minLength": 1,
+                    "title": "Message",
+                    "type": "string"
+                  },
+                  "calendarLink": {
+                    "default": null,
+                    "description": "Optional scheduling link to attach.",
+                    "title": "Calendarlink",
+                    "maxLength": 500,
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "portfolioProjectIds": {
+                    "description": "Contra portfolio project ids to attach to the application.",
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 20,
+                    "title": "Portfolioprojectids",
+                    "type": "array"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Exit IP pinned to this account. Omit to use the shared pool.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "docId": {
+                    "default": null,
+                    "description": "Override the pinned persisted-query id for this call.",
+                    "title": "Docid",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["sessionCookies", "jobPostingId", "actorWorkspaceId", "message"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "jobPostingId": {
+                      "title": "Jobpostingid",
+                      "type": "string"
+                    },
+                    "applied": {
+                      "title": "Applied",
+                      "type": "boolean"
+                    },
+                    "submittedAt": {
+                      "title": "Submittedat",
+                      "type": "string"
+                    },
+                    "elapsedMs": {
+                      "title": "Elapsedms",
+                      "type": "integer"
+                    }
+                  },
+                  "required": ["jobPostingId", "applied", "submittedAt", "elapsedMs"],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contra-check-session.get": {
+      "post": {
+        "operationId": "contra_check_session_get",
+        "summary": "Check Contra Session",
+        "description": "Report whether a Contra session cookie is still authenticated. Returns the account id when it is and false when it is not. Uses your own Contra account; upAPI stores nothing.",
+        "tags": ["Social Media", "contra", "identity"],
+        "x-upapi-unit-weight": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "sessionCookies": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Contra session cookies for the account whose session is being checked. Your own Contra account's cookies; upAPI stores nothing.",
+                    "title": "Sessioncookies",
+                    "type": "object"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Exit IP pinned to this account. Omit to use the shared pool.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "docId": {
+                    "default": null,
+                    "description": "Override the pinned persisted-query id for this call. Pass a freshly discovered 32-hex id when Contra has rotated its query ids.",
+                    "title": "Docid",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["sessionCookies"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "authenticated": {
+                      "title": "Authenticated",
+                      "type": "boolean"
+                    },
+                    "userAccountId": {
+                      "title": "Useraccountid",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "checkedAt": {
+                      "title": "Checkedat",
+                      "type": "string"
+                    },
+                    "elapsedMs": {
+                      "title": "Elapsedms",
+                      "type": "integer"
+                    }
+                  },
+                  "required": ["authenticated", "userAccountId", "checkedAt", "elapsedMs"],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/contra-company-profile.get": {
       "post": {
         "operationId": "contra_company_profile_get",
@@ -4219,7 +4592,7 @@
       "post": {
         "operationId": "contra_discover_people_get",
         "summary": "Search Contra Freelancers",
-        "description": "Search contra.com's public directory of independent professionals by role or free text. Returns each profile's name, headline, roles, location, review average and count, follower and hire counts, availability and minimum hourly rate. Reads Contra's public page — no Contra account is required.",
+        "description": "Search contra.com's public directory of independent professionals by role or free text. Returns each profile's name, headline, roles, location, review average and count, follower and hire counts, availability and minimum hourly rate. Reads Contra's discover page. Contra has served that directory only to logged-in visitors since 2026-10-14, so an anonymous call now fails with UPSTREAM_BLOCKED (sign-up wall) instead of returning profiles.",
         "tags": ["Social Media", "contra", "freelancers", "directory", "talent", "leads"],
         "x-upapi-unit-weight": 5,
         "requestBody": {
@@ -4450,6 +4823,180 @@
                     "fetchedAt",
                     "elapsedMs"
                   ],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contra-follow-user.post": {
+      "post": {
+        "operationId": "contra_follow_user_post",
+        "summary": "Follow Contra Profile",
+        "description": "Follow a Contra profile from your own signed-in Contra account. Uses your own Contra account; upAPI stores nothing.",
+        "tags": ["Social Media", "contra", "social", "write"],
+        "x-upapi-unit-weight": 6,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "sessionCookies": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Contra session cookies for the follower. Your own Contra account's cookies; upAPI stores nothing.",
+                    "title": "Sessioncookies",
+                    "type": "object"
+                  },
+                  "userProfileId": {
+                    "description": "Contra UserProfile id to follow.",
+                    "maxLength": 200,
+                    "minLength": 1,
+                    "title": "Userprofileid",
+                    "type": "string"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Exit IP pinned to this account. Omit to use the shared pool.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "docId": {
+                    "default": null,
+                    "description": "Override the pinned persisted-query id for this call.",
+                    "title": "Docid",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["sessionCookies", "userProfileId"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "userProfileId": {
+                      "title": "Userprofileid",
+                      "type": "string"
+                    },
+                    "following": {
+                      "title": "Following",
+                      "type": "boolean"
+                    },
+                    "followedAt": {
+                      "title": "Followedat",
+                      "type": "string"
+                    },
+                    "elapsedMs": {
+                      "title": "Elapsedms",
+                      "type": "integer"
+                    }
+                  },
+                  "required": ["userProfileId", "following", "followedAt", "elapsedMs"],
                   "title": "Output",
                   "type": "object"
                 }
@@ -4849,6 +5396,1014 @@
                     "fetchedAt",
                     "elapsedMs"
                   ],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contra-job-feed.get": {
+      "post": {
+        "operationId": "contra_job_feed_get",
+        "summary": "Read Contra Job Feed",
+        "description": "Read one page of your signed-in Contra job feed. Returns the feed nodes exactly as Contra sends them plus the pagination cursor. Uses your own Contra account; upAPI stores nothing.",
+        "tags": ["Social Media", "contra", "jobs"],
+        "x-upapi-unit-weight": 4,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "sessionCookies": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Contra session cookies. The job feed answers UNAUTHENTICATED without them. Your own Contra account's cookies; upAPI stores nothing.",
+                    "title": "Sessioncookies",
+                    "type": "object"
+                  },
+                  "preset": {
+                    "default": "RECOMMENDED",
+                    "description": "Contra feed preset, e.g. RECOMMENDED, SAVED or APPLIED.",
+                    "maxLength": 60,
+                    "title": "Preset",
+                    "type": "string"
+                  },
+                  "sort": {
+                    "default": "NEWEST",
+                    "description": "Contra feed sort key.",
+                    "maxLength": 60,
+                    "title": "Sort",
+                    "type": "string"
+                  },
+                  "first": {
+                    "default": 20,
+                    "description": "Page size.",
+                    "maximum": 50,
+                    "minimum": 1,
+                    "title": "First",
+                    "type": "integer"
+                  },
+                  "after": {
+                    "default": null,
+                    "description": "Opaque cursor from a previous page's endCursor.",
+                    "title": "After",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "search": {
+                    "default": null,
+                    "description": "Free-text feed search.",
+                    "title": "Search",
+                    "maxLength": 200,
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Exit IP pinned to this account. Omit to use the shared pool.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "docId": {
+                    "default": null,
+                    "description": "Override the pinned persisted-query id for this call.",
+                    "title": "Docid",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["sessionCookies"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      "title": "Items",
+                      "type": "array"
+                    },
+                    "itemCount": {
+                      "title": "Itemcount",
+                      "type": "integer"
+                    },
+                    "endCursor": {
+                      "title": "Endcursor",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "hasNextPage": {
+                      "title": "Hasnextpage",
+                      "type": "boolean"
+                    },
+                    "fetchedAt": {
+                      "title": "Fetchedat",
+                      "type": "string"
+                    },
+                    "elapsedMs": {
+                      "title": "Elapsedms",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "itemCount",
+                    "endCursor",
+                    "hasNextPage",
+                    "fetchedAt",
+                    "elapsedMs"
+                  ],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contra-list-conversations.get": {
+      "post": {
+        "operationId": "contra_list_conversations_get",
+        "summary": "List Contra Conversations",
+        "description": "Read one page of your signed-in Contra inbox. Returns the conversation nodes exactly as Contra sends them plus the pagination cursor. Uses your own Contra account; upAPI stores nothing.",
+        "tags": ["Social Media", "contra", "messaging"],
+        "x-upapi-unit-weight": 4,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "sessionCookies": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Contra session cookies for the inbox owner. Your own Contra account's cookies; upAPI stores nothing.",
+                    "title": "Sessioncookies",
+                    "type": "object"
+                  },
+                  "first": {
+                    "default": 30,
+                    "description": "Page size.",
+                    "maximum": 50,
+                    "minimum": 1,
+                    "title": "First",
+                    "type": "integer"
+                  },
+                  "after": {
+                    "default": null,
+                    "description": "Opaque cursor from a previous page's endCursor.",
+                    "title": "After",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "filter": {
+                    "additionalProperties": true,
+                    "description": "Contra's own conversation filter object, forwarded verbatim, e.g. {\"archived\": false}. Omit for the default bucket.",
+                    "title": "Filter",
+                    "type": "object"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Exit IP pinned to this account. Omit to use the shared pool.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "docId": {
+                    "default": null,
+                    "description": "Override the pinned persisted-query id for this call.",
+                    "title": "Docid",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["sessionCookies"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "items": {
+                      "items": {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      "title": "Items",
+                      "type": "array"
+                    },
+                    "itemCount": {
+                      "title": "Itemcount",
+                      "type": "integer"
+                    },
+                    "endCursor": {
+                      "title": "Endcursor",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "hasNextPage": {
+                      "title": "Hasnextpage",
+                      "type": "boolean"
+                    },
+                    "fetchedAt": {
+                      "title": "Fetchedat",
+                      "type": "string"
+                    },
+                    "elapsedMs": {
+                      "title": "Elapsedms",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "itemCount",
+                    "endCursor",
+                    "hasNextPage",
+                    "fetchedAt",
+                    "elapsedMs"
+                  ],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contra-list-messages.get": {
+      "post": {
+        "operationId": "contra_list_messages_get",
+        "summary": "List Contra Messages",
+        "description": "Read one page of messages in a Contra conversation you take part in, oldest first. Returns the message nodes exactly as Contra sends them plus the cursor. Uses your own Contra account; upAPI stores nothing.",
+        "tags": ["Social Media", "contra", "messaging"],
+        "x-upapi-unit-weight": 4,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "sessionCookies": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Contra session cookies for a participant in the conversation. Your own Contra account's cookies; upAPI stores nothing.",
+                    "title": "Sessioncookies",
+                    "type": "object"
+                  },
+                  "conversationId": {
+                    "description": "Contra chat conversation id.",
+                    "maxLength": 200,
+                    "minLength": 1,
+                    "title": "Conversationid",
+                    "type": "string"
+                  },
+                  "first": {
+                    "default": 30,
+                    "description": "Page size.",
+                    "maximum": 50,
+                    "minimum": 1,
+                    "title": "First",
+                    "type": "integer"
+                  },
+                  "after": {
+                    "default": null,
+                    "description": "Opaque cursor from a previous page's endCursor.",
+                    "title": "After",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Exit IP pinned to this account. Omit to use the shared pool.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "docId": {
+                    "default": null,
+                    "description": "Override the pinned persisted-query id for this call.",
+                    "title": "Docid",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["sessionCookies", "conversationId"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "conversationId": {
+                      "title": "Conversationid",
+                      "type": "string"
+                    },
+                    "items": {
+                      "items": {
+                        "additionalProperties": true,
+                        "type": "object"
+                      },
+                      "title": "Items",
+                      "type": "array"
+                    },
+                    "itemCount": {
+                      "title": "Itemcount",
+                      "type": "integer"
+                    },
+                    "endCursor": {
+                      "title": "Endcursor",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "hasNextPage": {
+                      "title": "Hasnextpage",
+                      "type": "boolean"
+                    },
+                    "fetchedAt": {
+                      "title": "Fetchedat",
+                      "type": "string"
+                    },
+                    "elapsedMs": {
+                      "title": "Elapsedms",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "conversationId",
+                    "items",
+                    "itemCount",
+                    "endCursor",
+                    "hasNextPage",
+                    "fetchedAt",
+                    "elapsedMs"
+                  ],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contra-send-message.post": {
+      "post": {
+        "operationId": "contra_send_message_post",
+        "summary": "Send Contra Message",
+        "description": "Send a plain-text message into an existing Contra conversation from your own signed-in Contra account and return the id Contra assigned it. Uses your own Contra account; upAPI stores nothing.",
+        "tags": ["Social Media", "contra", "messaging", "write"],
+        "x-upapi-unit-weight": 6,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "sessionCookies": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Contra session cookies for the sender. Your own Contra account's cookies; upAPI stores nothing.",
+                    "title": "Sessioncookies",
+                    "type": "object"
+                  },
+                  "conversationId": {
+                    "description": "Contra chat conversation id to reply in.",
+                    "maxLength": 200,
+                    "minLength": 1,
+                    "title": "Conversationid",
+                    "type": "string"
+                  },
+                  "workspaceId": {
+                    "description": "The sender's workspace id. REQUIRED by Contra: an input missing it comes back as a generic 'An unexpected error occurred.' that names nothing.",
+                    "maxLength": 200,
+                    "minLength": 1,
+                    "title": "Workspaceid",
+                    "type": "string"
+                  },
+                  "message": {
+                    "description": "Message body as plain text. Converted to Contra's BlockNote format.",
+                    "maxLength": 10000,
+                    "minLength": 1,
+                    "title": "Message",
+                    "type": "string"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Exit IP pinned to this account. Omit to use the shared pool.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "docId": {
+                    "default": null,
+                    "description": "Override the pinned persisted-query id for this call.",
+                    "title": "Docid",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["sessionCookies", "conversationId", "workspaceId", "message"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "conversationId": {
+                      "title": "Conversationid",
+                      "type": "string"
+                    },
+                    "messageId": {
+                      "title": "Messageid",
+                      "type": "string"
+                    },
+                    "sentAt": {
+                      "title": "Sentat",
+                      "type": "string"
+                    },
+                    "elapsedMs": {
+                      "title": "Elapsedms",
+                      "type": "integer"
+                    }
+                  },
+                  "required": ["conversationId", "messageId", "sentAt", "elapsedMs"],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contra-unfollow-user.post": {
+      "post": {
+        "operationId": "contra_unfollow_user_post",
+        "summary": "Unfollow Contra Profile",
+        "description": "Unfollow a Contra profile from your own signed-in Contra account. Uses your own Contra account; upAPI stores nothing.",
+        "tags": ["Social Media", "contra", "social", "write"],
+        "x-upapi-unit-weight": 6,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "sessionCookies": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Contra session cookies for the follower. Your own Contra account's cookies; upAPI stores nothing.",
+                    "title": "Sessioncookies",
+                    "type": "object"
+                  },
+                  "userProfileId": {
+                    "description": "Contra UserProfile id to unfollow.",
+                    "maxLength": 200,
+                    "minLength": 1,
+                    "title": "Userprofileid",
+                    "type": "string"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Exit IP pinned to this account. Omit to use the shared pool.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "docId": {
+                    "default": null,
+                    "description": "Override the pinned persisted-query id for this call.",
+                    "title": "Docid",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["sessionCookies", "userProfileId"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "userProfileId": {
+                      "title": "Userprofileid",
+                      "type": "string"
+                    },
+                    "following": {
+                      "title": "Following",
+                      "type": "boolean"
+                    },
+                    "unfollowedAt": {
+                      "title": "Unfollowedat",
+                      "type": "string"
+                    },
+                    "elapsedMs": {
+                      "title": "Elapsedms",
+                      "type": "integer"
+                    }
+                  },
+                  "required": ["userProfileId", "following", "unfollowedAt", "elapsedMs"],
                   "title": "Output",
                   "type": "object"
                 }

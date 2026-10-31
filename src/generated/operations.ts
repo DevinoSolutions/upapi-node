@@ -28,12 +28,28 @@ import type {
   ChatousPollEventsGetOutput,
   CloudflarePageTitleGetInput,
   CloudflarePageTitleGetOutput,
+  ContraApplyToJobPostInput,
+  ContraApplyToJobPostOutput,
+  ContraCheckSessionGetInput,
+  ContraCheckSessionGetOutput,
   ContraCompanyProfileGetInput,
   ContraCompanyProfileGetOutput,
   ContraDiscoverPeopleGetInput,
   ContraDiscoverPeopleGetOutput,
+  ContraFollowUserPostInput,
+  ContraFollowUserPostOutput,
   ContraJobDetailGetInput,
   ContraJobDetailGetOutput,
+  ContraJobFeedGetInput,
+  ContraJobFeedGetOutput,
+  ContraListConversationsGetInput,
+  ContraListConversationsGetOutput,
+  ContraListMessagesGetInput,
+  ContraListMessagesGetOutput,
+  ContraSendMessagePostInput,
+  ContraSendMessagePostOutput,
+  ContraUnfollowUserPostInput,
+  ContraUnfollowUserPostOutput,
   CryptoPriceGetInput,
   CryptoPriceGetOutput,
   CurrencyConvertGetInput,
@@ -267,21 +283,61 @@ export type Operations = {
     input: CloudflarePageTitleGetInput,
     options?: CallOptions,
   ) => Promise<CloudflarePageTitleGetOutput>;
+  /** Apply To Contra Job — Submit an application to a Contra job posting with a cover letter and optional portfolio attachments, from your own signed-in Contra account. Returns applied=true only when Contra records the application. Uses your own Contra account; upAPI stores nothing. */
+  'contra-apply-to-job.post': (
+    input: ContraApplyToJobPostInput,
+    options?: CallOptions,
+  ) => Promise<ContraApplyToJobPostOutput>;
+  /** Check Contra Session — Report whether a Contra session cookie is still authenticated. Returns the account id when it is and false when it is not. Uses your own Contra account; upAPI stores nothing. */
+  'contra-check-session.get': (
+    input: ContraCheckSessionGetInput,
+    options?: CallOptions,
+  ) => Promise<ContraCheckSessionGetOutput>;
   /** Get Contra Company Profile — Read one contra.com company profile by its slug: name, description, website, location, year founded, verification badge, review count and the client statistics Contra publishes (average rating, projects hired, total spend). Reads Contra's public page — no Contra account is required. */
   'contra-company-profile.get': (
     input: ContraCompanyProfileGetInput,
     options?: CallOptions,
   ) => Promise<ContraCompanyProfileGetOutput>;
-  /** Search Contra Freelancers — Search contra.com's public directory of independent professionals by role or free text. Returns each profile's name, headline, roles, location, review average and count, follower and hire counts, availability and minimum hourly rate. Reads Contra's public page — no Contra account is required. */
+  /** Search Contra Freelancers — Search contra.com's public directory of independent professionals by role or free text. Returns each profile's name, headline, roles, location, review average and count, follower and hire counts, availability and minimum hourly rate. Reads Contra's discover page. Contra has served that directory only to logged-in visitors since 2026-10-14, so an anonymous call now fails with UPSTREAM_BLOCKED (sign-up wall) instead of returning profiles. */
   'contra-discover-people.get': (
     input: ContraDiscoverPeopleGetInput,
     options?: CallOptions,
   ) => Promise<ContraDiscoverPeopleGetOutput>;
+  /** Follow Contra Profile — Follow a Contra profile from your own signed-in Contra account. Uses your own Contra account; upAPI stores nothing. */
+  'contra-follow-user.post': (
+    input: ContraFollowUserPostInput,
+    options?: CallOptions,
+  ) => Promise<ContraFollowUserPostOutput>;
   /** Get Contra Opportunity — Read one contra.com freelance opportunity by its slug: title, full description, budget range, required roles and tools, application window, and the hiring company with its review count and spend statistics. Reads Contra's public page — no Contra account is required. */
   'contra-job-detail.get': (
     input: ContraJobDetailGetInput,
     options?: CallOptions,
   ) => Promise<ContraJobDetailGetOutput>;
+  /** Read Contra Job Feed — Read one page of your signed-in Contra job feed. Returns the feed nodes exactly as Contra sends them plus the pagination cursor. Uses your own Contra account; upAPI stores nothing. */
+  'contra-job-feed.get': (
+    input: ContraJobFeedGetInput,
+    options?: CallOptions,
+  ) => Promise<ContraJobFeedGetOutput>;
+  /** List Contra Conversations — Read one page of your signed-in Contra inbox. Returns the conversation nodes exactly as Contra sends them plus the pagination cursor. Uses your own Contra account; upAPI stores nothing. */
+  'contra-list-conversations.get': (
+    input: ContraListConversationsGetInput,
+    options?: CallOptions,
+  ) => Promise<ContraListConversationsGetOutput>;
+  /** List Contra Messages — Read one page of messages in a Contra conversation you take part in, oldest first. Returns the message nodes exactly as Contra sends them plus the cursor. Uses your own Contra account; upAPI stores nothing. */
+  'contra-list-messages.get': (
+    input: ContraListMessagesGetInput,
+    options?: CallOptions,
+  ) => Promise<ContraListMessagesGetOutput>;
+  /** Send Contra Message — Send a plain-text message into an existing Contra conversation from your own signed-in Contra account and return the id Contra assigned it. Uses your own Contra account; upAPI stores nothing. */
+  'contra-send-message.post': (
+    input: ContraSendMessagePostInput,
+    options?: CallOptions,
+  ) => Promise<ContraSendMessagePostOutput>;
+  /** Unfollow Contra Profile — Unfollow a Contra profile from your own signed-in Contra account. Uses your own Contra account; upAPI stores nothing. */
+  'contra-unfollow-user.post': (
+    input: ContraUnfollowUserPostInput,
+    options?: CallOptions,
+  ) => Promise<ContraUnfollowUserPostOutput>;
   /** Get Crypto Prices — Current crypto prices (+ optional market cap and 24h change) for one or more coins across fiat or crypto quote currencies via CoinGecko's free simple-price endpoint. */
   'crypto-price.get': (
     input: CryptoPriceGetInput,
@@ -790,6 +846,18 @@ export function buildOperations(client: UpAPI): Operations {
         input,
         options,
       ),
+    'contra-apply-to-job.post': (input, options) =>
+      client.call<ContraApplyToJobPostOutput, ContraApplyToJobPostInput>(
+        'contra-apply-to-job.post',
+        input,
+        options,
+      ),
+    'contra-check-session.get': (input, options) =>
+      client.call<ContraCheckSessionGetOutput, ContraCheckSessionGetInput>(
+        'contra-check-session.get',
+        input,
+        options,
+      ),
     'contra-company-profile.get': (input, options) =>
       client.call<ContraCompanyProfileGetOutput, ContraCompanyProfileGetInput>(
         'contra-company-profile.get',
@@ -802,9 +870,45 @@ export function buildOperations(client: UpAPI): Operations {
         input,
         options,
       ),
+    'contra-follow-user.post': (input, options) =>
+      client.call<ContraFollowUserPostOutput, ContraFollowUserPostInput>(
+        'contra-follow-user.post',
+        input,
+        options,
+      ),
     'contra-job-detail.get': (input, options) =>
       client.call<ContraJobDetailGetOutput, ContraJobDetailGetInput>(
         'contra-job-detail.get',
+        input,
+        options,
+      ),
+    'contra-job-feed.get': (input, options) =>
+      client.call<ContraJobFeedGetOutput, ContraJobFeedGetInput>(
+        'contra-job-feed.get',
+        input,
+        options,
+      ),
+    'contra-list-conversations.get': (input, options) =>
+      client.call<ContraListConversationsGetOutput, ContraListConversationsGetInput>(
+        'contra-list-conversations.get',
+        input,
+        options,
+      ),
+    'contra-list-messages.get': (input, options) =>
+      client.call<ContraListMessagesGetOutput, ContraListMessagesGetInput>(
+        'contra-list-messages.get',
+        input,
+        options,
+      ),
+    'contra-send-message.post': (input, options) =>
+      client.call<ContraSendMessagePostOutput, ContraSendMessagePostInput>(
+        'contra-send-message.post',
+        input,
+        options,
+      ),
+    'contra-unfollow-user.post': (input, options) =>
+      client.call<ContraUnfollowUserPostOutput, ContraUnfollowUserPostInput>(
+        'contra-unfollow-user.post',
         input,
         options,
       ),

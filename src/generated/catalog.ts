@@ -39,9 +39,17 @@ export const OPERATION_SLUGS = [
   'chatous-get-account-state.get',
   'chatous-poll-events.get',
   'cloudflare-page-title.get',
+  'contra-apply-to-job.post',
+  'contra-check-session.get',
   'contra-company-profile.get',
   'contra-discover-people.get',
+  'contra-follow-user.post',
   'contra-job-detail.get',
+  'contra-job-feed.get',
+  'contra-list-conversations.get',
+  'contra-list-messages.get',
+  'contra-send-message.post',
+  'contra-unfollow-user.post',
   'crypto-price.get',
   'currency-convert.get',
   'detect-tech-stack.post',
@@ -1573,6 +1581,213 @@ export const OPERATIONS: readonly OperationMeta[] = [
     },
   },
   {
+    slug: 'contra-apply-to-job.post',
+    operationId: 'contra_apply_to_job_post',
+    name: 'Apply To Contra Job',
+    description:
+      'Submit an application to a Contra job posting with a cover letter and optional portfolio attachments, from your own signed-in Contra account. Returns applied=true only when Contra records the application. Uses your own Contra account; upAPI stores nothing.',
+    category: 'Social Media',
+    tags: ['contra', 'jobs', 'write'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 6,
+    inputSchema: {
+      properties: {
+        sessionCookies: {
+          additionalProperties: {
+            type: 'string',
+          },
+          description:
+            "Contra session cookies for the applicant. Your own Contra account's cookies; upAPI stores nothing.",
+          title: 'Sessioncookies',
+          type: 'object',
+        },
+        jobPostingId: {
+          description: 'Contra JobPosting id to apply to.',
+          maxLength: 200,
+          minLength: 1,
+          title: 'Jobpostingid',
+          type: 'string',
+        },
+        actorWorkspaceId: {
+          description:
+            "The applicant's workspace id. REQUIRED by Contra: omitting it fails the mutation with a generic error that names nothing.",
+          maxLength: 200,
+          minLength: 1,
+          title: 'Actorworkspaceid',
+          type: 'string',
+        },
+        message: {
+          description: "Cover letter as plain text. Converted to Contra's BlockNote format.",
+          maxLength: 10000,
+          minLength: 1,
+          title: 'Message',
+          type: 'string',
+        },
+        calendarLink: {
+          anyOf: [
+            {
+              maxLength: 500,
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional scheduling link to attach.',
+          title: 'Calendarlink',
+        },
+        portfolioProjectIds: {
+          description: 'Contra portfolio project ids to attach to the application.',
+          items: {
+            type: 'string',
+          },
+          maxItems: 20,
+          title: 'Portfolioprojectids',
+          type: 'array',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Exit IP pinned to this account. Omit to use the shared pool.',
+          title: 'Proxyurl',
+        },
+        docId: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Override the pinned persisted-query id for this call.',
+          title: 'Docid',
+        },
+      },
+      required: ['sessionCookies', 'jobPostingId', 'actorWorkspaceId', 'message'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        jobPostingId: {
+          title: 'Jobpostingid',
+          type: 'string',
+        },
+        applied: {
+          title: 'Applied',
+          type: 'boolean',
+        },
+        submittedAt: {
+          title: 'Submittedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['jobPostingId', 'applied', 'submittedAt', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'contra-check-session.get',
+    operationId: 'contra_check_session_get',
+    name: 'Check Contra Session',
+    description:
+      'Report whether a Contra session cookie is still authenticated. Returns the account id when it is and false when it is not. Uses your own Contra account; upAPI stores nothing.',
+    category: 'Social Media',
+    tags: ['contra', 'identity'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        sessionCookies: {
+          additionalProperties: {
+            type: 'string',
+          },
+          description:
+            "Contra session cookies for the account whose session is being checked. Your own Contra account's cookies; upAPI stores nothing.",
+          title: 'Sessioncookies',
+          type: 'object',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Exit IP pinned to this account. Omit to use the shared pool.',
+          title: 'Proxyurl',
+        },
+        docId: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Override the pinned persisted-query id for this call. Pass a freshly discovered 32-hex id when Contra has rotated its query ids.',
+          title: 'Docid',
+        },
+      },
+      required: ['sessionCookies'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        authenticated: {
+          title: 'Authenticated',
+          type: 'boolean',
+        },
+        userAccountId: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Useraccountid',
+        },
+        checkedAt: {
+          title: 'Checkedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['authenticated', 'userAccountId', 'checkedAt', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
     slug: 'contra-company-profile.get',
     operationId: 'contra_company_profile_get',
     name: 'Get Contra Company Profile',
@@ -1874,7 +2089,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     operationId: 'contra_discover_people_get',
     name: 'Search Contra Freelancers',
     description:
-      "Search contra.com's public directory of independent professionals by role or free text. Returns each profile's name, headline, roles, location, review average and count, follower and hire counts, availability and minimum hourly rate. Reads Contra's public page — no Contra account is required.",
+      "Search contra.com's public directory of independent professionals by role or free text. Returns each profile's name, headline, roles, location, review average and count, follower and hire counts, availability and minimum hourly rate. Reads Contra's discover page. Contra has served that directory only to logged-in visitors since 2026-10-14, so an anonymous call now fails with UPSTREAM_BLOCKED (sign-up wall) instead of returning profiles.",
     category: 'Social Media',
     tags: ['contra', 'freelancers', 'directory', 'talent', 'leads'],
     workerLanguage: 'python',
@@ -2246,6 +2461,90 @@ export const OPERATIONS: readonly OperationMeta[] = [
         },
       },
       required: ['url', 'roles', 'query', 'resultCount', 'people', 'fetchedAt', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'contra-follow-user.post',
+    operationId: 'contra_follow_user_post',
+    name: 'Follow Contra Profile',
+    description:
+      'Follow a Contra profile from your own signed-in Contra account. Uses your own Contra account; upAPI stores nothing.',
+    category: 'Social Media',
+    tags: ['contra', 'social', 'write'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 6,
+    inputSchema: {
+      properties: {
+        sessionCookies: {
+          additionalProperties: {
+            type: 'string',
+          },
+          description:
+            "Contra session cookies for the follower. Your own Contra account's cookies; upAPI stores nothing.",
+          title: 'Sessioncookies',
+          type: 'object',
+        },
+        userProfileId: {
+          description: 'Contra UserProfile id to follow.',
+          maxLength: 200,
+          minLength: 1,
+          title: 'Userprofileid',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Exit IP pinned to this account. Omit to use the shared pool.',
+          title: 'Proxyurl',
+        },
+        docId: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Override the pinned persisted-query id for this call.',
+          title: 'Docid',
+        },
+      },
+      required: ['sessionCookies', 'userProfileId'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        userProfileId: {
+          title: 'Userprofileid',
+          type: 'string',
+        },
+        following: {
+          title: 'Following',
+          type: 'boolean',
+        },
+        followedAt: {
+          title: 'Followedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['userProfileId', 'following', 'followedAt', 'elapsedMs'],
       title: 'Output',
       type: 'object',
     },
@@ -2737,6 +3036,594 @@ export const OPERATIONS: readonly OperationMeta[] = [
         'fetchedAt',
         'elapsedMs',
       ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'contra-job-feed.get',
+    operationId: 'contra_job_feed_get',
+    name: 'Read Contra Job Feed',
+    description:
+      'Read one page of your signed-in Contra job feed. Returns the feed nodes exactly as Contra sends them plus the pagination cursor. Uses your own Contra account; upAPI stores nothing.',
+    category: 'Social Media',
+    tags: ['contra', 'jobs'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        sessionCookies: {
+          additionalProperties: {
+            type: 'string',
+          },
+          description:
+            "Contra session cookies. The job feed answers UNAUTHENTICATED without them. Your own Contra account's cookies; upAPI stores nothing.",
+          title: 'Sessioncookies',
+          type: 'object',
+        },
+        preset: {
+          default: 'RECOMMENDED',
+          description: 'Contra feed preset, e.g. RECOMMENDED, SAVED or APPLIED.',
+          maxLength: 60,
+          title: 'Preset',
+          type: 'string',
+        },
+        sort: {
+          default: 'NEWEST',
+          description: 'Contra feed sort key.',
+          maxLength: 60,
+          title: 'Sort',
+          type: 'string',
+        },
+        first: {
+          default: 20,
+          description: 'Page size.',
+          maximum: 50,
+          minimum: 1,
+          title: 'First',
+          type: 'integer',
+        },
+        after: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: "Opaque cursor from a previous page's endCursor.",
+          title: 'After',
+        },
+        search: {
+          anyOf: [
+            {
+              maxLength: 200,
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Free-text feed search.',
+          title: 'Search',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Exit IP pinned to this account. Omit to use the shared pool.',
+          title: 'Proxyurl',
+        },
+        docId: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Override the pinned persisted-query id for this call.',
+          title: 'Docid',
+        },
+      },
+      required: ['sessionCookies'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        items: {
+          items: {
+            additionalProperties: true,
+            type: 'object',
+          },
+          title: 'Items',
+          type: 'array',
+        },
+        itemCount: {
+          title: 'Itemcount',
+          type: 'integer',
+        },
+        endCursor: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Endcursor',
+        },
+        hasNextPage: {
+          title: 'Hasnextpage',
+          type: 'boolean',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['items', 'itemCount', 'endCursor', 'hasNextPage', 'fetchedAt', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'contra-list-conversations.get',
+    operationId: 'contra_list_conversations_get',
+    name: 'List Contra Conversations',
+    description:
+      'Read one page of your signed-in Contra inbox. Returns the conversation nodes exactly as Contra sends them plus the pagination cursor. Uses your own Contra account; upAPI stores nothing.',
+    category: 'Social Media',
+    tags: ['contra', 'messaging'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        sessionCookies: {
+          additionalProperties: {
+            type: 'string',
+          },
+          description:
+            "Contra session cookies for the inbox owner. Your own Contra account's cookies; upAPI stores nothing.",
+          title: 'Sessioncookies',
+          type: 'object',
+        },
+        first: {
+          default: 30,
+          description: 'Page size.',
+          maximum: 50,
+          minimum: 1,
+          title: 'First',
+          type: 'integer',
+        },
+        after: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: "Opaque cursor from a previous page's endCursor.",
+          title: 'After',
+        },
+        filter: {
+          additionalProperties: true,
+          description:
+            'Contra\'s own conversation filter object, forwarded verbatim, e.g. {"archived": false}. Omit for the default bucket.',
+          title: 'Filter',
+          type: 'object',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Exit IP pinned to this account. Omit to use the shared pool.',
+          title: 'Proxyurl',
+        },
+        docId: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Override the pinned persisted-query id for this call.',
+          title: 'Docid',
+        },
+      },
+      required: ['sessionCookies'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        items: {
+          items: {
+            additionalProperties: true,
+            type: 'object',
+          },
+          title: 'Items',
+          type: 'array',
+        },
+        itemCount: {
+          title: 'Itemcount',
+          type: 'integer',
+        },
+        endCursor: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Endcursor',
+        },
+        hasNextPage: {
+          title: 'Hasnextpage',
+          type: 'boolean',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['items', 'itemCount', 'endCursor', 'hasNextPage', 'fetchedAt', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'contra-list-messages.get',
+    operationId: 'contra_list_messages_get',
+    name: 'List Contra Messages',
+    description:
+      'Read one page of messages in a Contra conversation you take part in, oldest first. Returns the message nodes exactly as Contra sends them plus the cursor. Uses your own Contra account; upAPI stores nothing.',
+    category: 'Social Media',
+    tags: ['contra', 'messaging'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        sessionCookies: {
+          additionalProperties: {
+            type: 'string',
+          },
+          description:
+            "Contra session cookies for a participant in the conversation. Your own Contra account's cookies; upAPI stores nothing.",
+          title: 'Sessioncookies',
+          type: 'object',
+        },
+        conversationId: {
+          description: 'Contra chat conversation id.',
+          maxLength: 200,
+          minLength: 1,
+          title: 'Conversationid',
+          type: 'string',
+        },
+        first: {
+          default: 30,
+          description: 'Page size.',
+          maximum: 50,
+          minimum: 1,
+          title: 'First',
+          type: 'integer',
+        },
+        after: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: "Opaque cursor from a previous page's endCursor.",
+          title: 'After',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Exit IP pinned to this account. Omit to use the shared pool.',
+          title: 'Proxyurl',
+        },
+        docId: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Override the pinned persisted-query id for this call.',
+          title: 'Docid',
+        },
+      },
+      required: ['sessionCookies', 'conversationId'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        conversationId: {
+          title: 'Conversationid',
+          type: 'string',
+        },
+        items: {
+          items: {
+            additionalProperties: true,
+            type: 'object',
+          },
+          title: 'Items',
+          type: 'array',
+        },
+        itemCount: {
+          title: 'Itemcount',
+          type: 'integer',
+        },
+        endCursor: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Endcursor',
+        },
+        hasNextPage: {
+          title: 'Hasnextpage',
+          type: 'boolean',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: [
+        'conversationId',
+        'items',
+        'itemCount',
+        'endCursor',
+        'hasNextPage',
+        'fetchedAt',
+        'elapsedMs',
+      ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'contra-send-message.post',
+    operationId: 'contra_send_message_post',
+    name: 'Send Contra Message',
+    description:
+      'Send a plain-text message into an existing Contra conversation from your own signed-in Contra account and return the id Contra assigned it. Uses your own Contra account; upAPI stores nothing.',
+    category: 'Social Media',
+    tags: ['contra', 'messaging', 'write'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 6,
+    inputSchema: {
+      properties: {
+        sessionCookies: {
+          additionalProperties: {
+            type: 'string',
+          },
+          description:
+            "Contra session cookies for the sender. Your own Contra account's cookies; upAPI stores nothing.",
+          title: 'Sessioncookies',
+          type: 'object',
+        },
+        conversationId: {
+          description: 'Contra chat conversation id to reply in.',
+          maxLength: 200,
+          minLength: 1,
+          title: 'Conversationid',
+          type: 'string',
+        },
+        workspaceId: {
+          description:
+            "The sender's workspace id. REQUIRED by Contra: an input missing it comes back as a generic 'An unexpected error occurred.' that names nothing.",
+          maxLength: 200,
+          minLength: 1,
+          title: 'Workspaceid',
+          type: 'string',
+        },
+        message: {
+          description: "Message body as plain text. Converted to Contra's BlockNote format.",
+          maxLength: 10000,
+          minLength: 1,
+          title: 'Message',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Exit IP pinned to this account. Omit to use the shared pool.',
+          title: 'Proxyurl',
+        },
+        docId: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Override the pinned persisted-query id for this call.',
+          title: 'Docid',
+        },
+      },
+      required: ['sessionCookies', 'conversationId', 'workspaceId', 'message'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        conversationId: {
+          title: 'Conversationid',
+          type: 'string',
+        },
+        messageId: {
+          title: 'Messageid',
+          type: 'string',
+        },
+        sentAt: {
+          title: 'Sentat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['conversationId', 'messageId', 'sentAt', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'contra-unfollow-user.post',
+    operationId: 'contra_unfollow_user_post',
+    name: 'Unfollow Contra Profile',
+    description:
+      'Unfollow a Contra profile from your own signed-in Contra account. Uses your own Contra account; upAPI stores nothing.',
+    category: 'Social Media',
+    tags: ['contra', 'social', 'write'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 6,
+    inputSchema: {
+      properties: {
+        sessionCookies: {
+          additionalProperties: {
+            type: 'string',
+          },
+          description:
+            "Contra session cookies for the follower. Your own Contra account's cookies; upAPI stores nothing.",
+          title: 'Sessioncookies',
+          type: 'object',
+        },
+        userProfileId: {
+          description: 'Contra UserProfile id to unfollow.',
+          maxLength: 200,
+          minLength: 1,
+          title: 'Userprofileid',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Exit IP pinned to this account. Omit to use the shared pool.',
+          title: 'Proxyurl',
+        },
+        docId: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Override the pinned persisted-query id for this call.',
+          title: 'Docid',
+        },
+      },
+      required: ['sessionCookies', 'userProfileId'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        userProfileId: {
+          title: 'Userprofileid',
+          type: 'string',
+        },
+        following: {
+          title: 'Following',
+          type: 'boolean',
+        },
+        unfollowedAt: {
+          title: 'Unfollowedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['userProfileId', 'following', 'unfollowedAt', 'elapsedMs'],
       title: 'Output',
       type: 'object',
     },

@@ -414,6 +414,74 @@ export interface CloudflarePageTitleGetOutput {
   fetched_with: string;
 }
 
+// ── contra-apply-to-job.post ────────────────────────────────────────────
+
+export interface ContraApplyToJobPostInput {
+  /**
+   * Contra session cookies for the applicant. Your own Contra account's cookies; upAPI stores nothing.
+   */
+  sessionCookies: Record<string, string>;
+  /**
+   * Contra JobPosting id to apply to.
+   */
+  jobPostingId: string;
+  /**
+   * The applicant's workspace id. REQUIRED by Contra: omitting it fails the mutation with a generic error that names nothing.
+   */
+  actorWorkspaceId: string;
+  /**
+   * Cover letter as plain text. Converted to Contra's BlockNote format.
+   */
+  message: string;
+  /**
+   * Optional scheduling link to attach.
+   */
+  calendarLink?: string | null;
+  /**
+   * Contra portfolio project ids to attach to the application.
+   */
+  portfolioProjectIds?: Array<string>;
+  /**
+   * Exit IP pinned to this account. Omit to use the shared pool.
+   */
+  proxyUrl?: string | null;
+  /**
+   * Override the pinned persisted-query id for this call.
+   */
+  docId?: string | null;
+}
+
+export interface ContraApplyToJobPostOutput {
+  jobPostingId: string;
+  applied: boolean;
+  submittedAt: string;
+  elapsedMs: number;
+}
+
+// ── contra-check-session.get ────────────────────────────────────────────
+
+export interface ContraCheckSessionGetInput {
+  /**
+   * Contra session cookies for the account whose session is being checked. Your own Contra account's cookies; upAPI stores nothing.
+   */
+  sessionCookies: Record<string, string>;
+  /**
+   * Exit IP pinned to this account. Omit to use the shared pool.
+   */
+  proxyUrl?: string | null;
+  /**
+   * Override the pinned persisted-query id for this call. Pass a freshly discovered 32-hex id when Contra has rotated its query ids.
+   */
+  docId?: string | null;
+}
+
+export interface ContraCheckSessionGetOutput {
+  authenticated: boolean;
+  userAccountId: string | null;
+  checkedAt: string;
+  elapsedMs: number;
+}
+
 // ── contra-company-profile.get ──────────────────────────────────────────
 
 export interface ContraCompanyProfileGetInput {
@@ -517,6 +585,34 @@ export interface ContraDiscoverPeopleGetOutput {
   elapsedMs: number;
 }
 
+// ── contra-follow-user.post ─────────────────────────────────────────────
+
+export interface ContraFollowUserPostInput {
+  /**
+   * Contra session cookies for the follower. Your own Contra account's cookies; upAPI stores nothing.
+   */
+  sessionCookies: Record<string, string>;
+  /**
+   * Contra UserProfile id to follow.
+   */
+  userProfileId: string;
+  /**
+   * Exit IP pinned to this account. Omit to use the shared pool.
+   */
+  proxyUrl?: string | null;
+  /**
+   * Override the pinned persisted-query id for this call.
+   */
+  docId?: string | null;
+}
+
+export interface ContraFollowUserPostOutput {
+  userProfileId: string;
+  following: boolean;
+  followedAt: string;
+  elapsedMs: number;
+}
+
 // ── contra-job-detail.get ───────────────────────────────────────────────
 
 export interface ContraJobDetailGetInput {
@@ -580,6 +676,193 @@ export interface ContraJobDetailGetOutput {
   tools: Array<string>;
   organization: ContraJobDetailGetOutputOrganization | null;
   fetchedAt: string;
+  elapsedMs: number;
+}
+
+// ── contra-job-feed.get ─────────────────────────────────────────────────
+
+export interface ContraJobFeedGetInput {
+  /**
+   * Contra session cookies. The job feed answers UNAUTHENTICATED without them. Your own Contra account's cookies; upAPI stores nothing.
+   */
+  sessionCookies: Record<string, string>;
+  /**
+   * Contra feed preset, e.g. RECOMMENDED, SAVED or APPLIED.
+   */
+  preset?: string;
+  /**
+   * Contra feed sort key.
+   */
+  sort?: string;
+  /**
+   * Page size.
+   */
+  first?: number;
+  /**
+   * Opaque cursor from a previous page's endCursor.
+   */
+  after?: string | null;
+  /**
+   * Free-text feed search.
+   */
+  search?: string | null;
+  /**
+   * Exit IP pinned to this account. Omit to use the shared pool.
+   */
+  proxyUrl?: string | null;
+  /**
+   * Override the pinned persisted-query id for this call.
+   */
+  docId?: string | null;
+}
+
+export interface ContraJobFeedGetOutput {
+  items: Array<Record<string, unknown>>;
+  itemCount: number;
+  endCursor: string | null;
+  hasNextPage: boolean;
+  fetchedAt: string;
+  elapsedMs: number;
+}
+
+// ── contra-list-conversations.get ───────────────────────────────────────
+
+export interface ContraListConversationsGetInput {
+  /**
+   * Contra session cookies for the inbox owner. Your own Contra account's cookies; upAPI stores nothing.
+   */
+  sessionCookies: Record<string, string>;
+  /**
+   * Page size.
+   */
+  first?: number;
+  /**
+   * Opaque cursor from a previous page's endCursor.
+   */
+  after?: string | null;
+  /**
+   * Contra's own conversation filter object, forwarded verbatim, e.g. {"archived": false}. Omit for the default bucket.
+   */
+  filter?: Record<string, unknown>;
+  /**
+   * Exit IP pinned to this account. Omit to use the shared pool.
+   */
+  proxyUrl?: string | null;
+  /**
+   * Override the pinned persisted-query id for this call.
+   */
+  docId?: string | null;
+}
+
+export interface ContraListConversationsGetOutput {
+  items: Array<Record<string, unknown>>;
+  itemCount: number;
+  endCursor: string | null;
+  hasNextPage: boolean;
+  fetchedAt: string;
+  elapsedMs: number;
+}
+
+// ── contra-list-messages.get ────────────────────────────────────────────
+
+export interface ContraListMessagesGetInput {
+  /**
+   * Contra session cookies for a participant in the conversation. Your own Contra account's cookies; upAPI stores nothing.
+   */
+  sessionCookies: Record<string, string>;
+  /**
+   * Contra chat conversation id.
+   */
+  conversationId: string;
+  /**
+   * Page size.
+   */
+  first?: number;
+  /**
+   * Opaque cursor from a previous page's endCursor.
+   */
+  after?: string | null;
+  /**
+   * Exit IP pinned to this account. Omit to use the shared pool.
+   */
+  proxyUrl?: string | null;
+  /**
+   * Override the pinned persisted-query id for this call.
+   */
+  docId?: string | null;
+}
+
+export interface ContraListMessagesGetOutput {
+  conversationId: string;
+  items: Array<Record<string, unknown>>;
+  itemCount: number;
+  endCursor: string | null;
+  hasNextPage: boolean;
+  fetchedAt: string;
+  elapsedMs: number;
+}
+
+// ── contra-send-message.post ────────────────────────────────────────────
+
+export interface ContraSendMessagePostInput {
+  /**
+   * Contra session cookies for the sender. Your own Contra account's cookies; upAPI stores nothing.
+   */
+  sessionCookies: Record<string, string>;
+  /**
+   * Contra chat conversation id to reply in.
+   */
+  conversationId: string;
+  /**
+   * The sender's workspace id. REQUIRED by Contra: an input missing it comes back as a generic 'An unexpected error occurred.' that names nothing.
+   */
+  workspaceId: string;
+  /**
+   * Message body as plain text. Converted to Contra's BlockNote format.
+   */
+  message: string;
+  /**
+   * Exit IP pinned to this account. Omit to use the shared pool.
+   */
+  proxyUrl?: string | null;
+  /**
+   * Override the pinned persisted-query id for this call.
+   */
+  docId?: string | null;
+}
+
+export interface ContraSendMessagePostOutput {
+  conversationId: string;
+  messageId: string;
+  sentAt: string;
+  elapsedMs: number;
+}
+
+// ── contra-unfollow-user.post ───────────────────────────────────────────
+
+export interface ContraUnfollowUserPostInput {
+  /**
+   * Contra session cookies for the follower. Your own Contra account's cookies; upAPI stores nothing.
+   */
+  sessionCookies: Record<string, string>;
+  /**
+   * Contra UserProfile id to unfollow.
+   */
+  userProfileId: string;
+  /**
+   * Exit IP pinned to this account. Omit to use the shared pool.
+   */
+  proxyUrl?: string | null;
+  /**
+   * Override the pinned persisted-query id for this call.
+   */
+  docId?: string | null;
+}
+
+export interface ContraUnfollowUserPostOutput {
+  userProfileId: string;
+  following: boolean;
+  unfollowedAt: string;
   elapsedMs: number;
 }
 
