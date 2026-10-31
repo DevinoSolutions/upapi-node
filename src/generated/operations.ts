@@ -16,6 +16,8 @@ import type {
   AudioTranscribePostOutput,
   BbcNewsGetInput,
   BbcNewsGetOutput,
+  BingSerpGetInput,
+  BingSerpGetOutput,
   BlueskyProfileGetInput,
   BlueskyProfileGetOutput,
   ChatousCheckSessionGetInput,
@@ -40,6 +42,8 @@ import type {
   DetectTechStackPostOutput,
   DevtoArticlesSearchGetInput,
   DevtoArticlesSearchGetOutput,
+  DuckduckgoSearchGetInput,
+  DuckduckgoSearchGetOutput,
   EmailGenerateAddressPostInput,
   EmailGenerateAddressPostOutput,
   EmailReadVerificationCodeGraphPostInput,
@@ -80,6 +84,10 @@ import type {
   GoogleMapsReviewsGetOutput,
   GoogleMapsSearchPostInput,
   GoogleMapsSearchPostOutput,
+  GoogleSearchPostInput,
+  GoogleSearchPostOutput,
+  GoogleSerpGetInput,
+  GoogleSerpGetOutput,
   HackernewsSearchGetInput,
   HackernewsSearchGetOutput,
   HtmlToPdfPostInput,
@@ -230,6 +238,8 @@ export type Operations = {
   ) => Promise<AudioTranscribePostOutput>;
   /** Get BBC News Headlines — Fetch headlines from a BBC section (news / world / business / technology / science-environment / entertainment-arts / sport) via the official BBC RSS feeds. Pure HTTP (no browser). Returns title, article URL, and summary for each headline. */
   'bbc-news.get': (input: BbcNewsGetInput, options?: CallOptions) => Promise<BbcNewsGetOutput>;
+  /** Get Bing Search Results — Get Bing search results (title, URL, snippet) for a query, fetched through a real headless browser. */
+  'bing-serp.get': (input: BingSerpGetInput, options?: CallOptions) => Promise<BingSerpGetOutput>;
   /** Get Bluesky Profile — Fetch a Bluesky (AT Protocol) profile by handle or DID. Returns display name, description, avatar/banner, follower and post counts, labels, and DID. Uses the public AppView - no auth required. */
   'bluesky-profile.get': (
     input: BlueskyProfileGetInput,
@@ -290,6 +300,11 @@ export type Operations = {
     input: DevtoArticlesSearchGetInput,
     options?: CallOptions,
   ) => Promise<DevtoArticlesSearchGetOutput>;
+  /** Get DuckDuckGo Search Results — Get DuckDuckGo search results (title, URL, snippet) for a query, fetched through a real headless browser. */
+  'duckduckgo-search.get': (
+    input: DuckduckgoSearchGetInput,
+    options?: CallOptions,
+  ) => Promise<DuckduckgoSearchGetOutput>;
   /** Email Generate Address — Generate a fresh disposable email address for account signup. Supports catch-all domains, plus-addressing, and pre-created Outlook aliases. */
   'email-generate-address.post': (
     input: EmailGenerateAddressPostInput,
@@ -390,6 +405,16 @@ export type Operations = {
     input: GoogleMapsSearchPostInput,
     options?: CallOptions,
   ) => Promise<GoogleMapsSearchPostOutput>;
+  /** Google Search — Search Google and get organic results (title, URL, snippet, domain) for any query, with language and country control. For query suggestions use google-autocomplete.post; for a lighter general web search use web-search.post. */
+  'google-search.post': (
+    input: GoogleSearchPostInput,
+    options?: CallOptions,
+  ) => Promise<GoogleSearchPostOutput>;
+  /** Get Google Search Results — Get Google search results (title, URL, snippet) for a query, fetched through a real headless browser. */
+  'google-serp.get': (
+    input: GoogleSerpGetInput,
+    options?: CallOptions,
+  ) => Promise<GoogleSerpGetOutput>;
   /** Search Hacker News — Full-text + filter search over Hacker News (stories, comments, Show/Ask HN, front page) via Algolia's open API. Ordered by relevance or date. */
   'hackernews-search.get': (
     input: HackernewsSearchGetInput,
@@ -726,6 +751,8 @@ export function buildOperations(client: UpAPI): Operations {
       ),
     'bbc-news.get': (input, options) =>
       client.call<BbcNewsGetOutput, BbcNewsGetInput>('bbc-news.get', input, options),
+    'bing-serp.get': (input, options) =>
+      client.call<BingSerpGetOutput, BingSerpGetInput>('bing-serp.get', input, options),
     'bluesky-profile.get': (input, options) =>
       client.call<BlueskyProfileGetOutput, BlueskyProfileGetInput>(
         'bluesky-profile.get',
@@ -791,6 +818,12 @@ export function buildOperations(client: UpAPI): Operations {
     'devto-articles-search.get': (input, options) =>
       client.call<DevtoArticlesSearchGetOutput, DevtoArticlesSearchGetInput>(
         'devto-articles-search.get',
+        input,
+        options,
+      ),
+    'duckduckgo-search.get': (input, options) =>
+      client.call<DuckduckgoSearchGetOutput, DuckduckgoSearchGetInput>(
+        'duckduckgo-search.get',
         input,
         options,
       ),
@@ -905,6 +938,14 @@ export function buildOperations(client: UpAPI): Operations {
         input,
         options,
       ),
+    'google-search.post': (input, options) =>
+      client.call<GoogleSearchPostOutput, GoogleSearchPostInput>(
+        'google-search.post',
+        input,
+        options,
+      ),
+    'google-serp.get': (input, options) =>
+      client.call<GoogleSerpGetOutput, GoogleSerpGetInput>('google-serp.get', input, options),
     'hackernews-search.get': (input, options) =>
       client.call<HackernewsSearchGetOutput, HackernewsSearchGetInput>(
         'hackernews-search.get',

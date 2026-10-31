@@ -182,6 +182,36 @@ export interface BbcNewsGetOutput {
   fetchedAt: string;
 }
 
+// ── bing-serp.get ───────────────────────────────────────────────────────
+
+export interface BingSerpGetInput {
+  /**
+   * Search query
+   */
+  query: string;
+  /**
+   * Max results
+   */
+  limit?: number;
+  /**
+   * Country code (ISO 3166-1 alpha-2)
+   */
+  country?: string;
+}
+
+export interface BingSerpGetOutput {
+  query: string;
+  totalCount: number;
+  results: Array<{
+    position: number;
+    title: string;
+    url: string;
+    displayUrl: string;
+    snippet: string;
+  }>;
+  fetchedAt: string;
+}
+
 // ── bluesky-profile.get ─────────────────────────────────────────────────
 
 export interface BlueskyProfileGetInput {
@@ -667,6 +697,38 @@ export interface DevtoArticlesSearchGetOutput {
   totalReturned: number;
   articles: Array<DevtoArticlesSearchGetOutputArticle>;
   fetchedAt: string;
+}
+
+// ── duckduckgo-search.get ───────────────────────────────────────────────
+
+export interface DuckduckgoSearchGetInput {
+  /**
+   * Search query
+   */
+  query: string;
+  /**
+   * Max results
+   */
+  limit?: number;
+  /**
+   * Safe-search level; invalid values are rejected by the gateway
+   */
+  safeSearch?: 'strict' | 'moderate' | 'off';
+}
+
+export interface DuckduckgoSearchGetOutput {
+  query: string;
+  totalCount: number;
+  results: Array<{
+    position: number;
+    title: string;
+    url: string;
+    displayUrl: string;
+    snippet: string;
+  }>;
+  fetchedAt: string;
+  engine: 'duckduckgo-html';
+  elapsedMs: number;
 }
 
 // ── email-generate-address.post ─────────────────────────────────────────
@@ -2177,6 +2239,84 @@ export interface GoogleMapsSearchPostOutput {
    * True when Google still had more results than `maxResults` allowed
    */
   truncated: boolean;
+}
+
+// ── google-search.post ──────────────────────────────────────────────────
+
+export interface GoogleSearchPostInput {
+  /**
+   * Search query
+   */
+  query: string;
+  /**
+   * Max results to return
+   */
+  maxResults?: number;
+  /**
+   * hl param (e.g. en, fr, es)
+   */
+  language?: string;
+  /**
+   * gl param (e.g. us, ca, gb)
+   */
+  country?: string;
+  /**
+   * Optional proxy URL (http://user:pass@host:port). If set, uses only this exit IP for the BotGuard mint + scrape.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface GoogleSearchPostOutputResultItem {
+  position: number;
+  title: string;
+  url: string;
+  snippet: string;
+  domain: string;
+}
+
+export interface GoogleSearchPostOutput {
+  success: boolean;
+  query: string;
+  results: Array<GoogleSearchPostOutputResultItem>;
+  totalResults: number;
+  source?: string;
+  message: string;
+  fetchedAt: string;
+  elapsedMs: number;
+}
+
+// ── google-serp.get ─────────────────────────────────────────────────────
+
+export interface GoogleSerpGetInput {
+  /**
+   * Search query
+   */
+  query: string;
+  /**
+   * Max results
+   */
+  limit?: number;
+  /**
+   * Country code (ISO 3166-1 alpha-2)
+   */
+  country?: string;
+  /**
+   * Language code
+   */
+  language?: string;
+}
+
+export interface GoogleSerpGetOutput {
+  query: string;
+  totalCount: number;
+  results: Array<{
+    position: number;
+    title: string;
+    url: string;
+    displayUrl: string;
+    snippet: string;
+  }>;
+  fetchedAt: string;
 }
 
 // ── hackernews-search.get ───────────────────────────────────────────────

@@ -33,6 +33,7 @@ export const OPERATION_SLUGS = [
   'audio-transcribe-result.get',
   'audio-transcribe.post',
   'bbc-news.get',
+  'bing-serp.get',
   'bluesky-profile.get',
   'chatous-check-session.get',
   'chatous-get-account-state.get',
@@ -45,6 +46,7 @@ export const OPERATION_SLUGS = [
   'currency-convert.get',
   'detect-tech-stack.post',
   'devto-articles-search.get',
+  'duckduckgo-search.get',
   'email-generate-address.post',
   'email-read-verification-code-graph.post',
   'email-read-verification-code.post',
@@ -65,6 +67,8 @@ export const OPERATION_SLUGS = [
   'google-maps-place.get',
   'google-maps-reviews.get',
   'google-maps-search.post',
+  'google-search.post',
+  'google-serp.get',
   'hackernews-search.get',
   'html-to-pdf.post',
   'image-ocr.post',
@@ -616,6 +620,91 @@ export const OPERATIONS: readonly OperationMeta[] = [
         },
       },
       required: ['section', 'url', 'totalCount', 'headlines', 'fetchedAt'],
+      additionalProperties: false,
+      $schema: 'http://json-schema.org/draft-07/schema#',
+    },
+  },
+  {
+    slug: 'bing-serp.get',
+    operationId: 'bing_serp_get',
+    name: 'Get Bing Search Results',
+    description:
+      'Get Bing search results (title, URL, snippet) for a query, fetched through a real headless browser.',
+    category: 'SEO tools',
+    tags: ['bing', 'search', 'serp', 'browser'],
+    workerLanguage: 'ts',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 25,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 200,
+          description: 'Search query',
+        },
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 50,
+          default: 10,
+          description: 'Max results',
+        },
+        country: {
+          type: 'string',
+          minLength: 2,
+          maxLength: 2,
+          default: 'us',
+          description: 'Country code (ISO 3166-1 alpha-2)',
+        },
+      },
+      required: ['query'],
+      additionalProperties: false,
+      $schema: 'http://json-schema.org/draft-07/schema#',
+    },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+        },
+        totalCount: {
+          type: 'integer',
+          minimum: 0,
+        },
+        results: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              position: {
+                type: 'integer',
+                exclusiveMinimum: 0,
+              },
+              title: {
+                type: 'string',
+              },
+              url: {
+                type: 'string',
+                format: 'uri',
+              },
+              displayUrl: {
+                type: 'string',
+              },
+              snippet: {
+                type: 'string',
+              },
+            },
+            required: ['position', 'title', 'url', 'displayUrl', 'snippet'],
+            additionalProperties: false,
+          },
+        },
+        fetchedAt: {
+          type: 'string',
+        },
+      },
+      required: ['query', 'totalCount', 'results', 'fetchedAt'],
       additionalProperties: false,
       $schema: 'http://json-schema.org/draft-07/schema#',
     },
@@ -3127,6 +3216,98 @@ export const OPERATIONS: readonly OperationMeta[] = [
       required: ['totalReturned', 'articles', 'fetchedAt'],
       title: 'Output',
       type: 'object',
+    },
+  },
+  {
+    slug: 'duckduckgo-search.get',
+    operationId: 'duckduckgo_search_get',
+    name: 'Get DuckDuckGo Search Results',
+    description:
+      'Get DuckDuckGo search results (title, URL, snippet) for a query, fetched through a real headless browser.',
+    category: 'SEO tools',
+    tags: ['duckduckgo', 'search', 'serp', 'browser'],
+    workerLanguage: 'ts',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 25,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 200,
+          description: 'Search query',
+        },
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 50,
+          default: 10,
+          description: 'Max results',
+        },
+        safeSearch: {
+          type: 'string',
+          enum: ['strict', 'moderate', 'off'],
+          default: 'moderate',
+          description: 'Safe-search level; invalid values are rejected by the gateway',
+        },
+      },
+      required: ['query'],
+      additionalProperties: false,
+      $schema: 'http://json-schema.org/draft-07/schema#',
+    },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+        },
+        totalCount: {
+          type: 'integer',
+          minimum: 0,
+        },
+        results: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              position: {
+                type: 'integer',
+                exclusiveMinimum: 0,
+              },
+              title: {
+                type: 'string',
+              },
+              url: {
+                type: 'string',
+                format: 'uri',
+              },
+              displayUrl: {
+                type: 'string',
+              },
+              snippet: {
+                type: 'string',
+              },
+            },
+            required: ['position', 'title', 'url', 'displayUrl', 'snippet'],
+            additionalProperties: false,
+          },
+        },
+        fetchedAt: {
+          type: 'string',
+        },
+        engine: {
+          type: 'string',
+          const: 'duckduckgo-html',
+        },
+        elapsedMs: {
+          type: 'integer',
+          minimum: 0,
+        },
+      },
+      required: ['query', 'totalCount', 'results', 'fetchedAt', 'engine', 'elapsedMs'],
+      additionalProperties: false,
+      $schema: 'http://json-schema.org/draft-07/schema#',
     },
   },
   {
@@ -8123,6 +8304,237 @@ export const OPERATIONS: readonly OperationMeta[] = [
       required: ['query', 'count', 'places', 'truncated'],
       title: 'Output',
       type: 'object',
+    },
+  },
+  {
+    slug: 'google-search.post',
+    operationId: 'google_search_post',
+    name: 'Google Search',
+    description:
+      'Search Google and get organic results (title, URL, snippet, domain) for any query, with language and country control. For query suggestions use google-autocomplete.post; for a lighter general web search use web-search.post.',
+    category: 'Search',
+    tags: ['google', 'search', 'serp', 'scrape'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 6,
+    inputSchema: {
+      properties: {
+        query: {
+          description: 'Search query',
+          minLength: 1,
+          title: 'Query',
+          type: 'string',
+        },
+        maxResults: {
+          default: 10,
+          description: 'Max results to return',
+          maximum: 100,
+          minimum: 1,
+          title: 'Maxresults',
+          type: 'integer',
+        },
+        language: {
+          default: 'en',
+          description: 'hl param (e.g. en, fr, es)',
+          title: 'Language',
+          type: 'string',
+        },
+        country: {
+          default: 'us',
+          description: 'gl param (e.g. us, ca, gb)',
+          title: 'Country',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Optional proxy URL (http://user:pass@host:port). If set, uses only this exit IP for the BotGuard mint + scrape.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['query'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        ResultItem: {
+          properties: {
+            position: {
+              title: 'Position',
+              type: 'integer',
+            },
+            title: {
+              title: 'Title',
+              type: 'string',
+            },
+            url: {
+              title: 'Url',
+              type: 'string',
+            },
+            snippet: {
+              title: 'Snippet',
+              type: 'string',
+            },
+            domain: {
+              title: 'Domain',
+              type: 'string',
+            },
+          },
+          required: ['position', 'title', 'url', 'snippet', 'domain'],
+          title: 'ResultItem',
+          type: 'object',
+        },
+      },
+      properties: {
+        success: {
+          title: 'Success',
+          type: 'boolean',
+        },
+        query: {
+          title: 'Query',
+          type: 'string',
+        },
+        results: {
+          items: {
+            $ref: '#/$defs/ResultItem',
+          },
+          title: 'Results',
+          type: 'array',
+        },
+        totalResults: {
+          title: 'Totalresults',
+          type: 'integer',
+        },
+        source: {
+          default: 'google',
+          title: 'Source',
+          type: 'string',
+        },
+        message: {
+          title: 'Message',
+          type: 'string',
+        },
+        fetchedAt: {
+          title: 'Fetchedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: [
+        'success',
+        'query',
+        'results',
+        'totalResults',
+        'message',
+        'fetchedAt',
+        'elapsedMs',
+      ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'google-serp.get',
+    operationId: 'google_serp_get',
+    name: 'Get Google Search Results',
+    description:
+      'Get Google search results (title, URL, snippet) for a query, fetched through a real headless browser.',
+    category: 'SEO tools',
+    tags: ['google', 'search', 'serp', 'browser'],
+    workerLanguage: 'ts',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 25,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          minLength: 1,
+          maxLength: 200,
+          description: 'Search query',
+        },
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 50,
+          default: 10,
+          description: 'Max results',
+        },
+        country: {
+          type: 'string',
+          minLength: 2,
+          maxLength: 2,
+          default: 'us',
+          description: 'Country code (ISO 3166-1 alpha-2)',
+        },
+        language: {
+          type: 'string',
+          minLength: 2,
+          maxLength: 5,
+          default: 'en',
+          description: 'Language code',
+        },
+      },
+      required: ['query'],
+      additionalProperties: false,
+      $schema: 'http://json-schema.org/draft-07/schema#',
+    },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+        },
+        totalCount: {
+          type: 'integer',
+          minimum: 0,
+        },
+        results: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              position: {
+                type: 'integer',
+                exclusiveMinimum: 0,
+              },
+              title: {
+                type: 'string',
+              },
+              url: {
+                type: 'string',
+                format: 'uri',
+              },
+              displayUrl: {
+                type: 'string',
+              },
+              snippet: {
+                type: 'string',
+              },
+            },
+            required: ['position', 'title', 'url', 'displayUrl', 'snippet'],
+            additionalProperties: false,
+          },
+        },
+        fetchedAt: {
+          type: 'string',
+        },
+      },
+      required: ['query', 'totalCount', 'results', 'fetchedAt'],
+      additionalProperties: false,
+      $schema: 'http://json-schema.org/draft-07/schema#',
     },
   },
   {
