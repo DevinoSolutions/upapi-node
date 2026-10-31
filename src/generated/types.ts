@@ -656,6 +656,10 @@ export interface DetectTechStackPostOutput {
   poweredBy: string | null;
   contentType: string | null;
   fetchedAt: string;
+  /**
+   * True when the page was larger than the analysed prefix, so only its first 500,000 characters were inspected and a signature after that point cannot be reported.
+   */
+  truncated?: boolean;
 }
 
 // ── devto-articles-search.get ───────────────────────────────────────────

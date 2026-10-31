@@ -3032,6 +3032,13 @@ export const OPERATIONS: readonly OperationMeta[] = [
           title: 'Fetchedat',
           type: 'string',
         },
+        truncated: {
+          default: false,
+          description:
+            'True when the page was larger than the analysed prefix, so only its first 500,000 characters were inspected and a signature after that point cannot be reported.',
+          title: 'Truncated',
+          type: 'boolean',
+        },
       },
       required: [
         'url',
