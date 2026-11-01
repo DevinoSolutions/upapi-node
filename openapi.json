@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "upAPI",
-    "description": "Browser-powered API marketplace. 112 of 112 APIs included (capped at 449 for RapidAPI compatibility).\n\nBilling: a call spends WEIGHTED UNITS against your plan's monthly quota — not a flat one call = one unit. A light HTTP relay costs 1 unit; heavy work costs more, up to 25 (search-engine result pages 25, headless-browser renders and page scrapes 20, residential-proxy social reads 15, LLM completions 10, datacenter social/media reads 4). Every operation declares its own price as `x-upapi-unit-weight`, so a workload can be costed before it is run. Quota state rides on every response in the `RateLimit` / `RateLimit-Policy` headers.",
+    "description": "Browser-powered API marketplace. 113 of 113 APIs included (capped at 449 for RapidAPI compatibility).\n\nBilling: a call spends WEIGHTED UNITS against your plan's monthly quota — not a flat one call = one unit. A light HTTP relay costs 1 unit; heavy work costs more, up to 25 (search-engine result pages 25, headless-browser renders and page scrapes 20, residential-proxy social reads 15, LLM completions 10, datacenter social/media reads 4). Every operation declares its own price as `x-upapi-unit-weight`, so a workload can be costed before it is run. Quota state rides on every response in the `RateLimit` / `RateLimit-Policy` headers.",
     "version": "1.0.0"
   },
   "servers": [
@@ -7629,6 +7629,264 @@
                     "code": {
                       "default": null,
                       "title": "Code",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "error": {
+                      "default": null,
+                      "title": "Error",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "elapsedMs": {
+                      "title": "Elapsedms",
+                      "type": "integer"
+                    }
+                  },
+                  "required": ["success", "elapsedMs"],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/email-read-verification-link-graph.post": {
+      "post": {
+        "operationId": "email_read_verification_link_graph_post",
+        "summary": "Email Read Verification Link (Microsoft Graph)",
+        "description": "Poll an outlook.com mailbox over Microsoft Graph for a verification LINK in a message body, optionally following a click-tracker through a proxy. For accounts whose IMAP switch is off. Returns the link or an error.",
+        "tags": ["Utility", "email", "verification", "link", "outlook", "graph", "utility"],
+        "x-upapi-unit-weight": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "graphClientId": {
+                    "description": "Microsoft public app client_id",
+                    "minLength": 1,
+                    "title": "Graphclientid",
+                    "type": "string"
+                  },
+                  "graphRefreshToken": {
+                    "description": "OAuth refresh token (Mail.Read offline_access)",
+                    "minLength": 1,
+                    "title": "Graphrefreshtoken",
+                    "type": "string"
+                  },
+                  "senderContains": {
+                    "description": "Substring to match in the From header (e.g. 'discord', 'reddit')",
+                    "minLength": 1,
+                    "title": "Sendercontains",
+                    "type": "string"
+                  },
+                  "recipientContains": {
+                    "default": null,
+                    "description": "Substring to match in the To header -- REQUIRED to tell plus-addresses (base+alias@outlook.com) apart when many accounts share one inbox",
+                    "title": "Recipientcontains",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "linkPattern": {
+                    "default": null,
+                    "description": "Regex for candidate URLs in the RAW html body (default: any http(s) URL)",
+                    "title": "Linkpattern",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "linkHostContains": {
+                    "default": null,
+                    "description": "Keep only candidate URLs whose text contains this (e.g. 'discord.com')",
+                    "title": "Linkhostcontains",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "followRedirects": {
+                    "default": true,
+                    "description": "Follow click-tracker redirects to resolve the actionable URL",
+                    "title": "Followredirects",
+                    "type": "boolean"
+                  },
+                  "redirectProxyUrl": {
+                    "default": null,
+                    "description": "Proxy to follow the tracker through (the account's pinned exit)",
+                    "title": "Redirectproxyurl",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "redirectHostContains": {
+                    "default": null,
+                    "description": "The actionable URL's host+path (e.g. 'discord.com/verify'): a candidate that already contains it is returned directly; otherwise candidates are followed until a hop contains it",
+                    "title": "Redirecthostcontains",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "maxRedirects": {
+                    "default": 5,
+                    "description": "Max redirect hops to follow",
+                    "maximum": 10,
+                    "minimum": 1,
+                    "title": "Maxredirects",
+                    "type": "integer"
+                  },
+                  "timeoutSeconds": {
+                    "default": 120,
+                    "description": "Max seconds to poll",
+                    "maximum": 300,
+                    "minimum": 5,
+                    "title": "Timeoutseconds",
+                    "type": "number"
+                  },
+                  "pollSeconds": {
+                    "default": 5,
+                    "description": "Seconds between polls",
+                    "maximum": 30,
+                    "minimum": 1,
+                    "title": "Pollseconds",
+                    "type": "number"
+                  },
+                  "minEpochSeconds": {
+                    "default": null,
+                    "description": "Ignore messages received before this Unix timestamp",
+                    "title": "Minepochseconds",
+                    "type": "number",
+                    "nullable": true
+                  }
+                },
+                "required": ["graphClientId", "graphRefreshToken", "senderContains"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "success": {
+                      "title": "Success",
+                      "type": "boolean"
+                    },
+                    "link": {
+                      "default": null,
+                      "title": "Link",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "allLinks": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Alllinks",
+                      "type": "array"
+                    },
+                    "subject": {
+                      "default": null,
+                      "title": "Subject",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "receivedAt": {
+                      "default": null,
+                      "title": "Receivedat",
                       "type": "string",
                       "nullable": true
                     },

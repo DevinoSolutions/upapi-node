@@ -1172,6 +1172,73 @@ export interface EmailReadVerificationCodePostOutput {
   elapsedMs: number;
 }
 
+// ── email-read-verification-link-graph.post ─────────────────────────────
+
+export interface EmailReadVerificationLinkGraphPostInput {
+  /**
+   * Microsoft public app client_id
+   */
+  graphClientId: string;
+  /**
+   * OAuth refresh token (Mail.Read offline_access)
+   */
+  graphRefreshToken: string;
+  /**
+   * Substring to match in the From header (e.g. 'discord', 'reddit')
+   */
+  senderContains: string;
+  /**
+   * Substring to match in the To header -- REQUIRED to tell plus-addresses (base+alias@outlook.com) apart when many accounts share one inbox
+   */
+  recipientContains?: string | null;
+  /**
+   * Regex for candidate URLs in the RAW html body (default: any http(s) URL)
+   */
+  linkPattern?: string | null;
+  /**
+   * Keep only candidate URLs whose text contains this (e.g. 'discord.com')
+   */
+  linkHostContains?: string | null;
+  /**
+   * Follow click-tracker redirects to resolve the actionable URL
+   */
+  followRedirects?: boolean;
+  /**
+   * Proxy to follow the tracker through (the account's pinned exit)
+   */
+  redirectProxyUrl?: string | null;
+  /**
+   * The actionable URL's host+path (e.g. 'discord.com/verify'): a candidate that already contains it is returned directly; otherwise candidates are followed until a hop contains it
+   */
+  redirectHostContains?: string | null;
+  /**
+   * Max redirect hops to follow
+   */
+  maxRedirects?: number;
+  /**
+   * Max seconds to poll
+   */
+  timeoutSeconds?: number;
+  /**
+   * Seconds between polls
+   */
+  pollSeconds?: number;
+  /**
+   * Ignore messages received before this Unix timestamp
+   */
+  minEpochSeconds?: number | null;
+}
+
+export interface EmailReadVerificationLinkGraphPostOutput {
+  success: boolean;
+  link?: string | null;
+  allLinks?: Array<string>;
+  subject?: string | null;
+  receivedAt?: string | null;
+  error?: string | null;
+  elapsedMs: number;
+}
+
 // ── email-read-verification-link.post ───────────────────────────────────
 
 export interface EmailReadVerificationLinkPostInput {

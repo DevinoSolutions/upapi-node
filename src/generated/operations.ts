@@ -66,6 +66,8 @@ import type {
   EmailReadVerificationCodeGraphPostOutput,
   EmailReadVerificationCodePostInput,
   EmailReadVerificationCodePostOutput,
+  EmailReadVerificationLinkGraphPostInput,
+  EmailReadVerificationLinkGraphPostOutput,
   EmailReadVerificationLinkPostInput,
   EmailReadVerificationLinkPostOutput,
   FetchMarkdownPostInput,
@@ -378,6 +380,11 @@ export type Operations = {
     input: EmailReadVerificationCodePostInput,
     options?: CallOptions,
   ) => Promise<EmailReadVerificationCodePostOutput>;
+  /** Email Read Verification Link (Microsoft Graph) — Poll an outlook.com mailbox over Microsoft Graph for a verification LINK in a message body, optionally following a click-tracker through a proxy. For accounts whose IMAP switch is off. Returns the link or an error. */
+  'email-read-verification-link-graph.post': (
+    input: EmailReadVerificationLinkGraphPostInput,
+    options?: CallOptions,
+  ) => Promise<EmailReadVerificationLinkGraphPostOutput>;
   /** Read Email Verification Link — Connect to an IMAP mailbox and extract a link from the BODY of a recent email. Decodes quoted-printable/base64 bodies before matching, so URLs split across lines are returned whole. Polls with retries. Use this for verification mail whose token is a one-time URL rather than a code in the subject. */
   'email-read-verification-link.post': (
     input: EmailReadVerificationLinkPostInput,
@@ -955,6 +962,11 @@ export function buildOperations(client: UpAPI): Operations {
         input,
         options,
       ),
+    'email-read-verification-link-graph.post': (input, options) =>
+      client.call<
+        EmailReadVerificationLinkGraphPostOutput,
+        EmailReadVerificationLinkGraphPostInput
+      >('email-read-verification-link-graph.post', input, options),
     'email-read-verification-link.post': (input, options) =>
       client.call<EmailReadVerificationLinkPostOutput, EmailReadVerificationLinkPostInput>(
         'email-read-verification-link.post',

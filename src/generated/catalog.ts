@@ -58,6 +58,7 @@ export const OPERATION_SLUGS = [
   'email-generate-address.post',
   'email-read-verification-code-graph.post',
   'email-read-verification-code.post',
+  'email-read-verification-link-graph.post',
   'email-read-verification-link.post',
   'fetch-markdown.post',
   'github-issue-comments.get',
@@ -4565,6 +4566,223 @@ export const OPERATIONS: readonly OperationMeta[] = [
       required: ['code', 'subject', 'from', 'to', 'receivedAt', 'fetchedAt', 'elapsedMs'],
       additionalProperties: false,
       $schema: 'http://json-schema.org/draft-07/schema#',
+    },
+  },
+  {
+    slug: 'email-read-verification-link-graph.post',
+    operationId: 'email_read_verification_link_graph_post',
+    name: 'Email Read Verification Link (Microsoft Graph)',
+    description:
+      'Poll an outlook.com mailbox over Microsoft Graph for a verification LINK in a message body, optionally following a click-tracker through a proxy. For accounts whose IMAP switch is off. Returns the link or an error.',
+    category: 'Utility',
+    tags: ['email', 'verification', 'link', 'outlook', 'graph', 'utility'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        graphClientId: {
+          description: 'Microsoft public app client_id',
+          minLength: 1,
+          title: 'Graphclientid',
+          type: 'string',
+        },
+        graphRefreshToken: {
+          description: 'OAuth refresh token (Mail.Read offline_access)',
+          minLength: 1,
+          title: 'Graphrefreshtoken',
+          type: 'string',
+        },
+        senderContains: {
+          description: "Substring to match in the From header (e.g. 'discord', 'reddit')",
+          minLength: 1,
+          title: 'Sendercontains',
+          type: 'string',
+        },
+        recipientContains: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Substring to match in the To header -- REQUIRED to tell plus-addresses (base+alias@outlook.com) apart when many accounts share one inbox',
+          title: 'Recipientcontains',
+        },
+        linkPattern: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Regex for candidate URLs in the RAW html body (default: any http(s) URL)',
+          title: 'Linkpattern',
+        },
+        linkHostContains: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: "Keep only candidate URLs whose text contains this (e.g. 'discord.com')",
+          title: 'Linkhostcontains',
+        },
+        followRedirects: {
+          default: true,
+          description: 'Follow click-tracker redirects to resolve the actionable URL',
+          title: 'Followredirects',
+          type: 'boolean',
+        },
+        redirectProxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: "Proxy to follow the tracker through (the account's pinned exit)",
+          title: 'Redirectproxyurl',
+        },
+        redirectHostContains: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            "The actionable URL's host+path (e.g. 'discord.com/verify'): a candidate that already contains it is returned directly; otherwise candidates are followed until a hop contains it",
+          title: 'Redirecthostcontains',
+        },
+        maxRedirects: {
+          default: 5,
+          description: 'Max redirect hops to follow',
+          maximum: 10,
+          minimum: 1,
+          title: 'Maxredirects',
+          type: 'integer',
+        },
+        timeoutSeconds: {
+          default: 120,
+          description: 'Max seconds to poll',
+          maximum: 300,
+          minimum: 5,
+          title: 'Timeoutseconds',
+          type: 'number',
+        },
+        pollSeconds: {
+          default: 5,
+          description: 'Seconds between polls',
+          maximum: 30,
+          minimum: 1,
+          title: 'Pollseconds',
+          type: 'number',
+        },
+        minEpochSeconds: {
+          anyOf: [
+            {
+              type: 'number',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Ignore messages received before this Unix timestamp',
+          title: 'Minepochseconds',
+        },
+      },
+      required: ['graphClientId', 'graphRefreshToken', 'senderContains'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        success: {
+          title: 'Success',
+          type: 'boolean',
+        },
+        link: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Link',
+        },
+        allLinks: {
+          items: {
+            type: 'string',
+          },
+          title: 'Alllinks',
+          type: 'array',
+        },
+        subject: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Subject',
+        },
+        receivedAt: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Receivedat',
+        },
+        error: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Error',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['success', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
     },
   },
   {
