@@ -3701,6 +3701,7 @@ export interface RedditCheckCommentVisibilityGetOutput {
   visibleToAnon: boolean;
   removed: boolean;
   shadowSuspected: boolean;
+  removalReason?: string | null;
   fetchedAt: string;
   elapsedMs: number;
 }

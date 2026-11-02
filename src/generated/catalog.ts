@@ -13752,6 +13752,18 @@ export const OPERATIONS: readonly OperationMeta[] = [
           title: 'Shadowsuspected',
           type: 'boolean',
         },
+        removalReason: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Removalreason',
+        },
         fetchedAt: {
           title: 'Fetchedat',
           type: 'string',

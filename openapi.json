@@ -18323,6 +18323,12 @@
                       "title": "Shadowsuspected",
                       "type": "boolean"
                     },
+                    "removalReason": {
+                      "default": null,
+                      "title": "Removalreason",
+                      "type": "string",
+                      "nullable": true
+                    },
                     "fetchedAt": {
                       "title": "Fetchedat",
                       "type": "string"
