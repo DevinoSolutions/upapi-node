@@ -258,7 +258,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Media',
     tags: ['audio', 'video', 'transcribe', 'speech', 'polling', 'job'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 1,
     inputSchema: {
       properties: {
@@ -399,7 +399,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Media',
     tags: ['audio', 'video', 'transcribe', 'speech', 'whisper', 'subtitles'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 10,
     inputSchema: {
       properties: {
@@ -873,7 +873,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['chatous', 'session', 'auth'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 1,
     inputSchema: {
       properties: {
@@ -939,7 +939,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['chatous', 'profile', 'conversations', 'messages'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 4,
     inputSchema: {
       properties: {
@@ -1216,7 +1216,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['chatous', 'events', 'messages', 'realtime'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 4,
     inputSchema: {
       properties: {
@@ -4215,7 +4215,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Utility',
     tags: ['email', 'signup', 'account-creation', 'utility'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 1,
     inputSchema: {
       properties: {
@@ -4339,7 +4339,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Utility',
     tags: ['email', 'verification', 'otp', 'outlook', 'graph', 'utility'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 1,
     inputSchema: {
       properties: {
@@ -4471,7 +4471,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Utility',
     tags: ['email', 'verification', 'imap', 'utility'],
     workerLanguage: 'ts',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 1,
     inputSchema: {
       type: 'object',
@@ -4577,7 +4577,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Utility',
     tags: ['email', 'verification', 'link', 'outlook', 'graph', 'utility'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 1,
     inputSchema: {
       properties: {
@@ -4794,7 +4794,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Utility',
     tags: ['email', 'verification', 'imap', 'utility'],
     workerLanguage: 'ts',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 1,
     inputSchema: {
       type: 'object',
@@ -4931,7 +4931,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Tools',
     tags: ['markdown', 'html', 'readability', 'llm', 'rag', 'scraper', 'content', 'converter'],
     workerLanguage: 'ts',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 3,
     inputSchema: {
       type: 'object',
@@ -7936,7 +7936,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Search',
     tags: ['google', 'autocomplete', 'suggest', 'keywords', 'search'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 1,
     inputSchema: {
       properties: {
@@ -9811,7 +9811,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Tools',
     tags: ['pdf', 'html', 'browser', 'render', 'print', 'document'],
     workerLanguage: 'ts',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 20,
     inputSchema: {
       type: 'object',
@@ -9936,7 +9936,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Tools',
     tags: ['ocr', 'image', 'text', 'recognition', 'vision', 'document'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 4,
     inputSchema: {
       properties: {
@@ -10084,7 +10084,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['instagram', 'account', 'health', 'check'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 15,
     inputSchema: {
       properties: {
@@ -10209,7 +10209,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['instagram', 'account', 'oracle', 'verification', 'social'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 15,
     inputSchema: {
       properties: {
@@ -10306,7 +10306,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['instagram', 'location', 'discovery', 'leads', 'social'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 15,
     inputSchema: {
       properties: {
@@ -10423,7 +10423,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['instagram', 'commenters', 'discovery', 'leads', 'social'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 15,
     inputSchema: {
       properties: {
@@ -10601,7 +10601,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['instagram', 'post', 'scraping', 'social', 'embed'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 15,
     inputSchema: {
       properties: {
@@ -10727,7 +10727,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['instagram', 'profile', 'user', 'scraping', 'social', 'http'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 15,
     inputSchema: {
       properties: {
@@ -10998,7 +10998,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['instagram', 'posts', 'feed', 'scraping', 'social'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 15,
     inputSchema: {
       properties: {
@@ -11162,7 +11162,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['instagram', 'user', 'profile', 'scraping', 'social'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 15,
     inputSchema: {
       properties: {
@@ -11513,7 +11513,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['linkedin', 'account', 'health', 'auth', 'voyager'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 15,
     inputSchema: {
       properties: {
@@ -11597,7 +11597,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['linkedin', 'profile', 'voyager'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 15,
     inputSchema: {
       properties: {
@@ -11729,7 +11729,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['linkedin', 'invitations', 'connection', 'voyager'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 15,
     inputSchema: {
       properties: {
@@ -12276,7 +12276,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Search',
     tags: ['linkedin', 'search', 'profiles', 'lead-gen'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 15,
     inputSchema: {
       properties: {
@@ -13057,7 +13057,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Tools',
     tags: ['pdf', 'text', 'extract', 'document', 'parse', 'tables'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 2,
     inputSchema: {
       properties: {
@@ -13511,7 +13511,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['reddit', 'account', 'health', 'social'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 4,
     inputSchema: {
       properties: {
@@ -13669,7 +13669,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['reddit', 'shadowban', 'moderation', 'social'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 4,
     inputSchema: {
       properties: {
@@ -14010,7 +14010,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['reddit', 'oauth', 'account', 'identity', 'social'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 4,
     inputSchema: {
       properties: {
@@ -14160,7 +14160,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['reddit', 'oauth', 'comment', 'social'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 4,
     inputSchema: {
       properties: {
@@ -14928,7 +14928,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Tools',
     tags: ['screenshot', 'browser', 'render', 'image', 'capture', 'thumbnail'],
     workerLanguage: 'ts',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 20,
     inputSchema: {
       type: 'object',
@@ -15352,7 +15352,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Developer Tools',
     tags: ['text', 'rust', 'hash', 'sha256', 'stats'],
     workerLanguage: 'rust',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 1,
     inputSchema: {
       $schema: 'http://json-schema.org/draft-07/schema#',
@@ -15413,7 +15413,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['tiktok', 'account', 'health', 'check'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 15,
     inputSchema: {
       properties: {
@@ -15536,7 +15536,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['tiktok', 'discovery', 'users', 'comments', 'social', 'leads'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 15,
     inputSchema: {
       properties: {
@@ -15839,7 +15839,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['tiktok', 'comments', 'scraping', 'social'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 15,
     inputSchema: {
       properties: {
@@ -15977,7 +15977,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['tiktok', 'user', 'profile', 'scraping', 'social'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 15,
     inputSchema: {
       properties: {
@@ -16100,7 +16100,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Social Media',
     tags: ['tiktok', 'video', 'scraping', 'social'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 15,
     inputSchema: {
       properties: {
@@ -17440,7 +17440,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     category: 'Search',
     tags: ['search', 'web', 'duckduckgo', 'serp'],
     workerLanguage: 'python',
-    publishTargets: ['upapi'],
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
     unitWeight: 1,
     inputSchema: {
       properties: {
