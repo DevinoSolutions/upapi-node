@@ -15889,6 +15889,19 @@ export const OPERATIONS: readonly OperationMeta[] = [
           description: 'Optional proxy URL',
           title: 'Proxyurl',
         },
+        sessionCookies: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Authed read cookies (shadow-restriction check)',
+          title: 'Sessioncookies',
+        },
       },
       required: ['videoId'],
       title: 'Input',

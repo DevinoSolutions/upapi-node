@@ -4356,6 +4356,10 @@ export interface TiktokGetCommentsPostInput {
    * Optional proxy URL
    */
   proxyUrl?: string | null;
+  /**
+   * Authed read cookies (shadow-restriction check)
+   */
+  sessionCookies?: string | null;
 }
 
 export interface TiktokGetCommentsPostOutputCommentItem {

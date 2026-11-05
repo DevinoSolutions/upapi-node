@@ -21416,6 +21416,13 @@
                     "title": "Proxyurl",
                     "type": "string",
                     "nullable": true
+                  },
+                  "sessionCookies": {
+                    "default": null,
+                    "description": "Authed read cookies (shadow-restriction check)",
+                    "title": "Sessioncookies",
+                    "type": "string",
+                    "nullable": true
                   }
                 },
                 "required": ["videoId"],
