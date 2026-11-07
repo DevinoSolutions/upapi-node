@@ -61,9 +61,13 @@ export const OPERATION_SLUGS = [
   'email-read-verification-link-graph.post',
   'email-read-verification-link.post',
   'fetch-markdown.post',
+  'github-account-health.get',
+  'github-comment-reaction.post',
+  'github-issue-comment.post',
   'github-issue-comments.get',
   'github-repo-contributors.get',
   'github-repo-issues.get',
+  'github-repo-star.post',
   'github-repo.get',
   'github-search-discussions.get',
   'github-search-issues.get',
@@ -71,6 +75,7 @@ export const OPERATION_SLUGS = [
   'github-search-users.get',
   'github-trending.get',
   'github-user-emails.get',
+  'github-user-follow.post',
   'github-user.get',
   'google-autocomplete.post',
   'google-maps-place.get',
@@ -5078,6 +5083,558 @@ export const OPERATIONS: readonly OperationMeta[] = [
     },
   },
   {
+    slug: 'github-account-health.get',
+    operationId: 'github_account_health_get',
+    name: "Check a GitHub Account's Health",
+    description:
+      "Check whether a GitHub token still authenticates and whether its account has been suspended. Returns the account's login/id and a verdict (active / suspended / auth-expired / forbidden). Bring your own GitHub token: it is used for this one call, never stored; sent only to api.github.com.",
+    category: 'Developer Tools',
+    tags: ['github', 'account', 'health', 'auth', 'python'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        token: {
+          description: 'GitHub token of the account to health-check',
+          minLength: 1,
+          title: 'Token',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Optional proxy URL. Use the same one across related calls when the upstream expects a consistent IP.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['token'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        RateLimitInfo: {
+          description:
+            'The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.',
+          properties: {
+            limit: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Limit: requests allowed per window',
+              title: 'Limit',
+            },
+            remaining: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Remaining: requests left',
+              title: 'Remaining',
+            },
+            resetAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as an ISO-8601 UTC timestamp',
+              title: 'Resetat',
+            },
+            resetEpoch: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as unix seconds',
+              title: 'Resetepoch',
+            },
+            resource: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Resource: which bucket (core, search, graphql, ...)',
+              title: 'Resource',
+            },
+          },
+          required: ['limit', 'remaining', 'resetAt', 'resetEpoch', 'resource'],
+          title: 'RateLimitInfo',
+          type: 'object',
+        },
+      },
+      properties: {
+        verdict: {
+          description: 'active | suspended | auth-expired | forbidden',
+          title: 'Verdict',
+          type: 'string',
+        },
+        login: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: "The authenticated account's login",
+          title: 'Login',
+        },
+        accountId: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: "The account's numeric GitHub id",
+          title: 'Accountid',
+        },
+        createdAt: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Account creation timestamp',
+          title: 'Createdat',
+        },
+        twoFactorAuthentication: {
+          anyOf: [
+            {
+              type: 'boolean',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Whether 2FA is enabled (only present when the token can read it)',
+          title: 'Twofactorauthentication',
+        },
+        rateLimit: {
+          anyOf: [
+            {
+              $ref: '#/$defs/RateLimitInfo',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Rate-limit block from the /user response, when one was received',
+        },
+        checkedAt: {
+          title: 'Checkedat',
+          type: 'string',
+        },
+      },
+      required: ['verdict', 'checkedAt'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'github-comment-reaction.post',
+    operationId: 'github_comment_reaction_post',
+    name: 'React to a GitHub Issue Comment',
+    description:
+      "Add one of GitHub's eight reactions to an issue comment as the supplied token's account, and say whether that reaction already existed. Bring your own GitHub token: a fine-grained PAT with the 'Issues' repository permission (write), or a classic PAT with 'public_repo' (broad). The token is used for this one call, never stored; sent only to api.github.com.",
+    category: 'Developer Tools',
+    tags: ['github', 'reaction', 'comment', 'write', 'python'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        owner: {
+          description: 'Repo owner (user or org)',
+          maxLength: 39,
+          minLength: 1,
+          pattern: '^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$',
+          title: 'Owner',
+          type: 'string',
+        },
+        repo: {
+          description: 'Repo name',
+          maxLength: 100,
+          minLength: 1,
+          pattern: '^[A-Za-z0-9._-]*[A-Za-z0-9_-][A-Za-z0-9._-]*$',
+          title: 'Repo',
+          type: 'string',
+        },
+        commentId: {
+          description: 'Issue-comment id (not the issue number)',
+          minimum: 1,
+          title: 'Commentid',
+          type: 'integer',
+        },
+        reaction: {
+          description: "One of GitHub's eight reaction contents",
+          enum: ['+1', '-1', 'laugh', 'confused', 'heart', 'hooray', 'rocket', 'eyes'],
+          title: 'Reaction',
+          type: 'string',
+        },
+        token: {
+          description:
+            "GitHub token of the account that will react. Fine-grained PAT: 'Issues' repository permission (write); classic PAT: 'public_repo' ('repo' for a private repository; broad, prefer fine-grained). Used for this one call, never stored; sent only to api.github.com.",
+          minLength: 1,
+          title: 'Token',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Optional proxy URL. Use the same one across related calls when the upstream expects a consistent IP.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['owner', 'repo', 'commentId', 'reaction', 'token'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        RateLimitInfo: {
+          description:
+            'The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.',
+          properties: {
+            limit: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Limit: requests allowed per window',
+              title: 'Limit',
+            },
+            remaining: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Remaining: requests left',
+              title: 'Remaining',
+            },
+            resetAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as an ISO-8601 UTC timestamp',
+              title: 'Resetat',
+            },
+            resetEpoch: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as unix seconds',
+              title: 'Resetepoch',
+            },
+            resource: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Resource: which bucket (core, search, graphql, ...)',
+              title: 'Resource',
+            },
+          },
+          required: ['limit', 'remaining', 'resetAt', 'resetEpoch', 'resource'],
+          title: 'RateLimitInfo',
+          type: 'object',
+        },
+      },
+      properties: {
+        reactionId: {
+          title: 'Reactionid',
+          type: 'integer',
+        },
+        content: {
+          title: 'Content',
+          type: 'string',
+        },
+        author: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Author',
+        },
+        alreadyExisted: {
+          description:
+            'GitHub answers 200 when this account had already left this reaction, and 201 when it created one. True means nothing changed.',
+          title: 'Alreadyexisted',
+          type: 'boolean',
+        },
+        rateLimit: {
+          $ref: '#/$defs/RateLimitInfo',
+        },
+        reactedAt: {
+          title: 'Reactedat',
+          type: 'string',
+        },
+      },
+      required: ['reactionId', 'content', 'author', 'alreadyExisted', 'rateLimit', 'reactedAt'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'github-issue-comment.post',
+    operationId: 'github_issue_comment_post',
+    name: 'Post a GitHub Issue Comment',
+    description:
+      "Post one comment on a GitHub issue or pull request as the supplied token's account. Returns the new comment id and URL. Bring your own GitHub token: a fine-grained PAT with the 'Issues' repository permission (write), plus 'Pull requests' (write) for a pull request, or a classic PAT with 'public_repo' (broad). The token is used for this one call, never stored; sent only to api.github.com. Never retried here, so a client retry can post a duplicate comment and bill twice: over the HTTP API, send an Idempotency-Key header and reuse it on every retry; MCP callers should check for an existing comment before retrying.",
+    category: 'Developer Tools',
+    tags: ['github', 'issues', 'comment', 'write', 'python'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        owner: {
+          description: 'Repo owner (user or org)',
+          maxLength: 39,
+          minLength: 1,
+          pattern: '^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$',
+          title: 'Owner',
+          type: 'string',
+        },
+        repo: {
+          description: 'Repo name',
+          maxLength: 100,
+          minLength: 1,
+          pattern: '^[A-Za-z0-9._-]*[A-Za-z0-9_-][A-Za-z0-9._-]*$',
+          title: 'Repo',
+          type: 'string',
+        },
+        issueNumber: {
+          description: 'Issue or pull request number',
+          minimum: 1,
+          title: 'Issuenumber',
+          type: 'integer',
+        },
+        body: {
+          description: 'Comment body (GitHub-flavoured markdown)',
+          maxLength: 65536,
+          minLength: 1,
+          title: 'Body',
+          type: 'string',
+        },
+        token: {
+          description:
+            "GitHub token of the account that will comment. Fine-grained PAT: 'Issues' repository permission (write), plus 'Pull requests' (write) to comment on a pull request; classic PAT: 'public_repo' ('repo' for a private repository; broad, prefer fine-grained). Used for this one call, never stored; sent only to api.github.com.",
+          minLength: 1,
+          title: 'Token',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Optional proxy URL. Use the same one across related calls when the upstream expects a consistent IP.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['owner', 'repo', 'issueNumber', 'body', 'token'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        RateLimitInfo: {
+          description:
+            'The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.',
+          properties: {
+            limit: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Limit: requests allowed per window',
+              title: 'Limit',
+            },
+            remaining: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Remaining: requests left',
+              title: 'Remaining',
+            },
+            resetAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as an ISO-8601 UTC timestamp',
+              title: 'Resetat',
+            },
+            resetEpoch: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as unix seconds',
+              title: 'Resetepoch',
+            },
+            resource: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Resource: which bucket (core, search, graphql, ...)',
+              title: 'Resource',
+            },
+          },
+          required: ['limit', 'remaining', 'resetAt', 'resetEpoch', 'resource'],
+          title: 'RateLimitInfo',
+          type: 'object',
+        },
+      },
+      properties: {
+        commentId: {
+          title: 'Commentid',
+          type: 'integer',
+        },
+        htmlUrl: {
+          title: 'Htmlurl',
+          type: 'string',
+        },
+        author: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Author',
+        },
+        createdAt: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          title: 'Createdat',
+        },
+        rateLimit: {
+          $ref: '#/$defs/RateLimitInfo',
+        },
+        postedAt: {
+          title: 'Postedat',
+          type: 'string',
+        },
+      },
+      required: ['commentId', 'htmlUrl', 'author', 'createdAt', 'rateLimit', 'postedAt'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
     slug: 'github-issue-comments.get',
     operationId: 'github_issue_comments_get',
     name: 'List GitHub Issue Comments',
@@ -5092,15 +5649,17 @@ export const OPERATIONS: readonly OperationMeta[] = [
       properties: {
         owner: {
           description: 'Repo owner (user or org)',
-          maxLength: 100,
+          maxLength: 39,
           minLength: 1,
+          pattern: '^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$',
           title: 'Owner',
           type: 'string',
         },
         repo: {
           description: 'Repo name',
-          maxLength: 200,
+          maxLength: 100,
           minLength: 1,
+          pattern: '^[A-Za-z0-9._-]*[A-Za-z0-9_-][A-Za-z0-9._-]*$',
           title: 'Repo',
           type: 'string',
         },
@@ -5363,15 +5922,17 @@ export const OPERATIONS: readonly OperationMeta[] = [
       properties: {
         owner: {
           description: 'Repo owner (user or org)',
-          maxLength: 100,
+          maxLength: 39,
           minLength: 1,
+          pattern: '^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$',
           title: 'Owner',
           type: 'string',
         },
         repo: {
           description: 'Repo name',
-          maxLength: 200,
+          maxLength: 100,
           minLength: 1,
+          pattern: '^[A-Za-z0-9._-]*[A-Za-z0-9_-][A-Za-z0-9._-]*$',
           title: 'Repo',
           type: 'string',
         },
@@ -5586,15 +6147,17 @@ export const OPERATIONS: readonly OperationMeta[] = [
       properties: {
         owner: {
           description: 'Repo owner (user or org)',
-          maxLength: 100,
+          maxLength: 39,
           minLength: 1,
+          pattern: '^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$',
           title: 'Owner',
           type: 'string',
         },
         repo: {
           description: 'Repo name',
-          maxLength: 200,
+          maxLength: 100,
           minLength: 1,
+          pattern: '^[A-Za-z0-9._-]*[A-Za-z0-9_-][A-Za-z0-9._-]*$',
           title: 'Repo',
           type: 'string',
         },
@@ -5942,6 +6505,167 @@ export const OPERATIONS: readonly OperationMeta[] = [
     },
   },
   {
+    slug: 'github-repo-star.post',
+    operationId: 'github_repo_star_post',
+    name: 'Star or Unstar a GitHub Repository',
+    description:
+      "Star or unstar a repository as the supplied token's account. Idempotent in both directions. Bring your own GitHub token: a fine-grained PAT with the 'Starring' user permission (write) and 'Metadata' repository permission (read), or a classic PAT with 'public_repo' (broad, prefer fine-grained). The token is used for this one call, never stored; sent only to api.github.com.",
+    category: 'Developer Tools',
+    tags: ['github', 'star', 'repo', 'write', 'python'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        owner: {
+          description: 'Repo owner (user or org)',
+          maxLength: 39,
+          minLength: 1,
+          pattern: '^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$',
+          title: 'Owner',
+          type: 'string',
+        },
+        repo: {
+          description: 'Repo name',
+          maxLength: 100,
+          minLength: 1,
+          pattern: '^[A-Za-z0-9._-]*[A-Za-z0-9_-][A-Za-z0-9._-]*$',
+          title: 'Repo',
+          type: 'string',
+        },
+        action: {
+          default: 'star',
+          description: 'star = PUT, unstar = DELETE. Both are idempotent.',
+          enum: ['star', 'unstar'],
+          title: 'Action',
+          type: 'string',
+        },
+        token: {
+          description:
+            "GitHub token of the account that will star. Fine-grained PAT: 'Starring' user permission (write) + 'Metadata' repository permission (read); classic PAT: 'public_repo' ('repo' for a private repository; broad, prefer fine-grained). Used for this one call, never stored; sent only to api.github.com.",
+          minLength: 1,
+          title: 'Token',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Optional proxy URL. Use the same one across related calls when the upstream expects a consistent IP.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['owner', 'repo', 'token'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        RateLimitInfo: {
+          description:
+            'The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.',
+          properties: {
+            limit: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Limit: requests allowed per window',
+              title: 'Limit',
+            },
+            remaining: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Remaining: requests left',
+              title: 'Remaining',
+            },
+            resetAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as an ISO-8601 UTC timestamp',
+              title: 'Resetat',
+            },
+            resetEpoch: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as unix seconds',
+              title: 'Resetepoch',
+            },
+            resource: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Resource: which bucket (core, search, graphql, ...)',
+              title: 'Resource',
+            },
+          },
+          required: ['limit', 'remaining', 'resetAt', 'resetEpoch', 'resource'],
+          title: 'RateLimitInfo',
+          type: 'object',
+        },
+      },
+      properties: {
+        repository: {
+          title: 'Repository',
+          type: 'string',
+        },
+        action: {
+          title: 'Action',
+          type: 'string',
+        },
+        status: {
+          description: "GitHub's status; 204 is its success for both directions",
+          title: 'Status',
+          type: 'integer',
+        },
+        rateLimit: {
+          $ref: '#/$defs/RateLimitInfo',
+        },
+        actedAt: {
+          title: 'Actedat',
+          type: 'string',
+        },
+      },
+      required: ['repository', 'action', 'status', 'rateLimit', 'actedAt'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
     slug: 'github-repo.get',
     operationId: 'github_repo_get',
     name: 'Get GitHub Repository',
@@ -5956,15 +6680,17 @@ export const OPERATIONS: readonly OperationMeta[] = [
       properties: {
         owner: {
           description: 'Repo owner (user or org)',
-          maxLength: 100,
+          maxLength: 39,
           minLength: 1,
+          pattern: '^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$',
           title: 'Owner',
           type: 'string',
         },
         repo: {
           description: 'Repo name',
-          maxLength: 200,
+          maxLength: 100,
           minLength: 1,
+          pattern: '^[A-Za-z0-9._-]*[A-Za-z0-9_-][A-Za-z0-9._-]*$',
           title: 'Repo',
           type: 'string',
         },
@@ -7443,8 +8169,9 @@ export const OPERATIONS: readonly OperationMeta[] = [
       properties: {
         username: {
           description: 'GitHub login',
-          maxLength: 100,
+          maxLength: 64,
           minLength: 1,
+          pattern: '^[A-Za-z0-9][A-Za-z0-9_-]*(?:\\[bot\\])?$',
           title: 'Username',
           type: 'string',
         },
@@ -7629,6 +8356,159 @@ export const OPERATIONS: readonly OperationMeta[] = [
     },
   },
   {
+    slug: 'github-user-follow.post',
+    operationId: 'github_user_follow_post',
+    name: 'Follow or Unfollow a GitHub User',
+    description:
+      "Follow or unfollow a GitHub user as the supplied token's account. Idempotent in both directions. Bring your own GitHub token: a fine-grained PAT with the 'Followers' user permission (write), or a classic PAT with 'user:follow' (broad). The token is used for this one call, never stored; sent only to api.github.com.",
+    category: 'Developer Tools',
+    tags: ['github', 'follow', 'user', 'write', 'python'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        username: {
+          description: 'Login to follow or unfollow',
+          maxLength: 64,
+          minLength: 1,
+          pattern: '^[A-Za-z0-9][A-Za-z0-9_-]*(?:\\[bot\\])?$',
+          title: 'Username',
+          type: 'string',
+        },
+        action: {
+          default: 'follow',
+          description: 'follow = PUT, unfollow = DELETE. Both are idempotent.',
+          enum: ['follow', 'unfollow'],
+          title: 'Action',
+          type: 'string',
+        },
+        token: {
+          description:
+            "GitHub token of the account that will follow. Fine-grained PAT: 'Followers' user permission (write); classic PAT: 'user:follow' (broad, prefer fine-grained). Used for this one call, never stored; sent only to api.github.com.",
+          minLength: 1,
+          title: 'Token',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Optional proxy URL. Use the same one across related calls when the upstream expects a consistent IP.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['username', 'token'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      $defs: {
+        RateLimitInfo: {
+          description:
+            'The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.',
+          properties: {
+            limit: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Limit: requests allowed per window',
+              title: 'Limit',
+            },
+            remaining: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Remaining: requests left',
+              title: 'Remaining',
+            },
+            resetAt: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as an ISO-8601 UTC timestamp',
+              title: 'Resetat',
+            },
+            resetEpoch: {
+              anyOf: [
+                {
+                  type: 'integer',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Reset as unix seconds',
+              title: 'Resetepoch',
+            },
+            resource: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              description: 'X-RateLimit-Resource: which bucket (core, search, graphql, ...)',
+              title: 'Resource',
+            },
+          },
+          required: ['limit', 'remaining', 'resetAt', 'resetEpoch', 'resource'],
+          title: 'RateLimitInfo',
+          type: 'object',
+        },
+      },
+      properties: {
+        username: {
+          title: 'Username',
+          type: 'string',
+        },
+        action: {
+          title: 'Action',
+          type: 'string',
+        },
+        status: {
+          description: "GitHub's status; 204 is its success for both directions",
+          title: 'Status',
+          type: 'integer',
+        },
+        rateLimit: {
+          $ref: '#/$defs/RateLimitInfo',
+        },
+        actedAt: {
+          title: 'Actedat',
+          type: 'string',
+        },
+      },
+      required: ['username', 'action', 'status', 'rateLimit', 'actedAt'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
     slug: 'github-user.get',
     operationId: 'github_user_get',
     name: 'Get GitHub User',
@@ -7643,8 +8523,9 @@ export const OPERATIONS: readonly OperationMeta[] = [
       properties: {
         username: {
           description: 'GitHub login (user or org)',
-          maxLength: 100,
+          maxLength: 64,
           minLength: 1,
+          pattern: '^[A-Za-z0-9][A-Za-z0-9_-]*(?:\\[bot\\])?$',
           title: 'Username',
           type: 'string',
         },

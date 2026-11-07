@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "upAPI",
-    "description": "Browser-powered API marketplace. 113 of 113 APIs included (capped at 449 for RapidAPI compatibility).\n\nBilling: a call spends WEIGHTED UNITS against your plan's monthly quota — not a flat one call = one unit. A light HTTP relay costs 1 unit; heavy work costs more, up to 25 (search-engine result pages 25, headless-browser renders and page scrapes 20, residential-proxy social reads 15, LLM completions 10, datacenter social/media reads 4). Every operation declares its own price as `x-upapi-unit-weight`, so a workload can be costed before it is run. Quota state rides on every response in the `RateLimit` / `RateLimit-Policy` headers.",
+    "description": "Browser-powered API marketplace. 118 of 118 APIs included (capped at 449 for RapidAPI compatibility).\n\nBilling: a call spends WEIGHTED UNITS against your plan's monthly quota — not a flat one call = one unit. A light HTTP relay costs 1 unit; heavy work costs more, up to 25 (search-engine result pages 25, headless-browser renders and page scrapes 20, residential-proxy social reads 15, LLM completions 10, datacenter social/media reads 4). Every operation declares its own price as `x-upapi-unit-weight`, so a workload can be costed before it is run. Quota state rides on every response in the `RateLimit` / `RateLimit-Policy` headers.",
     "version": "1.0.0"
   },
   "servers": [
@@ -8001,6 +8001,698 @@
         }
       }
     },
+    "/github-account-health.get": {
+      "post": {
+        "operationId": "github_account_health_get",
+        "summary": "Check a GitHub Account's Health",
+        "description": "Check whether a GitHub token still authenticates and whether its account has been suspended. Returns the account's login/id and a verdict (active / suspended / auth-expired / forbidden). Bring your own GitHub token: it is used for this one call, never stored; sent only to api.github.com.",
+        "tags": ["Developer Tools", "github", "account", "health", "auth", "python"],
+        "x-upapi-unit-weight": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "token": {
+                    "description": "GitHub token of the account to health-check",
+                    "minLength": 1,
+                    "title": "Token",
+                    "type": "string"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Optional proxy URL. Use the same one across related calls when the upstream expects a consistent IP.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["token"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "verdict": {
+                      "description": "active | suspended | auth-expired | forbidden",
+                      "title": "Verdict",
+                      "type": "string"
+                    },
+                    "login": {
+                      "default": null,
+                      "description": "The authenticated account's login",
+                      "title": "Login",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "accountId": {
+                      "default": null,
+                      "description": "The account's numeric GitHub id",
+                      "title": "Accountid",
+                      "type": "integer",
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "default": null,
+                      "description": "Account creation timestamp",
+                      "title": "Createdat",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "twoFactorAuthentication": {
+                      "default": null,
+                      "description": "Whether 2FA is enabled (only present when the token can read it)",
+                      "title": "Twofactorauthentication",
+                      "type": "boolean",
+                      "nullable": true
+                    },
+                    "rateLimit": {
+                      "description": "The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.",
+                      "properties": {
+                        "limit": {
+                          "description": "X-RateLimit-Limit: requests allowed per window",
+                          "title": "Limit",
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "remaining": {
+                          "description": "X-RateLimit-Remaining: requests left",
+                          "title": "Remaining",
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "resetAt": {
+                          "description": "X-RateLimit-Reset as an ISO-8601 UTC timestamp",
+                          "title": "Resetat",
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "resetEpoch": {
+                          "description": "X-RateLimit-Reset as unix seconds",
+                          "title": "Resetepoch",
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "resource": {
+                          "description": "X-RateLimit-Resource: which bucket (core, search, graphql, ...)",
+                          "title": "Resource",
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": ["limit", "remaining", "resetAt", "resetEpoch", "resource"],
+                      "title": "RateLimitInfo",
+                      "type": "object"
+                    },
+                    "checkedAt": {
+                      "title": "Checkedat",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["verdict", "checkedAt"],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/github-comment-reaction.post": {
+      "post": {
+        "operationId": "github_comment_reaction_post",
+        "summary": "React to a GitHub Issue Comment",
+        "description": "Add one of GitHub's eight reactions to an issue comment as the supplied token's account, and say whether that reaction already existed. Bring your own GitHub token: a fine-grained PAT with the 'Issues' repository permission (write), or a classic PAT with 'public_repo' (broad). The token is used for this one call, never stored; sent only to api.github.com.",
+        "tags": ["Developer Tools", "github", "reaction", "comment", "write", "python"],
+        "x-upapi-unit-weight": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "owner": {
+                    "description": "Repo owner (user or org)",
+                    "maxLength": 39,
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$",
+                    "title": "Owner",
+                    "type": "string"
+                  },
+                  "repo": {
+                    "description": "Repo name",
+                    "maxLength": 100,
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9._-]*[A-Za-z0-9_-][A-Za-z0-9._-]*$",
+                    "title": "Repo",
+                    "type": "string"
+                  },
+                  "commentId": {
+                    "description": "Issue-comment id (not the issue number)",
+                    "minimum": 1,
+                    "title": "Commentid",
+                    "type": "integer"
+                  },
+                  "reaction": {
+                    "description": "One of GitHub's eight reaction contents",
+                    "enum": ["+1", "-1", "laugh", "confused", "heart", "hooray", "rocket", "eyes"],
+                    "title": "Reaction",
+                    "type": "string"
+                  },
+                  "token": {
+                    "description": "GitHub token of the account that will react. Fine-grained PAT: 'Issues' repository permission (write); classic PAT: 'public_repo' ('repo' for a private repository; broad, prefer fine-grained). Used for this one call, never stored; sent only to api.github.com.",
+                    "minLength": 1,
+                    "title": "Token",
+                    "type": "string"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Optional proxy URL. Use the same one across related calls when the upstream expects a consistent IP.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["owner", "repo", "commentId", "reaction", "token"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "reactionId": {
+                      "title": "Reactionid",
+                      "type": "integer"
+                    },
+                    "content": {
+                      "title": "Content",
+                      "type": "string"
+                    },
+                    "author": {
+                      "title": "Author",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "alreadyExisted": {
+                      "description": "GitHub answers 200 when this account had already left this reaction, and 201 when it created one. True means nothing changed.",
+                      "title": "Alreadyexisted",
+                      "type": "boolean"
+                    },
+                    "rateLimit": {
+                      "description": "The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.",
+                      "properties": {
+                        "limit": {
+                          "description": "X-RateLimit-Limit: requests allowed per window",
+                          "title": "Limit",
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "remaining": {
+                          "description": "X-RateLimit-Remaining: requests left",
+                          "title": "Remaining",
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "resetAt": {
+                          "description": "X-RateLimit-Reset as an ISO-8601 UTC timestamp",
+                          "title": "Resetat",
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "resetEpoch": {
+                          "description": "X-RateLimit-Reset as unix seconds",
+                          "title": "Resetepoch",
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "resource": {
+                          "description": "X-RateLimit-Resource: which bucket (core, search, graphql, ...)",
+                          "title": "Resource",
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": ["limit", "remaining", "resetAt", "resetEpoch", "resource"],
+                      "title": "RateLimitInfo",
+                      "type": "object"
+                    },
+                    "reactedAt": {
+                      "title": "Reactedat",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "reactionId",
+                    "content",
+                    "author",
+                    "alreadyExisted",
+                    "rateLimit",
+                    "reactedAt"
+                  ],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/github-issue-comment.post": {
+      "post": {
+        "operationId": "github_issue_comment_post",
+        "summary": "Post a GitHub Issue Comment",
+        "description": "Post one comment on a GitHub issue or pull request as the supplied token's account. Returns the new comment id and URL. Bring your own GitHub token: a fine-grained PAT with the 'Issues' repository permission (write), plus 'Pull requests' (write) for a pull request, or a classic PAT with 'public_repo' (broad). The token is used for this one call, never stored; sent only to api.github.com. Never retried here, so a client retry can post a duplicate comment and bill twice: over the HTTP API, send an Idempotency-Key header and reuse it on every retry; MCP callers should check for an existing comment before retrying.",
+        "tags": ["Developer Tools", "github", "issues", "comment", "write", "python"],
+        "x-upapi-unit-weight": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "owner": {
+                    "description": "Repo owner (user or org)",
+                    "maxLength": 39,
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$",
+                    "title": "Owner",
+                    "type": "string"
+                  },
+                  "repo": {
+                    "description": "Repo name",
+                    "maxLength": 100,
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9._-]*[A-Za-z0-9_-][A-Za-z0-9._-]*$",
+                    "title": "Repo",
+                    "type": "string"
+                  },
+                  "issueNumber": {
+                    "description": "Issue or pull request number",
+                    "minimum": 1,
+                    "title": "Issuenumber",
+                    "type": "integer"
+                  },
+                  "body": {
+                    "description": "Comment body (GitHub-flavoured markdown)",
+                    "maxLength": 65536,
+                    "minLength": 1,
+                    "title": "Body",
+                    "type": "string"
+                  },
+                  "token": {
+                    "description": "GitHub token of the account that will comment. Fine-grained PAT: 'Issues' repository permission (write), plus 'Pull requests' (write) to comment on a pull request; classic PAT: 'public_repo' ('repo' for a private repository; broad, prefer fine-grained). Used for this one call, never stored; sent only to api.github.com.",
+                    "minLength": 1,
+                    "title": "Token",
+                    "type": "string"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Optional proxy URL. Use the same one across related calls when the upstream expects a consistent IP.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["owner", "repo", "issueNumber", "body", "token"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "commentId": {
+                      "title": "Commentid",
+                      "type": "integer"
+                    },
+                    "htmlUrl": {
+                      "title": "Htmlurl",
+                      "type": "string"
+                    },
+                    "author": {
+                      "title": "Author",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "createdAt": {
+                      "title": "Createdat",
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "rateLimit": {
+                      "description": "The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.",
+                      "properties": {
+                        "limit": {
+                          "description": "X-RateLimit-Limit: requests allowed per window",
+                          "title": "Limit",
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "remaining": {
+                          "description": "X-RateLimit-Remaining: requests left",
+                          "title": "Remaining",
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "resetAt": {
+                          "description": "X-RateLimit-Reset as an ISO-8601 UTC timestamp",
+                          "title": "Resetat",
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "resetEpoch": {
+                          "description": "X-RateLimit-Reset as unix seconds",
+                          "title": "Resetepoch",
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "resource": {
+                          "description": "X-RateLimit-Resource: which bucket (core, search, graphql, ...)",
+                          "title": "Resource",
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": ["limit", "remaining", "resetAt", "resetEpoch", "resource"],
+                      "title": "RateLimitInfo",
+                      "type": "object"
+                    },
+                    "postedAt": {
+                      "title": "Postedat",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "commentId",
+                    "htmlUrl",
+                    "author",
+                    "createdAt",
+                    "rateLimit",
+                    "postedAt"
+                  ],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/github-issue-comments.get": {
       "post": {
         "operationId": "github_issue_comments_get",
@@ -8016,15 +8708,17 @@
                 "properties": {
                   "owner": {
                     "description": "Repo owner (user or org)",
-                    "maxLength": 100,
+                    "maxLength": 39,
                     "minLength": 1,
+                    "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$",
                     "title": "Owner",
                     "type": "string"
                   },
                   "repo": {
                     "description": "Repo name",
-                    "maxLength": 200,
+                    "maxLength": 100,
                     "minLength": 1,
+                    "pattern": "^[A-Za-z0-9._-]*[A-Za-z0-9_-][A-Za-z0-9._-]*$",
                     "title": "Repo",
                     "type": "string"
                   },
@@ -8303,15 +8997,17 @@
                 "properties": {
                   "owner": {
                     "description": "Repo owner (user or org)",
-                    "maxLength": 100,
+                    "maxLength": 39,
                     "minLength": 1,
+                    "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$",
                     "title": "Owner",
                     "type": "string"
                   },
                   "repo": {
                     "description": "Repo name",
-                    "maxLength": 200,
+                    "maxLength": 100,
                     "minLength": 1,
+                    "pattern": "^[A-Za-z0-9._-]*[A-Za-z0-9_-][A-Za-z0-9._-]*$",
                     "title": "Repo",
                     "type": "string"
                   },
@@ -8567,15 +9263,17 @@
                 "properties": {
                   "owner": {
                     "description": "Repo owner (user or org)",
-                    "maxLength": 100,
+                    "maxLength": 39,
                     "minLength": 1,
+                    "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$",
                     "title": "Owner",
                     "type": "string"
                   },
                   "repo": {
                     "description": "Repo name",
-                    "maxLength": 200,
+                    "maxLength": 100,
                     "minLength": 1,
+                    "pattern": "^[A-Za-z0-9._-]*[A-Za-z0-9_-][A-Za-z0-9._-]*$",
                     "title": "Repo",
                     "type": "string"
                   },
@@ -8912,6 +9610,226 @@
         }
       }
     },
+    "/github-repo-star.post": {
+      "post": {
+        "operationId": "github_repo_star_post",
+        "summary": "Star or Unstar a GitHub Repository",
+        "description": "Star or unstar a repository as the supplied token's account. Idempotent in both directions. Bring your own GitHub token: a fine-grained PAT with the 'Starring' user permission (write) and 'Metadata' repository permission (read), or a classic PAT with 'public_repo' (broad, prefer fine-grained). The token is used for this one call, never stored; sent only to api.github.com.",
+        "tags": ["Developer Tools", "github", "star", "repo", "write", "python"],
+        "x-upapi-unit-weight": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "owner": {
+                    "description": "Repo owner (user or org)",
+                    "maxLength": 39,
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$",
+                    "title": "Owner",
+                    "type": "string"
+                  },
+                  "repo": {
+                    "description": "Repo name",
+                    "maxLength": 100,
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9._-]*[A-Za-z0-9_-][A-Za-z0-9._-]*$",
+                    "title": "Repo",
+                    "type": "string"
+                  },
+                  "action": {
+                    "default": "star",
+                    "description": "star = PUT, unstar = DELETE. Both are idempotent.",
+                    "enum": ["star", "unstar"],
+                    "title": "Action",
+                    "type": "string"
+                  },
+                  "token": {
+                    "description": "GitHub token of the account that will star. Fine-grained PAT: 'Starring' user permission (write) + 'Metadata' repository permission (read); classic PAT: 'public_repo' ('repo' for a private repository; broad, prefer fine-grained). Used for this one call, never stored; sent only to api.github.com.",
+                    "minLength": 1,
+                    "title": "Token",
+                    "type": "string"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Optional proxy URL. Use the same one across related calls when the upstream expects a consistent IP.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["owner", "repo", "token"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "repository": {
+                      "title": "Repository",
+                      "type": "string"
+                    },
+                    "action": {
+                      "title": "Action",
+                      "type": "string"
+                    },
+                    "status": {
+                      "description": "GitHub's status; 204 is its success for both directions",
+                      "title": "Status",
+                      "type": "integer"
+                    },
+                    "rateLimit": {
+                      "description": "The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.",
+                      "properties": {
+                        "limit": {
+                          "description": "X-RateLimit-Limit: requests allowed per window",
+                          "title": "Limit",
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "remaining": {
+                          "description": "X-RateLimit-Remaining: requests left",
+                          "title": "Remaining",
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "resetAt": {
+                          "description": "X-RateLimit-Reset as an ISO-8601 UTC timestamp",
+                          "title": "Resetat",
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "resetEpoch": {
+                          "description": "X-RateLimit-Reset as unix seconds",
+                          "title": "Resetepoch",
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "resource": {
+                          "description": "X-RateLimit-Resource: which bucket (core, search, graphql, ...)",
+                          "title": "Resource",
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": ["limit", "remaining", "resetAt", "resetEpoch", "resource"],
+                      "title": "RateLimitInfo",
+                      "type": "object"
+                    },
+                    "actedAt": {
+                      "title": "Actedat",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["repository", "action", "status", "rateLimit", "actedAt"],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/github-repo.get": {
       "post": {
         "operationId": "github_repo_get",
@@ -8927,15 +9845,17 @@
                 "properties": {
                   "owner": {
                     "description": "Repo owner (user or org)",
-                    "maxLength": 100,
+                    "maxLength": 39,
                     "minLength": 1,
+                    "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$",
                     "title": "Owner",
                     "type": "string"
                   },
                   "repo": {
                     "description": "Repo name",
-                    "maxLength": 200,
+                    "maxLength": 100,
                     "minLength": 1,
+                    "pattern": "^[A-Za-z0-9._-]*[A-Za-z0-9_-][A-Za-z0-9._-]*$",
                     "title": "Repo",
                     "type": "string"
                   }
@@ -10441,8 +11361,9 @@
                 "properties": {
                   "username": {
                     "description": "GitHub login",
-                    "maxLength": 100,
+                    "maxLength": 64,
                     "minLength": 1,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(?:\\[bot\\])?$",
                     "title": "Username",
                     "type": "string"
                   },
@@ -10670,6 +11591,218 @@
         }
       }
     },
+    "/github-user-follow.post": {
+      "post": {
+        "operationId": "github_user_follow_post",
+        "summary": "Follow or Unfollow a GitHub User",
+        "description": "Follow or unfollow a GitHub user as the supplied token's account. Idempotent in both directions. Bring your own GitHub token: a fine-grained PAT with the 'Followers' user permission (write), or a classic PAT with 'user:follow' (broad). The token is used for this one call, never stored; sent only to api.github.com.",
+        "tags": ["Developer Tools", "github", "follow", "user", "write", "python"],
+        "x-upapi-unit-weight": 1,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "username": {
+                    "description": "Login to follow or unfollow",
+                    "maxLength": 64,
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(?:\\[bot\\])?$",
+                    "title": "Username",
+                    "type": "string"
+                  },
+                  "action": {
+                    "default": "follow",
+                    "description": "follow = PUT, unfollow = DELETE. Both are idempotent.",
+                    "enum": ["follow", "unfollow"],
+                    "title": "Action",
+                    "type": "string"
+                  },
+                  "token": {
+                    "description": "GitHub token of the account that will follow. Fine-grained PAT: 'Followers' user permission (write); classic PAT: 'user:follow' (broad, prefer fine-grained). Used for this one call, never stored; sent only to api.github.com.",
+                    "minLength": 1,
+                    "title": "Token",
+                    "type": "string"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Optional proxy URL. Use the same one across related calls when the upstream expects a consistent IP.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["username", "token"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "username": {
+                      "title": "Username",
+                      "type": "string"
+                    },
+                    "action": {
+                      "title": "Action",
+                      "type": "string"
+                    },
+                    "status": {
+                      "description": "GitHub's status; 204 is its success for both directions",
+                      "title": "Status",
+                      "type": "integer"
+                    },
+                    "rateLimit": {
+                      "description": "The rate-limit headers GitHub returned on THIS response, surfaced so the caller\ncan pace itself instead of the operation sleeping on its behalf.",
+                      "properties": {
+                        "limit": {
+                          "description": "X-RateLimit-Limit: requests allowed per window",
+                          "title": "Limit",
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "remaining": {
+                          "description": "X-RateLimit-Remaining: requests left",
+                          "title": "Remaining",
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "resetAt": {
+                          "description": "X-RateLimit-Reset as an ISO-8601 UTC timestamp",
+                          "title": "Resetat",
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "resetEpoch": {
+                          "description": "X-RateLimit-Reset as unix seconds",
+                          "title": "Resetepoch",
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "resource": {
+                          "description": "X-RateLimit-Resource: which bucket (core, search, graphql, ...)",
+                          "title": "Resource",
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": ["limit", "remaining", "resetAt", "resetEpoch", "resource"],
+                      "title": "RateLimitInfo",
+                      "type": "object"
+                    },
+                    "actedAt": {
+                      "title": "Actedat",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["username", "action", "status", "rateLimit", "actedAt"],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/github-user.get": {
       "post": {
         "operationId": "github_user_get",
@@ -10685,8 +11818,9 @@
                 "properties": {
                   "username": {
                     "description": "GitHub login (user or org)",
-                    "maxLength": 100,
+                    "maxLength": 64,
                     "minLength": 1,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(?:\\[bot\\])?$",
                     "title": "Username",
                     "type": "string"
                   },

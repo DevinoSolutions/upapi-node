@@ -1412,6 +1412,207 @@ export interface FetchMarkdownPostOutput {
   fetchedAt: string;
 }
 
+// ── github-account-health.get ───────────────────────────────────────────
+
+export interface GithubAccountHealthGetInput {
+  /**
+   * GitHub token of the account to health-check
+   */
+  token: string;
+  /**
+   * Optional proxy URL. Use the same one across related calls when the upstream expects a consistent IP.
+   */
+  proxyUrl?: string | null;
+}
+
+/**
+ * The rate-limit headers GitHub returned on THIS response, surfaced so the caller
+ * can pace itself instead of the operation sleeping on its behalf.
+ */
+export interface GithubAccountHealthGetOutputRateLimitInfo {
+  /**
+   * X-RateLimit-Limit: requests allowed per window
+   */
+  limit: number | null;
+  /**
+   * X-RateLimit-Remaining: requests left
+   */
+  remaining: number | null;
+  /**
+   * X-RateLimit-Reset as an ISO-8601 UTC timestamp
+   */
+  resetAt: string | null;
+  /**
+   * X-RateLimit-Reset as unix seconds
+   */
+  resetEpoch: number | null;
+  /**
+   * X-RateLimit-Resource: which bucket (core, search, graphql, ...)
+   */
+  resource: string | null;
+}
+
+export interface GithubAccountHealthGetOutput {
+  /**
+   * active | suspended | auth-expired | forbidden
+   */
+  verdict: string;
+  /**
+   * The authenticated account's login
+   */
+  login?: string | null;
+  /**
+   * The account's numeric GitHub id
+   */
+  accountId?: number | null;
+  /**
+   * Account creation timestamp
+   */
+  createdAt?: string | null;
+  /**
+   * Whether 2FA is enabled (only present when the token can read it)
+   */
+  twoFactorAuthentication?: boolean | null;
+  /**
+   * Rate-limit block from the /user response, when one was received
+   */
+  rateLimit?: GithubAccountHealthGetOutputRateLimitInfo | null;
+  checkedAt: string;
+}
+
+// ── github-comment-reaction.post ────────────────────────────────────────
+
+export interface GithubCommentReactionPostInput {
+  /**
+   * Repo owner (user or org)
+   */
+  owner: string;
+  /**
+   * Repo name
+   */
+  repo: string;
+  /**
+   * Issue-comment id (not the issue number)
+   */
+  commentId: number;
+  /**
+   * One of GitHub's eight reaction contents
+   */
+  reaction: '+1' | '-1' | 'laugh' | 'confused' | 'heart' | 'hooray' | 'rocket' | 'eyes';
+  /**
+   * GitHub token of the account that will react. Fine-grained PAT: 'Issues' repository permission (write); classic PAT: 'public_repo' ('repo' for a private repository; broad, prefer fine-grained). Used for this one call, never stored; sent only to api.github.com.
+   */
+  token: string;
+  /**
+   * Optional proxy URL. Use the same one across related calls when the upstream expects a consistent IP.
+   */
+  proxyUrl?: string | null;
+}
+
+/**
+ * The rate-limit headers GitHub returned on THIS response, surfaced so the caller
+ * can pace itself instead of the operation sleeping on its behalf.
+ */
+export interface GithubCommentReactionPostOutputRateLimitInfo {
+  /**
+   * X-RateLimit-Limit: requests allowed per window
+   */
+  limit: number | null;
+  /**
+   * X-RateLimit-Remaining: requests left
+   */
+  remaining: number | null;
+  /**
+   * X-RateLimit-Reset as an ISO-8601 UTC timestamp
+   */
+  resetAt: string | null;
+  /**
+   * X-RateLimit-Reset as unix seconds
+   */
+  resetEpoch: number | null;
+  /**
+   * X-RateLimit-Resource: which bucket (core, search, graphql, ...)
+   */
+  resource: string | null;
+}
+
+export interface GithubCommentReactionPostOutput {
+  reactionId: number;
+  content: string;
+  author: string | null;
+  /**
+   * GitHub answers 200 when this account had already left this reaction, and 201 when it created one. True means nothing changed.
+   */
+  alreadyExisted: boolean;
+  rateLimit: GithubCommentReactionPostOutputRateLimitInfo;
+  reactedAt: string;
+}
+
+// ── github-issue-comment.post ───────────────────────────────────────────
+
+export interface GithubIssueCommentPostInput {
+  /**
+   * Repo owner (user or org)
+   */
+  owner: string;
+  /**
+   * Repo name
+   */
+  repo: string;
+  /**
+   * Issue or pull request number
+   */
+  issueNumber: number;
+  /**
+   * Comment body (GitHub-flavoured markdown)
+   */
+  body: string;
+  /**
+   * GitHub token of the account that will comment. Fine-grained PAT: 'Issues' repository permission (write), plus 'Pull requests' (write) to comment on a pull request; classic PAT: 'public_repo' ('repo' for a private repository; broad, prefer fine-grained). Used for this one call, never stored; sent only to api.github.com.
+   */
+  token: string;
+  /**
+   * Optional proxy URL. Use the same one across related calls when the upstream expects a consistent IP.
+   */
+  proxyUrl?: string | null;
+}
+
+/**
+ * The rate-limit headers GitHub returned on THIS response, surfaced so the caller
+ * can pace itself instead of the operation sleeping on its behalf.
+ */
+export interface GithubIssueCommentPostOutputRateLimitInfo {
+  /**
+   * X-RateLimit-Limit: requests allowed per window
+   */
+  limit: number | null;
+  /**
+   * X-RateLimit-Remaining: requests left
+   */
+  remaining: number | null;
+  /**
+   * X-RateLimit-Reset as an ISO-8601 UTC timestamp
+   */
+  resetAt: string | null;
+  /**
+   * X-RateLimit-Reset as unix seconds
+   */
+  resetEpoch: number | null;
+  /**
+   * X-RateLimit-Resource: which bucket (core, search, graphql, ...)
+   */
+  resource: string | null;
+}
+
+export interface GithubIssueCommentPostOutput {
+  commentId: number;
+  htmlUrl: string;
+  author: string | null;
+  createdAt: string | null;
+  rateLimit: GithubIssueCommentPostOutputRateLimitInfo;
+  postedAt: string;
+}
+
 // ── github-issue-comments.get ───────────────────────────────────────────
 
 export interface GithubIssueCommentsGetInput {
@@ -1664,6 +1865,69 @@ export interface GithubRepoIssuesGetOutput {
   items: Array<GithubRepoIssuesGetOutputIssueSummary>;
   rateLimit: GithubRepoIssuesGetOutputRateLimitInfo;
   fetchedAt: string;
+}
+
+// ── github-repo-star.post ───────────────────────────────────────────────
+
+export interface GithubRepoStarPostInput {
+  /**
+   * Repo owner (user or org)
+   */
+  owner: string;
+  /**
+   * Repo name
+   */
+  repo: string;
+  /**
+   * star = PUT, unstar = DELETE. Both are idempotent.
+   */
+  action?: 'star' | 'unstar';
+  /**
+   * GitHub token of the account that will star. Fine-grained PAT: 'Starring' user permission (write) + 'Metadata' repository permission (read); classic PAT: 'public_repo' ('repo' for a private repository; broad, prefer fine-grained). Used for this one call, never stored; sent only to api.github.com.
+   */
+  token: string;
+  /**
+   * Optional proxy URL. Use the same one across related calls when the upstream expects a consistent IP.
+   */
+  proxyUrl?: string | null;
+}
+
+/**
+ * The rate-limit headers GitHub returned on THIS response, surfaced so the caller
+ * can pace itself instead of the operation sleeping on its behalf.
+ */
+export interface GithubRepoStarPostOutputRateLimitInfo {
+  /**
+   * X-RateLimit-Limit: requests allowed per window
+   */
+  limit: number | null;
+  /**
+   * X-RateLimit-Remaining: requests left
+   */
+  remaining: number | null;
+  /**
+   * X-RateLimit-Reset as an ISO-8601 UTC timestamp
+   */
+  resetAt: string | null;
+  /**
+   * X-RateLimit-Reset as unix seconds
+   */
+  resetEpoch: number | null;
+  /**
+   * X-RateLimit-Resource: which bucket (core, search, graphql, ...)
+   */
+  resource: string | null;
+}
+
+export interface GithubRepoStarPostOutput {
+  repository: string;
+  action: string;
+  /**
+   * GitHub's status; 204 is its success for both directions
+   */
+  status: number;
+  rateLimit: GithubRepoStarPostOutputRateLimitInfo;
+  actedAt: string;
 }
 
 // ── github-repo.get ─────────────────────────────────────────────────────
@@ -2131,6 +2395,65 @@ export interface GithubUserEmailsGetOutput {
    */
   rateLimit: GithubUserEmailsGetOutputRateLimitInfo;
   fetchedAt: string;
+}
+
+// ── github-user-follow.post ─────────────────────────────────────────────
+
+export interface GithubUserFollowPostInput {
+  /**
+   * Login to follow or unfollow
+   */
+  username: string;
+  /**
+   * follow = PUT, unfollow = DELETE. Both are idempotent.
+   */
+  action?: 'follow' | 'unfollow';
+  /**
+   * GitHub token of the account that will follow. Fine-grained PAT: 'Followers' user permission (write); classic PAT: 'user:follow' (broad, prefer fine-grained). Used for this one call, never stored; sent only to api.github.com.
+   */
+  token: string;
+  /**
+   * Optional proxy URL. Use the same one across related calls when the upstream expects a consistent IP.
+   */
+  proxyUrl?: string | null;
+}
+
+/**
+ * The rate-limit headers GitHub returned on THIS response, surfaced so the caller
+ * can pace itself instead of the operation sleeping on its behalf.
+ */
+export interface GithubUserFollowPostOutputRateLimitInfo {
+  /**
+   * X-RateLimit-Limit: requests allowed per window
+   */
+  limit: number | null;
+  /**
+   * X-RateLimit-Remaining: requests left
+   */
+  remaining: number | null;
+  /**
+   * X-RateLimit-Reset as an ISO-8601 UTC timestamp
+   */
+  resetAt: string | null;
+  /**
+   * X-RateLimit-Reset as unix seconds
+   */
+  resetEpoch: number | null;
+  /**
+   * X-RateLimit-Resource: which bucket (core, search, graphql, ...)
+   */
+  resource: string | null;
+}
+
+export interface GithubUserFollowPostOutput {
+  username: string;
+  action: string;
+  /**
+   * GitHub's status; 204 is its success for both directions
+   */
+  status: number;
+  rateLimit: GithubUserFollowPostOutputRateLimitInfo;
+  actedAt: string;
 }
 
 // ── github-user.get ─────────────────────────────────────────────────────

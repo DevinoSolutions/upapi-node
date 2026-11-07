@@ -72,12 +72,20 @@ import type {
   EmailReadVerificationLinkPostOutput,
   FetchMarkdownPostInput,
   FetchMarkdownPostOutput,
+  GithubAccountHealthGetInput,
+  GithubAccountHealthGetOutput,
+  GithubCommentReactionPostInput,
+  GithubCommentReactionPostOutput,
+  GithubIssueCommentPostInput,
+  GithubIssueCommentPostOutput,
   GithubIssueCommentsGetInput,
   GithubIssueCommentsGetOutput,
   GithubRepoContributorsGetInput,
   GithubRepoContributorsGetOutput,
   GithubRepoIssuesGetInput,
   GithubRepoIssuesGetOutput,
+  GithubRepoStarPostInput,
+  GithubRepoStarPostOutput,
   GithubRepoGetInput,
   GithubRepoGetOutput,
   GithubSearchDiscussionsGetInput,
@@ -92,6 +100,8 @@ import type {
   GithubTrendingGetOutput,
   GithubUserEmailsGetInput,
   GithubUserEmailsGetOutput,
+  GithubUserFollowPostInput,
+  GithubUserFollowPostOutput,
   GithubUserGetInput,
   GithubUserGetOutput,
   GoogleAutocompletePostInput,
@@ -395,6 +405,21 @@ export type Operations = {
     input: FetchMarkdownPostInput,
     options?: CallOptions,
   ) => Promise<FetchMarkdownPostOutput>;
+  /** Check a GitHub Account's Health — Check whether a GitHub token still authenticates and whether its account has been suspended. Returns the account's login/id and a verdict (active / suspended / auth-expired / forbidden). Bring your own GitHub token: it is used for this one call, never stored; sent only to api.github.com. */
+  'github-account-health.get': (
+    input: GithubAccountHealthGetInput,
+    options?: CallOptions,
+  ) => Promise<GithubAccountHealthGetOutput>;
+  /** React to a GitHub Issue Comment — Add one of GitHub's eight reactions to an issue comment as the supplied token's account, and say whether that reaction already existed. Bring your own GitHub token: a fine-grained PAT with the 'Issues' repository permission (write), or a classic PAT with 'public_repo' (broad). The token is used for this one call, never stored; sent only to api.github.com. */
+  'github-comment-reaction.post': (
+    input: GithubCommentReactionPostInput,
+    options?: CallOptions,
+  ) => Promise<GithubCommentReactionPostOutput>;
+  /** Post a GitHub Issue Comment — Post one comment on a GitHub issue or pull request as the supplied token's account. Returns the new comment id and URL. Bring your own GitHub token: a fine-grained PAT with the 'Issues' repository permission (write), plus 'Pull requests' (write) for a pull request, or a classic PAT with 'public_repo' (broad). The token is used for this one call, never stored; sent only to api.github.com. Never retried here, so a client retry can post a duplicate comment and bill twice: over the HTTP API, send an Idempotency-Key header and reuse it on every retry; MCP callers should check for an existing comment before retrying. */
+  'github-issue-comment.post': (
+    input: GithubIssueCommentPostInput,
+    options?: CallOptions,
+  ) => Promise<GithubIssueCommentPostOutput>;
   /** List GitHub Issue Comments — List the comments on a GitHub issue or pull request, paginated: author, association (OWNER/MEMBER/CONTRIBUTOR/NONE), body, reaction count, timestamps. Plus the rate-limit headers. */
   'github-issue-comments.get': (
     input: GithubIssueCommentsGetInput,
@@ -410,6 +435,11 @@ export type Operations = {
     input: GithubRepoIssuesGetInput,
     options?: CallOptions,
   ) => Promise<GithubRepoIssuesGetOutput>;
+  /** Star or Unstar a GitHub Repository — Star or unstar a repository as the supplied token's account. Idempotent in both directions. Bring your own GitHub token: a fine-grained PAT with the 'Starring' user permission (write) and 'Metadata' repository permission (read), or a classic PAT with 'public_repo' (broad, prefer fine-grained). The token is used for this one call, never stored; sent only to api.github.com. */
+  'github-repo-star.post': (
+    input: GithubRepoStarPostInput,
+    options?: CallOptions,
+  ) => Promise<GithubRepoStarPostOutput>;
   /** Get GitHub Repository — Fetch metadata (stars, forks, topics, license, dates) for a public GitHub repository via the REST API. */
   'github-repo.get': (
     input: GithubRepoGetInput,
@@ -445,6 +475,11 @@ export type Operations = {
     input: GithubUserEmailsGetInput,
     options?: CallOptions,
   ) => Promise<GithubUserEmailsGetOutput>;
+  /** Follow or Unfollow a GitHub User — Follow or unfollow a GitHub user as the supplied token's account. Idempotent in both directions. Bring your own GitHub token: a fine-grained PAT with the 'Followers' user permission (write), or a classic PAT with 'user:follow' (broad). The token is used for this one call, never stored; sent only to api.github.com. */
+  'github-user-follow.post': (
+    input: GithubUserFollowPostInput,
+    options?: CallOptions,
+  ) => Promise<GithubUserFollowPostOutput>;
   /** Get GitHub User — Fetch a GitHub user or organization's public profile: name, bio, company, location, follower/repo counts, avatar, Twitter handle, hireable flag. Plus the rate-limit headers. Works without a token; pass your own for 5,000 req/h. */
   'github-user.get': (
     input: GithubUserGetInput,
@@ -979,6 +1014,24 @@ export function buildOperations(client: UpAPI): Operations {
         input,
         options,
       ),
+    'github-account-health.get': (input, options) =>
+      client.call<GithubAccountHealthGetOutput, GithubAccountHealthGetInput>(
+        'github-account-health.get',
+        input,
+        options,
+      ),
+    'github-comment-reaction.post': (input, options) =>
+      client.call<GithubCommentReactionPostOutput, GithubCommentReactionPostInput>(
+        'github-comment-reaction.post',
+        input,
+        options,
+      ),
+    'github-issue-comment.post': (input, options) =>
+      client.call<GithubIssueCommentPostOutput, GithubIssueCommentPostInput>(
+        'github-issue-comment.post',
+        input,
+        options,
+      ),
     'github-issue-comments.get': (input, options) =>
       client.call<GithubIssueCommentsGetOutput, GithubIssueCommentsGetInput>(
         'github-issue-comments.get',
@@ -994,6 +1047,12 @@ export function buildOperations(client: UpAPI): Operations {
     'github-repo-issues.get': (input, options) =>
       client.call<GithubRepoIssuesGetOutput, GithubRepoIssuesGetInput>(
         'github-repo-issues.get',
+        input,
+        options,
+      ),
+    'github-repo-star.post': (input, options) =>
+      client.call<GithubRepoStarPostOutput, GithubRepoStarPostInput>(
+        'github-repo-star.post',
         input,
         options,
       ),
@@ -1032,6 +1091,12 @@ export function buildOperations(client: UpAPI): Operations {
     'github-user-emails.get': (input, options) =>
       client.call<GithubUserEmailsGetOutput, GithubUserEmailsGetInput>(
         'github-user-emails.get',
+        input,
+        options,
+      ),
+    'github-user-follow.post': (input, options) =>
+      client.call<GithubUserFollowPostOutput, GithubUserFollowPostInput>(
+        'github-user-follow.post',
         input,
         options,
       ),
