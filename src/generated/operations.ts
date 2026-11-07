@@ -22,10 +22,24 @@ import type {
   BlueskyProfileGetOutput,
   ChatousCheckSessionGetInput,
   ChatousCheckSessionGetOutput,
+  ChatousDequeuePostInput,
+  ChatousDequeuePostOutput,
+  ChatousEndChatPostInput,
+  ChatousEndChatPostOutput,
+  ChatousEnqueuePostInput,
+  ChatousEnqueuePostOutput,
   ChatousGetAccountStateGetInput,
   ChatousGetAccountStateGetOutput,
+  ChatousLoginPostInput,
+  ChatousLoginPostOutput,
   ChatousPollEventsGetInput,
   ChatousPollEventsGetOutput,
+  ChatousSendMessagePostInput,
+  ChatousSendMessagePostOutput,
+  ChatousUpdateProfilePostInput,
+  ChatousUpdateProfilePostOutput,
+  ChatousUploadProfilePhotoPostInput,
+  ChatousUploadProfilePhotoPostOutput,
   CloudflarePageTitleGetInput,
   CloudflarePageTitleGetOutput,
   ContraApplyToJobPostInput,
@@ -281,21 +295,56 @@ export type Operations = {
     input: BlueskyProfileGetInput,
     options?: CallOptions,
   ) => Promise<BlueskyProfileGetOutput>;
-  /** Chatous Check Session — Check whether a Chatous connect.sid cookie is still accepted. Returns Chatous's own verdict (0 authenticated, 1111 anonymous or expired) so an expired session is reported as data rather than as a failure. */
+  /** Chatous Check Session — Check whether your Chatous connect.sid session cookie is still accepted. Returns Chatous's own verdict (0 authenticated, 1111 anonymous or expired) so an expired session is reported as data rather than as a failure. */
   'chatous-check-session.get': (
     input: ChatousCheckSessionGetInput,
     options?: CallOptions,
   ) => Promise<ChatousCheckSessionGetOutput>;
-  /** Chatous Get Account State — Read a Chatous account's own profile, its open conversations and their message history in one bounded WebSocket read. Chatous exposes no REST endpoint for any of this, so the socket's opening burst is the only source. */
+  /** Chatous Leave Match Queue — Leave the Chatous matchmaking queue by releasing a queue entry id from chatous-enqueue, so your account can queue again. Takes your connect.sid session cookie and the queue id. Returns whether Chatous acknowledged the release and its own return code. */
+  'chatous-dequeue.post': (
+    input: ChatousDequeuePostInput,
+    options?: CallOptions,
+  ) => Promise<ChatousDequeuePostOutput>;
+  /** Chatous End Chat — End a Chatous chat from your own account and optionally block the other person. Takes your connect.sid session cookie, the chat id and a block flag (off by default, and blocking cannot be undone through upAPI). The block is sent only after the disconnect is acknowledged; a rejected disconnect fails the call. Returns the disconnect and block verdicts. */
+  'chatous-end-chat.post': (
+    input: ChatousEndChatPostInput,
+    options?: CallOptions,
+  ) => Promise<ChatousEndChatPostOutput>;
+  /** Chatous Join Match Queue — Join the Chatous matchmaking queue with your own account so it can be paired with another user. Takes your connect.sid session cookie and optional interest tags. Returns the queue entry id (pass it to chatous-dequeue to leave the queue) and whether an entry was already active. You can be matched with a real person as soon as the call succeeds. */
+  'chatous-enqueue.post': (
+    input: ChatousEnqueuePostInput,
+    options?: CallOptions,
+  ) => Promise<ChatousEnqueuePostOutput>;
+  /** Chatous Get Account State — Read your own Chatous account's profile, its open conversations and their message history in one bounded call. Takes your connect.sid session cookie. Chatous exposes no REST endpoint for any of this, so the account's WebSocket opening burst is the only source. */
   'chatous-get-account-state.get': (
     input: ChatousGetAccountStateGetInput,
     options?: CallOptions,
   ) => Promise<ChatousGetAccountStateGetOutput>;
-  /** Chatous Poll Events — Listen on a Chatous account's WebSocket for a bounded window and return the events that arrived: new matches with the partner's profile, incoming messages, chat disconnects and queue acknowledgements. */
+  /** Chatous Login — Log in to your Chatous account with its email and password and return the connect.sid session cookie that every other Chatous operation needs. Treat the cookie as a credential: anyone holding it is the account. Pass a proxy URL to keep the session and its exit IP together. */
+  'chatous-login.post': (
+    input: ChatousLoginPostInput,
+    options?: CallOptions,
+  ) => Promise<ChatousLoginPostOutput>;
+  /** Chatous Poll Events — Listen on your own Chatous account for a bounded window and return the events that arrived: new matches with the partner's profile, incoming messages, chat disconnects and queue acknowledgements. Takes your connect.sid session cookie. Zero events is a valid answer, but an expired session also returns zero events, so check it with chatous-check-session. */
   'chatous-poll-events.get': (
     input: ChatousPollEventsGetInput,
     options?: CallOptions,
   ) => Promise<ChatousPollEventsGetOutput>;
+  /** Chatous Send Message — Send a message into a Chatous chat from your own account. Takes your connect.sid session cookie, the chat id (from chatous-poll-events or chatous-get-account-state) and the message text, up to 2000 characters. Returns whether Chatous acknowledged the send. The message is delivered to the other person immediately. */
+  'chatous-send-message.post': (
+    input: ChatousSendMessagePostInput,
+    options?: CallOptions,
+  ) => Promise<ChatousSendMessagePostOutput>;
+  /** Chatous Update Profile — Update your Chatous profile: display name, age (18 or older), about text, gender, interest tags and avatar. Takes your connect.sid session cookie. Chatous replaces the whole profile on every write, so any field you omit is cleared. Checks the session first and fails with AUTH_EXPIRED when Chatous no longer accepts it. Returns the list of fields sent. */
+  'chatous-update-profile.post': (
+    input: ChatousUpdateProfilePostInput,
+    options?: CallOptions,
+  ) => Promise<ChatousUpdateProfilePostOutput>;
+  /** Chatous Upload Profile Photo — Upload a profile photo to your Chatous account from an image URL or base64 bytes. Takes your connect.sid session cookie. Chatous limits uploads per exit IP rather than per account, so pass your own proxy URL if you upload from several accounts. Returns the uploaded size and filename. */
+  'chatous-upload-profile-photo.post': (
+    input: ChatousUploadProfilePhotoPostInput,
+    options?: CallOptions,
+  ) => Promise<ChatousUploadProfilePhotoPostOutput>;
   /** Get Cloudflare Page Title — Fetch the <title> of a URL, with the HTTP status and Server header. The URL is read through an SSRF guard: private addresses and redirects to them are refused. */
   'cloudflare-page-title.get': (
     input: CloudflarePageTitleGetInput,
@@ -891,15 +940,57 @@ export function buildOperations(client: UpAPI): Operations {
         input,
         options,
       ),
+    'chatous-dequeue.post': (input, options) =>
+      client.call<ChatousDequeuePostOutput, ChatousDequeuePostInput>(
+        'chatous-dequeue.post',
+        input,
+        options,
+      ),
+    'chatous-end-chat.post': (input, options) =>
+      client.call<ChatousEndChatPostOutput, ChatousEndChatPostInput>(
+        'chatous-end-chat.post',
+        input,
+        options,
+      ),
+    'chatous-enqueue.post': (input, options) =>
+      client.call<ChatousEnqueuePostOutput, ChatousEnqueuePostInput>(
+        'chatous-enqueue.post',
+        input,
+        options,
+      ),
     'chatous-get-account-state.get': (input, options) =>
       client.call<ChatousGetAccountStateGetOutput, ChatousGetAccountStateGetInput>(
         'chatous-get-account-state.get',
         input,
         options,
       ),
+    'chatous-login.post': (input, options) =>
+      client.call<ChatousLoginPostOutput, ChatousLoginPostInput>(
+        'chatous-login.post',
+        input,
+        options,
+      ),
     'chatous-poll-events.get': (input, options) =>
       client.call<ChatousPollEventsGetOutput, ChatousPollEventsGetInput>(
         'chatous-poll-events.get',
+        input,
+        options,
+      ),
+    'chatous-send-message.post': (input, options) =>
+      client.call<ChatousSendMessagePostOutput, ChatousSendMessagePostInput>(
+        'chatous-send-message.post',
+        input,
+        options,
+      ),
+    'chatous-update-profile.post': (input, options) =>
+      client.call<ChatousUpdateProfilePostOutput, ChatousUpdateProfilePostInput>(
+        'chatous-update-profile.post',
+        input,
+        options,
+      ),
+    'chatous-upload-profile-photo.post': (input, options) =>
+      client.call<ChatousUploadProfilePhotoPostOutput, ChatousUploadProfilePhotoPostInput>(
+        'chatous-upload-profile-photo.post',
         input,
         options,
       ),

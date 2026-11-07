@@ -245,7 +245,7 @@ export interface ChatousCheckSessionGetInput {
    */
   connectSid: string;
   /**
-   * Optional proxy URL to send this request through. Omit to call Chatous directly. Pass the exit the account normally uses if you keep one per account.
+   * Optional proxy URL to send this request through. Omit to call Chatous directly. Use the same one across related calls when you want a consistent IP.
    */
   proxyUrl?: string | null;
 }
@@ -260,6 +260,118 @@ export interface ChatousCheckSessionGetOutput {
    */
   returnCode: number;
   checkedAt: string;
+  elapsedMs: number;
+}
+
+// ── chatous-dequeue.post ────────────────────────────────────────────────
+
+export interface ChatousDequeuePostInput {
+  /**
+   * The account's connect.sid cookie value.
+   */
+  connectSid: string;
+  /**
+   * The queue entry to release, from chatous-enqueue. Required: Chatous rejects an empty body and leaves the entry in place.
+   */
+  queueId: string;
+  /**
+   * Optional proxy URL.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface ChatousDequeuePostOutput {
+  queueId: string;
+  /**
+   * True when Chatous acknowledged the release.
+   */
+  released: boolean;
+  /**
+   * Chatous's own verdict for the release attempt.
+   */
+  returnCode: number;
+  releasedAt: string;
+  elapsedMs: number;
+}
+
+// ── chatous-end-chat.post ───────────────────────────────────────────────
+
+export interface ChatousEndChatPostInput {
+  /**
+   * The account's connect.sid cookie value.
+   */
+  connectSid: string;
+  /**
+   * The chat to end.
+   */
+  chatId: string;
+  /**
+   * Also block the partner. Blocking cannot be undone through upAPI, so it defaults to off. It is only sent after Chatous has acknowledged the disconnect.
+   */
+  block?: boolean;
+  /**
+   * Optional proxy URL.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface ChatousEndChatPostOutput {
+  chatId: string;
+  /**
+   * Always true on a successful call: the disconnect was acknowledged, or Chatous answered without a code at all, which is normal on this route. A rejected or unreadable answer fails the call instead.
+   */
+  disconnected: boolean;
+  /**
+   * True when a block was requested and Chatous accepted it.
+   */
+  blocked: boolean;
+  /**
+   * acknowledged = return_code 0. no-code-returned = the route answered without one, which it is documented to do. (A non-zero or unreadable code fails the call, so neither appears here.)
+   */
+  disconnectOutcome: string;
+  /**
+   * The same two values for the block, or null when none was requested.
+   */
+  blockOutcome: string | null;
+  /**
+   * Chatous's verdict for the disconnect, or null when it answered no code.
+   */
+  disconnectReturnCode: number | null;
+  /**
+   * Chatous's verdict for the block, or null when no block was requested.
+   */
+  blockReturnCode: number | null;
+  endedAt: string;
+  elapsedMs: number;
+}
+
+// ── chatous-enqueue.post ────────────────────────────────────────────────
+
+export interface ChatousEnqueuePostInput {
+  /**
+   * The account's connect.sid cookie value.
+   */
+  connectSid: string;
+  /**
+   * Interest tags to match on, in Chatous's own format. Empty matches on nothing in particular.
+   */
+  tags?: string;
+  /**
+   * Optional proxy URL.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface ChatousEnqueuePostOutput {
+  /**
+   * The queue entry's id. Pass it to chatous-dequeue to release the entry. When `alreadyQueued` is true this is the id of the entry that BLOCKED this request, which may be a stranded one from an earlier session.
+   */
+  queueId: string | null;
+  /**
+   * True when Chatous refused a second entry because one is already active. Not an error: the account is in the queue, just not because of this call.
+   */
+  alreadyQueued: boolean;
+  enqueuedAt: string;
   elapsedMs: number;
 }
 
@@ -279,7 +391,7 @@ export interface ChatousGetAccountStateGetInput {
    */
   maxMessages?: number;
   /**
-   * Optional proxy URL for the WebSocket. Omit to connect directly. Pass the exit the account normally uses if you keep one per account.
+   * Optional proxy URL for the WebSocket. Omit to connect directly. Use the same one across related calls when you want a consistent IP.
    */
   proxyUrl?: string | null;
 }
@@ -327,6 +439,32 @@ export interface ChatousGetAccountStateGetOutput {
    */
   undecodableItemCount: number;
   fetchedAt: string;
+  elapsedMs: number;
+}
+
+// ── chatous-login.post ──────────────────────────────────────────────────
+
+export interface ChatousLoginPostInput {
+  /**
+   * The account's email address. Chatous sends this as the `login` field.
+   */
+  email: string;
+  /**
+   * The account's password.
+   */
+  password: string;
+  /**
+   * Optional proxy URL. Omit to call Chatous directly. Use the same one across related calls when you want the session and its exit IP to stay together.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface ChatousLoginPostOutput {
+  /**
+   * The session cookie every other Chatous operation needs. Store it as a credential: anyone holding it is this account.
+   */
+  connectSid: string;
+  loggedInAt: string;
   elapsedMs: number;
 }
 
@@ -390,6 +528,123 @@ export interface ChatousPollEventsGetOutput {
   undecodableItemCount: number;
   closedByServer: boolean;
   fetchedAt: string;
+  elapsedMs: number;
+}
+
+// ── chatous-send-message.post ───────────────────────────────────────────
+
+export interface ChatousSendMessagePostInput {
+  /**
+   * The account's connect.sid cookie value.
+   */
+  connectSid: string;
+  /**
+   * The chat to send into, from chatous-poll-events or -get-account-state.
+   */
+  chatId: string;
+  /**
+   * The message text. It is delivered to a real person on Chatous.
+   */
+  message: string;
+  /**
+   * Optional proxy URL.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface ChatousSendMessagePostOutput {
+  chatId: string;
+  /**
+   * True only when Chatous acknowledged the message with return_code 0.
+   */
+  sent: boolean;
+  sentAt: string;
+  elapsedMs: number;
+}
+
+// ── chatous-update-profile.post ─────────────────────────────────────────
+
+export interface ChatousUpdateProfilePostInput {
+  /**
+   * The account's connect.sid cookie value.
+   */
+  connectSid: string;
+  /**
+   * Display name.
+   */
+  screenname?: string | null;
+  /**
+   * Age to publish. Chatous FLOORS this at 18 without saying so, so anything lower is refused here rather than silently changed upstream.
+   */
+  age?: number | null;
+  /**
+   * Profile blurb.
+   */
+  about?: string | null;
+  /**
+   * Gender string, sent verbatim.
+   */
+  gender?: string | null;
+  /**
+   * Interest tags. Sent as a JSON array, as the site expects.
+   */
+  profileTags?: Array<string> | null;
+  /**
+   * Chatous avatar icon index.
+   */
+  avatarIcon?: number | null;
+  /**
+   * Chatous avatar colour index.
+   */
+  avatarColor?: number | null;
+  /**
+   * Optional proxy URL.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface ChatousUpdateProfilePostOutput {
+  /**
+   * The form fields actually sent, in sent order.
+   */
+  updatedFields: Array<string>;
+  /**
+   * Always false: an age below 18 is refused before the request is sent.
+   */
+  ageFloored: boolean;
+  updatedAt: string;
+  elapsedMs: number;
+}
+
+// ── chatous-upload-profile-photo.post ───────────────────────────────────
+
+export interface ChatousUploadProfilePhotoPostInput {
+  /**
+   * The account's connect.sid cookie value.
+   */
+  connectSid: string;
+  /**
+   * URL of the image to upload. Pass this OR `imageFile`.
+   */
+  imageUrl?: string | null;
+  /**
+   * Base64-encoded image bytes. Pass this OR `imageUrl`.
+   */
+  imageFile?: string | null;
+  /**
+   * Filename sent with the multipart part.
+   */
+  filename?: string;
+  /**
+   * Optional proxy URL. Worth passing here more than anywhere else: Chatous rate-limits this endpoint PER EXIT IP, so accounts sharing an exit share one budget.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface ChatousUploadProfilePhotoPostOutput {
+  uploadedBytes: number;
+  filename: string;
+  uploadedAt: string;
   elapsedMs: number;
 }
 

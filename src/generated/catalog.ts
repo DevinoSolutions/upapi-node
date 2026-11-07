@@ -36,8 +36,15 @@ export const OPERATION_SLUGS = [
   'bing-serp.get',
   'bluesky-profile.get',
   'chatous-check-session.get',
+  'chatous-dequeue.post',
+  'chatous-end-chat.post',
+  'chatous-enqueue.post',
   'chatous-get-account-state.get',
+  'chatous-login.post',
   'chatous-poll-events.get',
+  'chatous-send-message.post',
+  'chatous-update-profile.post',
+  'chatous-upload-profile-photo.post',
   'cloudflare-page-title.get',
   'contra-apply-to-job.post',
   'contra-check-session.get',
@@ -877,7 +884,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     operationId: 'chatous_check_session_get',
     name: 'Chatous Check Session',
     description:
-      "Check whether a Chatous connect.sid cookie is still accepted. Returns Chatous's own verdict (0 authenticated, 1111 anonymous or expired) so an expired session is reported as data rather than as a failure.",
+      "Check whether your Chatous connect.sid session cookie is still accepted. Returns Chatous's own verdict (0 authenticated, 1111 anonymous or expired) so an expired session is reported as data rather than as a failure.",
     category: 'Social Media',
     tags: ['chatous', 'session', 'auth'],
     workerLanguage: 'python',
@@ -888,9 +895,11 @@ export const OPERATIONS: readonly OperationMeta[] = [
         connectSid: {
           description:
             "The account's `connect.sid` cookie value, as set on chatous.com when the account signed in.",
+          format: 'password',
           minLength: 1,
           title: 'Connectsid',
           type: 'string',
+          writeOnly: true,
         },
         proxyUrl: {
           anyOf: [
@@ -903,7 +912,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
           ],
           default: null,
           description:
-            'Optional proxy URL to send this request through. Omit to call Chatous directly. Pass the exit the account normally uses if you keep one per account.',
+            'Optional proxy URL to send this request through. Omit to call Chatous directly. Use the same one across related calls when you want a consistent IP.',
           title: 'Proxyurl',
         },
       },
@@ -939,11 +948,303 @@ export const OPERATIONS: readonly OperationMeta[] = [
     },
   },
   {
+    slug: 'chatous-dequeue.post',
+    operationId: 'chatous_dequeue_post',
+    name: 'Chatous Leave Match Queue',
+    description:
+      'Leave the Chatous matchmaking queue by releasing a queue entry id from chatous-enqueue, so your account can queue again. Takes your connect.sid session cookie and the queue id. Returns whether Chatous acknowledged the release and its own return code.',
+    category: 'Social Media',
+    tags: ['chatous', 'matchmaking', 'queue'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        connectSid: {
+          description: "The account's connect.sid cookie value.",
+          format: 'password',
+          minLength: 1,
+          title: 'Connectsid',
+          type: 'string',
+          writeOnly: true,
+        },
+        queueId: {
+          description:
+            'The queue entry to release, from chatous-enqueue. Required: Chatous rejects an empty body and leaves the entry in place.',
+          minLength: 1,
+          title: 'Queueid',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional proxy URL.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['connectSid', 'queueId'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        queueId: {
+          title: 'Queueid',
+          type: 'string',
+        },
+        released: {
+          description: 'True when Chatous acknowledged the release.',
+          title: 'Released',
+          type: 'boolean',
+        },
+        returnCode: {
+          description: "Chatous's own verdict for the release attempt.",
+          title: 'Returncode',
+          type: 'integer',
+        },
+        releasedAt: {
+          title: 'Releasedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['queueId', 'released', 'returnCode', 'releasedAt', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'chatous-end-chat.post',
+    operationId: 'chatous_end_chat_post',
+    name: 'Chatous End Chat',
+    description:
+      'End a Chatous chat from your own account and optionally block the other person. Takes your connect.sid session cookie, the chat id and a block flag (off by default, and blocking cannot be undone through upAPI). The block is sent only after the disconnect is acknowledged; a rejected disconnect fails the call. Returns the disconnect and block verdicts.',
+    category: 'Social Media',
+    tags: ['chatous', 'messaging', 'chat'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        connectSid: {
+          description: "The account's connect.sid cookie value.",
+          format: 'password',
+          minLength: 1,
+          title: 'Connectsid',
+          type: 'string',
+          writeOnly: true,
+        },
+        chatId: {
+          description: 'The chat to end.',
+          minLength: 1,
+          title: 'Chatid',
+          type: 'string',
+        },
+        block: {
+          default: false,
+          description:
+            'Also block the partner. Blocking cannot be undone through upAPI, so it defaults to off. It is only sent after Chatous has acknowledged the disconnect.',
+          title: 'Block',
+          type: 'boolean',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional proxy URL.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['connectSid', 'chatId'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        chatId: {
+          title: 'Chatid',
+          type: 'string',
+        },
+        disconnected: {
+          description:
+            'Always true on a successful call: the disconnect was acknowledged, or Chatous answered without a code at all, which is normal on this route. A rejected or unreadable answer fails the call instead.',
+          title: 'Disconnected',
+          type: 'boolean',
+        },
+        blocked: {
+          description: 'True when a block was requested and Chatous accepted it.',
+          title: 'Blocked',
+          type: 'boolean',
+        },
+        disconnectOutcome: {
+          description:
+            'acknowledged = return_code 0. no-code-returned = the route answered without one, which it is documented to do. (A non-zero or unreadable code fails the call, so neither appears here.)',
+          title: 'Disconnectoutcome',
+          type: 'string',
+        },
+        blockOutcome: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          description: 'The same two values for the block, or null when none was requested.',
+          title: 'Blockoutcome',
+        },
+        disconnectReturnCode: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          description: "Chatous's verdict for the disconnect, or null when it answered no code.",
+          title: 'Disconnectreturncode',
+        },
+        blockReturnCode: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          description: "Chatous's verdict for the block, or null when no block was requested.",
+          title: 'Blockreturncode',
+        },
+        endedAt: {
+          title: 'Endedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: [
+        'chatId',
+        'disconnected',
+        'blocked',
+        'disconnectOutcome',
+        'blockOutcome',
+        'disconnectReturnCode',
+        'blockReturnCode',
+        'endedAt',
+        'elapsedMs',
+      ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'chatous-enqueue.post',
+    operationId: 'chatous_enqueue_post',
+    name: 'Chatous Join Match Queue',
+    description:
+      'Join the Chatous matchmaking queue with your own account so it can be paired with another user. Takes your connect.sid session cookie and optional interest tags. Returns the queue entry id (pass it to chatous-dequeue to leave the queue) and whether an entry was already active. You can be matched with a real person as soon as the call succeeds.',
+    category: 'Social Media',
+    tags: ['chatous', 'matchmaking', 'queue'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        connectSid: {
+          description: "The account's connect.sid cookie value.",
+          format: 'password',
+          minLength: 1,
+          title: 'Connectsid',
+          type: 'string',
+          writeOnly: true,
+        },
+        tags: {
+          default: '',
+          description:
+            "Interest tags to match on, in Chatous's own format. Empty matches on nothing in particular.",
+          title: 'Tags',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional proxy URL.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['connectSid'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        queueId: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          description:
+            "The queue entry's id. Pass it to chatous-dequeue to release the entry. When `alreadyQueued` is true this is the id of the entry that BLOCKED this request, which may be a stranded one from an earlier session.",
+          title: 'Queueid',
+        },
+        alreadyQueued: {
+          description:
+            'True when Chatous refused a second entry because one is already active. Not an error: the account is in the queue, just not because of this call.',
+          title: 'Alreadyqueued',
+          type: 'boolean',
+        },
+        enqueuedAt: {
+          title: 'Enqueuedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['queueId', 'alreadyQueued', 'enqueuedAt', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
     slug: 'chatous-get-account-state.get',
     operationId: 'chatous_get_account_state_get',
     name: 'Chatous Get Account State',
     description:
-      "Read a Chatous account's own profile, its open conversations and their message history in one bounded WebSocket read. Chatous exposes no REST endpoint for any of this, so the socket's opening burst is the only source.",
+      "Read your own Chatous account's profile, its open conversations and their message history in one bounded call. Takes your connect.sid session cookie. Chatous exposes no REST endpoint for any of this, so the account's WebSocket opening burst is the only source.",
     category: 'Social Media',
     tags: ['chatous', 'profile', 'conversations', 'messages'],
     workerLanguage: 'python',
@@ -954,9 +1255,11 @@ export const OPERATIONS: readonly OperationMeta[] = [
         connectSid: {
           description:
             "The account's `connect.sid` cookie value, as set on chatous.com when the account signed in.",
+          format: 'password',
           minLength: 1,
           title: 'Connectsid',
           type: 'string',
+          writeOnly: true,
         },
         maxSeconds: {
           default: 12,
@@ -986,7 +1289,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
           ],
           default: null,
           description:
-            'Optional proxy URL for the WebSocket. Omit to connect directly. Pass the exit the account normally uses if you keep one per account.',
+            'Optional proxy URL for the WebSocket. Omit to connect directly. Use the same one across related calls when you want a consistent IP.',
           title: 'Proxyurl',
         },
       },
@@ -1216,11 +1519,79 @@ export const OPERATIONS: readonly OperationMeta[] = [
     },
   },
   {
+    slug: 'chatous-login.post',
+    operationId: 'chatous_login_post',
+    name: 'Chatous Login',
+    description:
+      'Log in to your Chatous account with its email and password and return the connect.sid session cookie that every other Chatous operation needs. Treat the cookie as a credential: anyone holding it is the account. Pass a proxy URL to keep the session and its exit IP together.',
+    category: 'Social Media',
+    tags: ['chatous', 'auth', 'session'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 2,
+    inputSchema: {
+      properties: {
+        email: {
+          description: "The account's email address. Chatous sends this as the `login` field.",
+          minLength: 1,
+          title: 'Email',
+          type: 'string',
+        },
+        password: {
+          description: "The account's password.",
+          format: 'password',
+          minLength: 1,
+          title: 'Password',
+          type: 'string',
+          writeOnly: true,
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Optional proxy URL. Omit to call Chatous directly. Use the same one across related calls when you want the session and its exit IP to stay together.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['email', 'password'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        connectSid: {
+          description:
+            'The session cookie every other Chatous operation needs. Store it as a credential: anyone holding it is this account.',
+          title: 'Connectsid',
+          type: 'string',
+        },
+        loggedInAt: {
+          title: 'Loggedinat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['connectSid', 'loggedInAt', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
     slug: 'chatous-poll-events.get',
     operationId: 'chatous_poll_events_get',
     name: 'Chatous Poll Events',
     description:
-      "Listen on a Chatous account's WebSocket for a bounded window and return the events that arrived: new matches with the partner's profile, incoming messages, chat disconnects and queue acknowledgements.",
+      "Listen on your own Chatous account for a bounded window and return the events that arrived: new matches with the partner's profile, incoming messages, chat disconnects and queue acknowledgements. Takes your connect.sid session cookie. Zero events is a valid answer, but an expired session also returns zero events, so check it with chatous-check-session.",
     category: 'Social Media',
     tags: ['chatous', 'events', 'messages', 'realtime'],
     workerLanguage: 'python',
@@ -1231,9 +1602,11 @@ export const OPERATIONS: readonly OperationMeta[] = [
         connectSid: {
           description:
             "The account's `connect.sid` cookie value, as set on chatous.com when the account signed in.",
+          format: 'password',
           minLength: 1,
           title: 'Connectsid',
           type: 'string',
+          writeOnly: true,
         },
         maxSeconds: {
           default: 15,
@@ -1524,6 +1897,344 @@ export const OPERATIONS: readonly OperationMeta[] = [
         'fetchedAt',
         'elapsedMs',
       ],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'chatous-send-message.post',
+    operationId: 'chatous_send_message_post',
+    name: 'Chatous Send Message',
+    description:
+      'Send a message into a Chatous chat from your own account. Takes your connect.sid session cookie, the chat id (from chatous-poll-events or chatous-get-account-state) and the message text, up to 2000 characters. Returns whether Chatous acknowledged the send. The message is delivered to the other person immediately.',
+    category: 'Social Media',
+    tags: ['chatous', 'messaging', 'chat'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        connectSid: {
+          description: "The account's connect.sid cookie value.",
+          format: 'password',
+          minLength: 1,
+          title: 'Connectsid',
+          type: 'string',
+          writeOnly: true,
+        },
+        chatId: {
+          description: 'The chat to send into, from chatous-poll-events or -get-account-state.',
+          minLength: 1,
+          title: 'Chatid',
+          type: 'string',
+        },
+        message: {
+          description: 'The message text. It is delivered to a real person on Chatous.',
+          maxLength: 2000,
+          minLength: 1,
+          title: 'Message',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional proxy URL.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['connectSid', 'chatId', 'message'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        chatId: {
+          title: 'Chatid',
+          type: 'string',
+        },
+        sent: {
+          description: 'True only when Chatous acknowledged the message with return_code 0.',
+          title: 'Sent',
+          type: 'boolean',
+        },
+        sentAt: {
+          title: 'Sentat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['chatId', 'sent', 'sentAt', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'chatous-update-profile.post',
+    operationId: 'chatous_update_profile_post',
+    name: 'Chatous Update Profile',
+    description:
+      'Update your Chatous profile: display name, age (18 or older), about text, gender, interest tags and avatar. Takes your connect.sid session cookie. Chatous replaces the whole profile on every write, so any field you omit is cleared. Checks the session first and fails with AUTH_EXPIRED when Chatous no longer accepts it. Returns the list of fields sent.',
+    category: 'Social Media',
+    tags: ['chatous', 'profile'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 1,
+    inputSchema: {
+      properties: {
+        connectSid: {
+          description: "The account's connect.sid cookie value.",
+          format: 'password',
+          minLength: 1,
+          title: 'Connectsid',
+          type: 'string',
+          writeOnly: true,
+        },
+        screenname: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Display name.',
+          title: 'Screenname',
+        },
+        age: {
+          anyOf: [
+            {
+              maximum: 99,
+              minimum: 18,
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Age to publish. Chatous FLOORS this at 18 without saying so, so anything lower is refused here rather than silently changed upstream.',
+          title: 'Age',
+        },
+        about: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Profile blurb.',
+          title: 'About',
+        },
+        gender: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Gender string, sent verbatim.',
+          title: 'Gender',
+        },
+        profileTags: {
+          anyOf: [
+            {
+              items: {
+                type: 'string',
+              },
+              type: 'array',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Interest tags. Sent as a JSON array, as the site expects.',
+          title: 'Profiletags',
+        },
+        avatarIcon: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Chatous avatar icon index.',
+          title: 'Avataricon',
+        },
+        avatarColor: {
+          anyOf: [
+            {
+              type: 'integer',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Chatous avatar colour index.',
+          title: 'Avatarcolor',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Optional proxy URL.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['connectSid'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        updatedFields: {
+          description: 'The form fields actually sent, in sent order.',
+          items: {
+            type: 'string',
+          },
+          title: 'Updatedfields',
+          type: 'array',
+        },
+        ageFloored: {
+          description: 'Always false: an age below 18 is refused before the request is sent.',
+          title: 'Agefloored',
+          type: 'boolean',
+        },
+        updatedAt: {
+          title: 'Updatedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['updatedFields', 'ageFloored', 'updatedAt', 'elapsedMs'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'chatous-upload-profile-photo.post',
+    operationId: 'chatous_upload_profile_photo_post',
+    name: 'Chatous Upload Profile Photo',
+    description:
+      'Upload a profile photo to your Chatous account from an image URL or base64 bytes. Takes your connect.sid session cookie. Chatous limits uploads per exit IP rather than per account, so pass your own proxy URL if you upload from several accounts. Returns the uploaded size and filename.',
+    category: 'Social Media',
+    tags: ['chatous', 'profile', 'upload'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi', 'rapidapi', 'apify'],
+    unitWeight: 2,
+    inputSchema: {
+      properties: {
+        connectSid: {
+          description: "The account's connect.sid cookie value.",
+          format: 'password',
+          minLength: 1,
+          title: 'Connectsid',
+          type: 'string',
+          writeOnly: true,
+        },
+        imageUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'URL of the image to upload. Pass this OR `imageFile`.',
+          title: 'Imageurl',
+        },
+        imageFile: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Base64-encoded image bytes. Pass this OR `imageUrl`.',
+          title: 'Imagefile',
+        },
+        filename: {
+          default: 'avatar.jpg',
+          description: 'Filename sent with the multipart part.',
+          title: 'Filename',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Optional proxy URL. Worth passing here more than anywhere else: Chatous rate-limits this endpoint PER EXIT IP, so accounts sharing an exit share one budget.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['connectSid'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        uploadedBytes: {
+          title: 'Uploadedbytes',
+          type: 'integer',
+        },
+        filename: {
+          title: 'Filename',
+          type: 'string',
+        },
+        uploadedAt: {
+          title: 'Uploadedat',
+          type: 'string',
+        },
+        elapsedMs: {
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['uploadedBytes', 'filename', 'uploadedAt', 'elapsedMs'],
       title: 'Output',
       type: 'object',
     },
