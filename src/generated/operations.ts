@@ -220,6 +220,8 @@ import type {
   WebSearchPostOutput,
   WellfoundApplicationModalPostInput,
   WellfoundApplicationModalPostOutput,
+  WellfoundApplyPostInput,
+  WellfoundApplyPostOutput,
   WellfoundBrowseJobsPostInput,
   WellfoundBrowseJobsPostOutput,
   WellfoundCompanyOverviewPostInput,
@@ -232,6 +234,8 @@ import type {
   WellfoundListApplicationsPostOutput,
   WellfoundListConversationsPostInput,
   WellfoundListConversationsPostOutput,
+  WellfoundLoginPostInput,
+  WellfoundLoginPostOutput,
   WellfoundPipelineStatsPostInput,
   WellfoundPipelineStatsPostOutput,
   WellfoundPublicSessionPostInput,
@@ -240,6 +244,8 @@ import type {
   WellfoundRefreshOpsPostOutput,
   WellfoundSearchJobsPostInput,
   WellfoundSearchJobsPostOutput,
+  WellfoundSendMessagePostInput,
+  WellfoundSendMessagePostOutput,
   WellfoundViewerPostInput,
   WellfoundViewerPostOutput,
   WikipediaArticleGetInput,
@@ -772,6 +778,11 @@ export type Operations = {
     input: WellfoundApplicationModalPostInput,
     options?: CallOptions,
   ) => Promise<WellfoundApplicationModalPostOutput>;
+  /** Wellfound Apply To Job — Apply to a Wellfound job listing as the signed-in account, with an optional cover note and answers to the listing's screening questions (read them first with wellfound-application-modal). Requires the session blob from wellfound-login. Returns the new application id, or Wellfound's rejection messages. Applying cannot be undone through this API, and success is reported only when Wellfound returns a real application id. */
+  'wellfound-apply.post': (
+    input: WellfoundApplyPostInput,
+    options?: CallOptions,
+  ) => Promise<WellfoundApplyPostOutput>;
   /** Wellfound Browse Jobs — Browse public Wellfound job listings through the anonymous SEO GraphQL search: job id, slug, title, compensation, equity, locations, full description and the hiring company, with deep pagination. No login. Takes a blob from wellfound-public-session and must run on the exit that minted it. Company funding fields are empty on anonymous results; use wellfound-company-overview for those. */
   'wellfound-browse-jobs.post': (
     input: WellfoundBrowseJobsPostInput,
@@ -802,6 +813,11 @@ export type Operations = {
     input: WellfoundListConversationsPostInput,
     options?: CallOptions,
   ) => Promise<WellfoundListConversationsPostOutput>;
+  /** Wellfound Login — Log in to Wellfound with your own account email and password and get back an opaque session blob that the other Wellfound operations (viewer, conversations, applications, application modal, apply, send message) take as input. Your credentials are sent only to Wellfound and are not stored; treat the returned session as a secret. The session is tied to the exit IP it was created on, so pass the same proxyUrl (or none) on every later call. Returns an error if Wellfound rejects the credentials. */
+  'wellfound-login.post': (
+    input: WellfoundLoginPostInput,
+    options?: CallOptions,
+  ) => Promise<WellfoundLoginPostOutput>;
   /** Wellfound Pipeline Stats — Fetch the signed-in candidate's Wellfound pipeline counts: interested, matched, messages and saved listings. Read-only. Requires an authenticated session blob from wellfound-login and the viewer id from wellfound-viewer. */
   'wellfound-pipeline-stats.post': (
     input: WellfoundPipelineStatsPostInput,
@@ -822,6 +838,11 @@ export type Operations = {
     input: WellfoundSearchJobsPostInput,
     options?: CallOptions,
   ) => Promise<WellfoundSearchJobsPostOutput>;
+  /** Wellfound Send Message — Send one message in an existing Wellfound conversation as the signed-in account. Takes the bare conversation modelId from wellfound-list-conversations and the session blob from wellfound-login. Returns the new message id, or Wellfound's rejection messages. A sent message cannot be unsent. */
+  'wellfound-send-message.post': (
+    input: WellfoundSendMessagePostInput,
+    options?: CallOptions,
+  ) => Promise<WellfoundSendMessagePostOutput>;
   /** Wellfound Viewer — Fetch the signed-in Wellfound viewer: user id, whether the account may still apply to jobs, candidate state and analytics traits. The cheapest way to check that a session is alive and the account is unrestricted. Read-only. Requires an authenticated session blob from wellfound-login. */
   'wellfound-viewer.post': (
     input: WellfoundViewerPostInput,
@@ -1406,6 +1427,12 @@ export function buildOperations(client: UpAPI): Operations {
         input,
         options,
       ),
+    'wellfound-apply.post': (input, options) =>
+      client.call<WellfoundApplyPostOutput, WellfoundApplyPostInput>(
+        'wellfound-apply.post',
+        input,
+        options,
+      ),
     'wellfound-browse-jobs.post': (input, options) =>
       client.call<WellfoundBrowseJobsPostOutput, WellfoundBrowseJobsPostInput>(
         'wellfound-browse-jobs.post',
@@ -1442,6 +1469,12 @@ export function buildOperations(client: UpAPI): Operations {
         input,
         options,
       ),
+    'wellfound-login.post': (input, options) =>
+      client.call<WellfoundLoginPostOutput, WellfoundLoginPostInput>(
+        'wellfound-login.post',
+        input,
+        options,
+      ),
     'wellfound-pipeline-stats.post': (input, options) =>
       client.call<WellfoundPipelineStatsPostOutput, WellfoundPipelineStatsPostInput>(
         'wellfound-pipeline-stats.post',
@@ -1463,6 +1496,12 @@ export function buildOperations(client: UpAPI): Operations {
     'wellfound-search-jobs.post': (input, options) =>
       client.call<WellfoundSearchJobsPostOutput, WellfoundSearchJobsPostInput>(
         'wellfound-search-jobs.post',
+        input,
+        options,
+      ),
+    'wellfound-send-message.post': (input, options) =>
+      client.call<WellfoundSendMessagePostOutput, WellfoundSendMessagePostInput>(
+        'wellfound-send-message.post',
         input,
         options,
       ),

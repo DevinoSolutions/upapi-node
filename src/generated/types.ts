@@ -5115,6 +5115,66 @@ export interface WellfoundApplicationModalPostOutput {
   session?: string;
 }
 
+// ── wellfound-apply.post ────────────────────────────────────────────────
+
+export interface WellfoundApplyPostInputAnswerInput {
+  /**
+   * Question id from wellfound-application-modal.
+   */
+  jobListingQuestionId: string;
+  /**
+   * Free-text answer, when applicable.
+   */
+  answer?: string | null;
+  /**
+   * Chosen option id, when the question offers options.
+   */
+  jobListingQuestionOptionId?: string | null;
+}
+
+export interface WellfoundApplyPostInput {
+  /**
+   * Session blob from wellfound-login.
+   */
+  session: string;
+  /**
+   * Wellfound job listing id.
+   */
+  jobListingId: string;
+  /**
+   * Company id owning the listing.
+   */
+  startupId: string;
+  /**
+   * Answers to the screening questions from wellfound-application-modal.
+   */
+  answers?: Array<WellfoundApplyPostInputAnswerInput>;
+  /**
+   * Note sent with the application.
+   */
+  coverLetter?: string;
+  /**
+   * Same exit the session was minted on. Omit to send directly.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface WellfoundApplyPostOutput {
+  /**
+   * True only when Wellfound returned an application id and no errors.
+   */
+  success: boolean;
+  applicationId?: string;
+  /**
+   * Rejection messages Wellfound returned.
+   */
+  errors?: Array<string>;
+  /**
+   * Refreshed blob carrying rotated cookies. Persist THIS one, not the input.
+   */
+  session?: string;
+}
+
 // ── wellfound-browse-jobs.post ──────────────────────────────────────────
 
 export interface WellfoundBrowseJobsPostInput {
@@ -5438,6 +5498,43 @@ export interface WellfoundListConversationsPostOutput {
   session?: string;
 }
 
+// ── wellfound-login.post ────────────────────────────────────────────────
+
+export interface WellfoundLoginPostInput {
+  /**
+   * Wellfound account email.
+   */
+  email: string;
+  /**
+   * Wellfound account password. Sent only to Wellfound, never stored.
+   */
+  password: string;
+  /**
+   * curl_cffi browser-impersonation target.
+   */
+  impersonate?: string;
+  /**
+   * Exit to log in from. Omit to send directly. The session is bound to this exit, so every later call must pass the SAME value.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface WellfoundLoginPostOutput {
+  /**
+   * Opaque authenticated blob. Treat it as a credential: never log it and never store it in the clear.
+   */
+  session: string;
+  /**
+   * Wellfound user id, empty when the follow-up viewer read did not answer.
+   */
+  viewerId?: string;
+  /**
+   * Persisted queries discovered in the bundle.
+   */
+  operationCount: number;
+  elapsedMs?: number;
+}
+
 // ── wellfound-pipeline-stats.post ───────────────────────────────────────
 
 export interface WellfoundPipelineStatsPostInput {
@@ -5607,6 +5704,47 @@ export interface WellfoundSearchJobsPostOutput {
    * Companies matched, which is what Wellfound counts here.
    */
   totalStartupCount?: number;
+  /**
+   * Refreshed blob carrying rotated cookies. Persist THIS one, not the input.
+   */
+  session?: string;
+}
+
+// ── wellfound-send-message.post ─────────────────────────────────────────
+
+export interface WellfoundSendMessagePostInput {
+  /**
+   * Session blob from wellfound-login.
+   */
+  session: string;
+  /**
+   * The BARE modelId from wellfound-list-conversations, for example 982616801. Not the prefixed node id.
+   */
+  conversationId: string;
+  /**
+   * Message text to send.
+   */
+  body: string;
+  /**
+   * Wellfound ConversationTypeEnum value.
+   */
+  messageType?: string;
+  /**
+   * Same exit the session was minted on. Omit to send directly.
+   */
+  proxyUrl?: string | null;
+}
+
+export interface WellfoundSendMessagePostOutput {
+  /**
+   * True when Wellfound accepted the message with no errors.
+   */
+  success: boolean;
+  messageId?: string;
+  /**
+   * Rejection messages Wellfound returned.
+   */
+  errors?: Array<string>;
   /**
    * Refreshed blob carrying rotated cookies. Persist THIS one, not the input.
    */

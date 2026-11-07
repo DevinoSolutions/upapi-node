@@ -135,16 +135,19 @@ export const OPERATION_SLUGS = [
   'weather-current.get',
   'web-search.post',
   'wellfound-application-modal.post',
+  'wellfound-apply.post',
   'wellfound-browse-jobs.post',
   'wellfound-company-overview.post',
   'wellfound-conversation-detail.post',
   'wellfound-job-detail.post',
   'wellfound-list-applications.post',
   'wellfound-list-conversations.post',
+  'wellfound-login.post',
   'wellfound-pipeline-stats.post',
   'wellfound-public-session.post',
   'wellfound-refresh-ops.post',
   'wellfound-search-jobs.post',
+  'wellfound-send-message.post',
   'wellfound-viewer.post',
   'wikipedia-article.get',
 ] as const;
@@ -18466,9 +18469,11 @@ export const OPERATIONS: readonly OperationMeta[] = [
       properties: {
         session: {
           description: 'Authenticated blob from wellfound-login.',
+          format: 'password',
           minLength: 1,
           title: 'Session',
           type: 'string',
+          writeOnly: true,
         },
         jobId: {
           description: 'Wellfound job listing id.',
@@ -18575,6 +18580,144 @@ export const OPERATIONS: readonly OperationMeta[] = [
           type: 'string',
         },
       },
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
+    slug: 'wellfound-apply.post',
+    operationId: 'wellfound_apply_post',
+    name: 'Wellfound Apply To Job',
+    description:
+      "Apply to a Wellfound job listing as the signed-in account, with an optional cover note and answers to the listing's screening questions (read them first with wellfound-application-modal). Requires the session blob from wellfound-login. Returns the new application id, or Wellfound's rejection messages. Applying cannot be undone through this API, and success is reported only when Wellfound returns a real application id.",
+    category: 'Social Media',
+    tags: ['wellfound', 'jobs', 'apply', 'write'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 6,
+    inputSchema: {
+      $defs: {
+        AnswerInput: {
+          properties: {
+            jobListingQuestionId: {
+              description: 'Question id from wellfound-application-modal.',
+              minLength: 1,
+              title: 'Joblistingquestionid',
+              type: 'string',
+            },
+            answer: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'Free-text answer, when applicable.',
+              title: 'Answer',
+            },
+            jobListingQuestionOptionId: {
+              anyOf: [
+                {
+                  type: 'string',
+                },
+                {
+                  type: 'null',
+                },
+              ],
+              default: null,
+              description: 'Chosen option id, when the question offers options.',
+              title: 'Joblistingquestionoptionid',
+            },
+          },
+          required: ['jobListingQuestionId'],
+          title: 'AnswerInput',
+          type: 'object',
+        },
+      },
+      properties: {
+        session: {
+          description: 'Session blob from wellfound-login.',
+          format: 'password',
+          minLength: 1,
+          title: 'Session',
+          type: 'string',
+          writeOnly: true,
+        },
+        jobListingId: {
+          description: 'Wellfound job listing id.',
+          minLength: 1,
+          title: 'Joblistingid',
+          type: 'string',
+        },
+        startupId: {
+          description: 'Company id owning the listing.',
+          minLength: 1,
+          title: 'Startupid',
+          type: 'string',
+        },
+        answers: {
+          description: 'Answers to the screening questions from wellfound-application-modal.',
+          items: {
+            $ref: '#/$defs/AnswerInput',
+          },
+          title: 'Answers',
+          type: 'array',
+        },
+        coverLetter: {
+          default: '',
+          description: 'Note sent with the application.',
+          title: 'Coverletter',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Same exit the session was minted on. Omit to send directly.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['session', 'jobListingId', 'startupId'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        success: {
+          description: 'True only when Wellfound returned an application id and no errors.',
+          title: 'Success',
+          type: 'boolean',
+        },
+        applicationId: {
+          default: '',
+          title: 'Applicationid',
+          type: 'string',
+        },
+        errors: {
+          description: 'Rejection messages Wellfound returned.',
+          items: {
+            type: 'string',
+          },
+          title: 'Errors',
+          type: 'array',
+        },
+        session: {
+          default: '',
+          description: 'Refreshed blob carrying rotated cookies. Persist THIS one, not the input.',
+          title: 'Session',
+          type: 'string',
+        },
+      },
+      required: ['success'],
       title: 'Output',
       type: 'object',
     },
@@ -18950,9 +19093,11 @@ export const OPERATIONS: readonly OperationMeta[] = [
       properties: {
         session: {
           description: 'Authenticated blob from wellfound-login.',
+          format: 'password',
           minLength: 1,
           title: 'Session',
           type: 'string',
+          writeOnly: true,
         },
         conversationId: {
           description:
@@ -19330,9 +19475,11 @@ export const OPERATIONS: readonly OperationMeta[] = [
       properties: {
         session: {
           description: 'Authenticated blob from wellfound-login.',
+          format: 'password',
           minLength: 1,
           title: 'Session',
           type: 'string',
+          writeOnly: true,
         },
         page: {
           default: 1,
@@ -19397,9 +19544,11 @@ export const OPERATIONS: readonly OperationMeta[] = [
       properties: {
         session: {
           description: 'Authenticated blob from wellfound-login.',
+          format: 'password',
           minLength: 1,
           title: 'Session',
           type: 'string',
+          writeOnly: true,
         },
         scope: {
           default: 'ONGOING',
@@ -19501,6 +19650,88 @@ export const OPERATIONS: readonly OperationMeta[] = [
     },
   },
   {
+    slug: 'wellfound-login.post',
+    operationId: 'wellfound_login_post',
+    name: 'Wellfound Login',
+    description:
+      'Log in to Wellfound with your own account email and password and get back an opaque session blob that the other Wellfound operations (viewer, conversations, applications, application modal, apply, send message) take as input. Your credentials are sent only to Wellfound and are not stored; treat the returned session as a secret. The session is tied to the exit IP it was created on, so pass the same proxyUrl (or none) on every later call. Returns an error if Wellfound rejects the credentials.',
+    category: 'Social Media',
+    tags: ['wellfound', 'auth', 'jobs'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 10,
+    inputSchema: {
+      properties: {
+        email: {
+          description: 'Wellfound account email.',
+          minLength: 1,
+          title: 'Email',
+          type: 'string',
+        },
+        password: {
+          description: 'Wellfound account password. Sent only to Wellfound, never stored.',
+          format: 'password',
+          minLength: 1,
+          title: 'Password',
+          type: 'string',
+          writeOnly: true,
+        },
+        impersonate: {
+          default: 'chrome146',
+          description: 'curl_cffi browser-impersonation target.',
+          title: 'Impersonate',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description:
+            'Exit to log in from. Omit to send directly. The session is bound to this exit, so every later call must pass the SAME value.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['email', 'password'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        session: {
+          description:
+            'Opaque authenticated blob. Treat it as a credential: never log it and never store it in the clear.',
+          title: 'Session',
+          type: 'string',
+        },
+        viewerId: {
+          default: '',
+          description: 'Wellfound user id, empty when the follow-up viewer read did not answer.',
+          title: 'Viewerid',
+          type: 'string',
+        },
+        operationCount: {
+          description: 'Persisted queries discovered in the bundle.',
+          title: 'Operationcount',
+          type: 'integer',
+        },
+        elapsedMs: {
+          default: 0,
+          title: 'Elapsedms',
+          type: 'integer',
+        },
+      },
+      required: ['session', 'operationCount'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
     slug: 'wellfound-pipeline-stats.post',
     operationId: 'wellfound_pipeline_stats_post',
     name: 'Wellfound Pipeline Stats',
@@ -19515,9 +19746,11 @@ export const OPERATIONS: readonly OperationMeta[] = [
       properties: {
         session: {
           description: 'Authenticated blob from wellfound-login.',
+          format: 'password',
           minLength: 1,
           title: 'Session',
           type: 'string',
+          writeOnly: true,
         },
         userId: {
           description: 'Wellfound viewer id, available from wellfound-viewer.',
@@ -19639,9 +19872,11 @@ export const OPERATIONS: readonly OperationMeta[] = [
       properties: {
         session: {
           description: 'Session blob from wellfound-public-session or wellfound-login.',
+          format: 'password',
           minLength: 1,
           title: 'Session',
           type: 'string',
+          writeOnly: true,
         },
         proxyUrl: {
           anyOf: [
@@ -19699,9 +19934,11 @@ export const OPERATIONS: readonly OperationMeta[] = [
       properties: {
         session: {
           description: 'Authenticated blob from wellfound-login.',
+          format: 'password',
           minLength: 1,
           title: 'Session',
           type: 'string',
+          writeOnly: true,
         },
         page: {
           default: 1,
@@ -19979,6 +20216,96 @@ export const OPERATIONS: readonly OperationMeta[] = [
     },
   },
   {
+    slug: 'wellfound-send-message.post',
+    operationId: 'wellfound_send_message_post',
+    name: 'Wellfound Send Message',
+    description:
+      "Send one message in an existing Wellfound conversation as the signed-in account. Takes the bare conversation modelId from wellfound-list-conversations and the session blob from wellfound-login. Returns the new message id, or Wellfound's rejection messages. A sent message cannot be unsent.",
+    category: 'Social Media',
+    tags: ['wellfound', 'messages', 'write'],
+    workerLanguage: 'python',
+    publishTargets: ['upapi'],
+    unitWeight: 4,
+    inputSchema: {
+      properties: {
+        session: {
+          description: 'Session blob from wellfound-login.',
+          format: 'password',
+          minLength: 1,
+          title: 'Session',
+          type: 'string',
+          writeOnly: true,
+        },
+        conversationId: {
+          description:
+            'The BARE modelId from wellfound-list-conversations, for example 982616801. Not the prefixed node id.',
+          minLength: 1,
+          title: 'Conversationid',
+          type: 'string',
+        },
+        body: {
+          description: 'Message text to send.',
+          minLength: 1,
+          title: 'Body',
+          type: 'string',
+        },
+        messageType: {
+          default: 'JOBPAIRING',
+          description: 'Wellfound ConversationTypeEnum value.',
+          title: 'Messagetype',
+          type: 'string',
+        },
+        proxyUrl: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Same exit the session was minted on. Omit to send directly.',
+          title: 'Proxyurl',
+        },
+      },
+      required: ['session', 'conversationId', 'body'],
+      title: 'Input',
+      type: 'object',
+    },
+    outputSchema: {
+      properties: {
+        success: {
+          description: 'True when Wellfound accepted the message with no errors.',
+          title: 'Success',
+          type: 'boolean',
+        },
+        messageId: {
+          default: '',
+          title: 'Messageid',
+          type: 'string',
+        },
+        errors: {
+          description: 'Rejection messages Wellfound returned.',
+          items: {
+            type: 'string',
+          },
+          title: 'Errors',
+          type: 'array',
+        },
+        session: {
+          default: '',
+          description: 'Refreshed blob carrying rotated cookies. Persist THIS one, not the input.',
+          title: 'Session',
+          type: 'string',
+        },
+      },
+      required: ['success'],
+      title: 'Output',
+      type: 'object',
+    },
+  },
+  {
     slug: 'wellfound-viewer.post',
     operationId: 'wellfound_viewer_post',
     name: 'Wellfound Viewer',
@@ -19993,9 +20320,11 @@ export const OPERATIONS: readonly OperationMeta[] = [
       properties: {
         session: {
           description: 'Authenticated blob from wellfound-login.',
+          format: 'password',
           minLength: 1,
           title: 'Session',
           type: 'string',
+          writeOnly: true,
         },
         proxyUrl: {
           anyOf: [

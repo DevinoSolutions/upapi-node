@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "upAPI",
-    "description": "Browser-powered API marketplace. 118 of 118 APIs included (capped at 449 for RapidAPI compatibility).\n\nBilling: a call spends WEIGHTED UNITS against your plan's monthly quota — not a flat one call = one unit. A light HTTP relay costs 1 unit; heavy work costs more, up to 25 (search-engine result pages 25, headless-browser renders and page scrapes 20, residential-proxy social reads 15, LLM completions 10, datacenter social/media reads 4). Every operation declares its own price as `x-upapi-unit-weight`, so a workload can be costed before it is run. Quota state rides on every response in the `RateLimit` / `RateLimit-Policy` headers.",
+    "description": "Browser-powered API marketplace. 121 of 121 APIs included (capped at 449 for RapidAPI compatibility).\n\nBilling: a call spends WEIGHTED UNITS against your plan's monthly quota — not a flat one call = one unit. A light HTTP relay costs 1 unit; heavy work costs more, up to 25 (search-engine result pages 25, headless-browser renders and page scrapes 20, residential-proxy social reads 15, LLM completions 10, datacenter social/media reads 4). Every operation declares its own price as `x-upapi-unit-weight`, so a workload can be costed before it is run. Quota state rides on every response in the `RateLimit` / `RateLimit-Policy` headers.",
     "version": "1.0.0"
   },
   "servers": [
@@ -25082,9 +25082,11 @@
                 "properties": {
                   "session": {
                     "description": "Authenticated blob from wellfound-login.",
+                    "format": "password",
                     "minLength": 1,
                     "title": "Session",
-                    "type": "string"
+                    "type": "string",
+                    "writeOnly": true
                   },
                   "jobId": {
                     "description": "Wellfound job listing id.",
@@ -25185,6 +25187,224 @@
                       "type": "string"
                     }
                   },
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wellfound-apply.post": {
+      "post": {
+        "operationId": "wellfound_apply_post",
+        "summary": "Wellfound Apply To Job",
+        "description": "Apply to a Wellfound job listing as the signed-in account, with an optional cover note and answers to the listing's screening questions (read them first with wellfound-application-modal). Requires the session blob from wellfound-login. Returns the new application id, or Wellfound's rejection messages. Applying cannot be undone through this API, and success is reported only when Wellfound returns a real application id.",
+        "tags": ["Social Media", "wellfound", "jobs", "apply", "write"],
+        "x-upapi-unit-weight": 6,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "session": {
+                    "description": "Session blob from wellfound-login.",
+                    "format": "password",
+                    "minLength": 1,
+                    "title": "Session",
+                    "type": "string",
+                    "writeOnly": true
+                  },
+                  "jobListingId": {
+                    "description": "Wellfound job listing id.",
+                    "minLength": 1,
+                    "title": "Joblistingid",
+                    "type": "string"
+                  },
+                  "startupId": {
+                    "description": "Company id owning the listing.",
+                    "minLength": 1,
+                    "title": "Startupid",
+                    "type": "string"
+                  },
+                  "answers": {
+                    "description": "Answers to the screening questions from wellfound-application-modal.",
+                    "items": {
+                      "properties": {
+                        "jobListingQuestionId": {
+                          "description": "Question id from wellfound-application-modal.",
+                          "minLength": 1,
+                          "title": "Joblistingquestionid",
+                          "type": "string"
+                        },
+                        "answer": {
+                          "default": null,
+                          "description": "Free-text answer, when applicable.",
+                          "title": "Answer",
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "jobListingQuestionOptionId": {
+                          "default": null,
+                          "description": "Chosen option id, when the question offers options.",
+                          "title": "Joblistingquestionoptionid",
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": ["jobListingQuestionId"],
+                      "title": "AnswerInput",
+                      "type": "object"
+                    },
+                    "title": "Answers",
+                    "type": "array"
+                  },
+                  "coverLetter": {
+                    "default": "",
+                    "description": "Note sent with the application.",
+                    "title": "Coverletter",
+                    "type": "string"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Same exit the session was minted on. Omit to send directly.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["session", "jobListingId", "startupId"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "success": {
+                      "description": "True only when Wellfound returned an application id and no errors.",
+                      "title": "Success",
+                      "type": "boolean"
+                    },
+                    "applicationId": {
+                      "default": "",
+                      "title": "Applicationid",
+                      "type": "string"
+                    },
+                    "errors": {
+                      "description": "Rejection messages Wellfound returned.",
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Errors",
+                      "type": "array"
+                    },
+                    "session": {
+                      "default": "",
+                      "description": "Refreshed blob carrying rotated cookies. Persist THIS one, not the input.",
+                      "title": "Session",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["success"],
                   "title": "Output",
                   "type": "object"
                 }
@@ -25825,9 +26045,11 @@
                 "properties": {
                   "session": {
                     "description": "Authenticated blob from wellfound-login.",
+                    "format": "password",
                     "minLength": 1,
                     "title": "Session",
-                    "type": "string"
+                    "type": "string",
+                    "writeOnly": true
                   },
                   "conversationId": {
                     "description": "The BARE modelId from wellfound-list-conversations, for example 982616801. Not the prefixed node id, which this query rejects.",
@@ -26364,9 +26586,11 @@
                 "properties": {
                   "session": {
                     "description": "Authenticated blob from wellfound-login.",
+                    "format": "password",
                     "minLength": 1,
                     "title": "Session",
-                    "type": "string"
+                    "type": "string",
+                    "writeOnly": true
                   },
                   "page": {
                     "default": 1,
@@ -26527,9 +26751,11 @@
                 "properties": {
                   "session": {
                     "description": "Authenticated blob from wellfound-login.",
+                    "format": "password",
                     "minLength": 1,
                     "title": "Session",
-                    "type": "string"
+                    "type": "string",
+                    "writeOnly": true
                   },
                   "scope": {
                     "default": "ONGOING",
@@ -26721,6 +26947,183 @@
         }
       }
     },
+    "/wellfound-login.post": {
+      "post": {
+        "operationId": "wellfound_login_post",
+        "summary": "Wellfound Login",
+        "description": "Log in to Wellfound with your own account email and password and get back an opaque session blob that the other Wellfound operations (viewer, conversations, applications, application modal, apply, send message) take as input. Your credentials are sent only to Wellfound and are not stored; treat the returned session as a secret. The session is tied to the exit IP it was created on, so pass the same proxyUrl (or none) on every later call. Returns an error if Wellfound rejects the credentials.",
+        "tags": ["Social Media", "wellfound", "auth", "jobs"],
+        "x-upapi-unit-weight": 10,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "email": {
+                    "description": "Wellfound account email.",
+                    "minLength": 1,
+                    "title": "Email",
+                    "type": "string"
+                  },
+                  "password": {
+                    "description": "Wellfound account password. Sent only to Wellfound, never stored.",
+                    "format": "password",
+                    "minLength": 1,
+                    "title": "Password",
+                    "type": "string",
+                    "writeOnly": true
+                  },
+                  "impersonate": {
+                    "default": "chrome146",
+                    "description": "curl_cffi browser-impersonation target.",
+                    "title": "Impersonate",
+                    "type": "string"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Exit to log in from. Omit to send directly. The session is bound to this exit, so every later call must pass the SAME value.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["email", "password"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "session": {
+                      "description": "Opaque authenticated blob. Treat it as a credential: never log it and never store it in the clear.",
+                      "title": "Session",
+                      "type": "string"
+                    },
+                    "viewerId": {
+                      "default": "",
+                      "description": "Wellfound user id, empty when the follow-up viewer read did not answer.",
+                      "title": "Viewerid",
+                      "type": "string"
+                    },
+                    "operationCount": {
+                      "description": "Persisted queries discovered in the bundle.",
+                      "title": "Operationcount",
+                      "type": "integer"
+                    },
+                    "elapsedMs": {
+                      "default": 0,
+                      "title": "Elapsedms",
+                      "type": "integer"
+                    }
+                  },
+                  "required": ["session", "operationCount"],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/wellfound-pipeline-stats.post": {
       "post": {
         "operationId": "wellfound_pipeline_stats_post",
@@ -26736,9 +27139,11 @@
                 "properties": {
                   "session": {
                     "description": "Authenticated blob from wellfound-login.",
+                    "format": "password",
                     "minLength": 1,
                     "title": "Session",
-                    "type": "string"
+                    "type": "string",
+                    "writeOnly": true
                   },
                   "userId": {
                     "description": "Wellfound viewer id, available from wellfound-viewer.",
@@ -27051,9 +27456,11 @@
                 "properties": {
                   "session": {
                     "description": "Session blob from wellfound-public-session or wellfound-login.",
+                    "format": "password",
                     "minLength": 1,
                     "title": "Session",
-                    "type": "string"
+                    "type": "string",
+                    "writeOnly": true
                   },
                   "proxyUrl": {
                     "default": null,
@@ -27208,9 +27615,11 @@
                 "properties": {
                   "session": {
                     "description": "Authenticated blob from wellfound-login.",
+                    "format": "password",
                     "minLength": 1,
                     "title": "Session",
-                    "type": "string"
+                    "type": "string",
+                    "writeOnly": true
                   },
                   "page": {
                     "default": 1,
@@ -27536,6 +27945,192 @@
         }
       }
     },
+    "/wellfound-send-message.post": {
+      "post": {
+        "operationId": "wellfound_send_message_post",
+        "summary": "Wellfound Send Message",
+        "description": "Send one message in an existing Wellfound conversation as the signed-in account. Takes the bare conversation modelId from wellfound-list-conversations and the session blob from wellfound-login. Returns the new message id, or Wellfound's rejection messages. A sent message cannot be unsent.",
+        "tags": ["Social Media", "wellfound", "messages", "write"],
+        "x-upapi-unit-weight": 4,
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "session": {
+                    "description": "Session blob from wellfound-login.",
+                    "format": "password",
+                    "minLength": 1,
+                    "title": "Session",
+                    "type": "string",
+                    "writeOnly": true
+                  },
+                  "conversationId": {
+                    "description": "The BARE modelId from wellfound-list-conversations, for example 982616801. Not the prefixed node id.",
+                    "minLength": 1,
+                    "title": "Conversationid",
+                    "type": "string"
+                  },
+                  "body": {
+                    "description": "Message text to send.",
+                    "minLength": 1,
+                    "title": "Body",
+                    "type": "string"
+                  },
+                  "messageType": {
+                    "default": "JOBPAIRING",
+                    "description": "Wellfound ConversationTypeEnum value.",
+                    "title": "Messagetype",
+                    "type": "string"
+                  },
+                  "proxyUrl": {
+                    "default": null,
+                    "description": "Same exit the session was minted on. Omit to send directly.",
+                    "title": "Proxyurl",
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "required": ["session", "conversationId", "body"],
+                "title": "Input",
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "success": {
+                      "description": "True when Wellfound accepted the message with no errors.",
+                      "title": "Success",
+                      "type": "boolean"
+                    },
+                    "messageId": {
+                      "default": "",
+                      "title": "Messageid",
+                      "type": "string"
+                    },
+                    "errors": {
+                      "description": "Rejection messages Wellfound returned.",
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Errors",
+                      "type": "array"
+                    },
+                    "session": {
+                      "default": "",
+                      "description": "Refreshed blob carrying rotated cookies. Persist THIS one, not the input.",
+                      "title": "Session",
+                      "type": "string"
+                    }
+                  },
+                  "required": ["success"],
+                  "title": "Output",
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN — the key is valid but not allowed to make this call. Three causes: the key belongs to a different organization than the one in the path; the key was minted without the scope this endpoint requires (the message names the missing scope); or the operation is not included in the organization's plan — a plan gate, which no retry clears. Upgrade the plan or mint a key with the right scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown marketplace API",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing required field(s)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Two DIFFERENT conditions share this status, told apart by `error.code`. `RATE_LIMITED` — the per-minute burst window is full; it refills on its own, so back off and retry (`Retry-After` is seconds, typically 60) and nothing was spent. `QUOTA_EXCEEDED` — a BUDGET is gone: the monthly weighted-unit quota, a trial's unit cap, or the plan's hosted-function compute seconds. Retrying on a short backoff will never succeed; `Retry-After` points at the real refill (the next UTC month, or the end of the trial), and upgrading the plan is usually the intended fix.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Upstream execution error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Data store temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/wellfound-viewer.post": {
       "post": {
         "operationId": "wellfound_viewer_post",
@@ -27551,9 +28146,11 @@
                 "properties": {
                   "session": {
                     "description": "Authenticated blob from wellfound-login.",
+                    "format": "password",
                     "minLength": 1,
                     "title": "Session",
-                    "type": "string"
+                    "type": "string",
+                    "writeOnly": true
                   },
                   "proxyUrl": {
                     "default": null,
