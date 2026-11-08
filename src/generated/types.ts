@@ -5426,6 +5426,8 @@ export interface WellfoundApplyPostOutput {
   errors?: Array<string>;
   /**
    * Refreshed blob carrying rotated cookies. Persist THIS one, not the input.
+   *
+   * Absent on an idempotent replay (Idempotency-Redacted); see docs/api#idempotency
    */
   session?: string;
 }
@@ -6002,6 +6004,8 @@ export interface WellfoundSendMessagePostOutput {
   errors?: Array<string>;
   /**
    * Refreshed blob carrying rotated cookies. Persist THIS one, not the input.
+   *
+   * Absent on an idempotent replay (Idempotency-Redacted); see docs/api#idempotency
    */
   session?: string;
 }

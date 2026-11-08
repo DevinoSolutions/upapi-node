@@ -387,6 +387,51 @@ describe('retries', () => {
     expect(result.replayed).toBe(true);
   });
 
+  it('lists the fields a replay had removed, from the Idempotency-Redacted header', async () => {
+    const fetchMock = mockFetch(async () =>
+      jsonResponse(
+        { success: true },
+        { headers: { 'Idempotency-Replayed': 'true', 'Idempotency-Redacted': 'session' } },
+      ),
+    );
+    const sdk = client(fetchMock as unknown as typeof globalThis.fetch);
+
+    const result = await sdk.callWithMeta('wellfound-apply.post', {});
+
+    expect(result.replayed).toBe(true);
+    expect(result.idempotencyRedacted).toEqual(['session']);
+  });
+
+  it('splits several redacted fields, trimming spaces and dropping empty entries', async () => {
+    const fetchMock = mockFetch(async () =>
+      jsonResponse({}, { headers: { 'Idempotency-Redacted': ' session, token ,,cookies ' } }),
+    );
+    const sdk = client(fetchMock as unknown as typeof globalThis.fetch);
+
+    const result = await sdk.callWithMeta('wellfound-apply.post', {});
+
+    expect(result.idempotencyRedacted).toEqual(['session', 'token', 'cookies']);
+  });
+
+  it('reports an empty redacted list when the header is absent or blank', async () => {
+    const plain = mockFetch(async () => jsonResponse({ ok: true }));
+    const blank = mockFetch(async () =>
+      jsonResponse({ ok: true }, { headers: { 'Idempotency-Redacted': ' , ' } }),
+    );
+
+    const first = await client(plain as unknown as typeof globalThis.fetch).callWithMeta(
+      'bbc-news.get',
+      {},
+    );
+    const second = await client(blank as unknown as typeof globalThis.fetch).callWithMeta(
+      'bbc-news.get',
+      {},
+    );
+
+    expect(first.idempotencyRedacted).toEqual([]);
+    expect(second.idempotencyRedacted).toEqual([]);
+  });
+
   it('never retries a 5xx — operations are non-idempotent POSTs and each attempt meters', async () => {
     const fetchMock = vi.fn(async () =>
       jsonResponse({ error: { code: 'UPSTREAM_ERROR', message: 'boom' } }, { status: 502 }),

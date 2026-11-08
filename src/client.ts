@@ -71,7 +71,25 @@ export type CallResult<TOut> = {
    * already been used.
    */
   replayed: boolean;
+  /**
+   * The `Idempotency-Redacted` header as a list: the field names removed from a REPLAYED
+   * body (for example `['session']`), empty when none; the first response is never redacted.
+   */
+  idempotencyRedacted: string[];
 };
+
+/**
+ * The `Idempotency-Redacted` header as a list: comma-separated field names,
+ * trimmed, empty entries dropped. Absent header => empty list.
+ */
+function parseIdempotencyRedacted(headers: Headers): string[] {
+  const raw = headers.get('idempotency-redacted');
+  if (raw === null) return [];
+  return raw
+    .split(',')
+    .map((field) => field.trim())
+    .filter((field) => field.length > 0);
+}
 
 function sleep(ms: number, signal: AbortSignal | undefined): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -256,6 +274,7 @@ export class UpAPI {
       requestId: response.headers.get('x-request-id') ?? undefined,
       cached: response.headers.get('x-upapi-cache') === 'HIT',
       replayed: response.headers.get('idempotency-replayed') === 'true',
+      idempotencyRedacted: parseIdempotencyRedacted(response.headers),
     };
   }
 
