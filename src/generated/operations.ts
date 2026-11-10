@@ -575,7 +575,7 @@ export type Operations = {
     input: HackernewsSearchGetInput,
     options?: CallOptions,
   ) => Promise<HackernewsSearchGetOutput>;
-  /** Render HTML or URL to PDF — Render a public web page or a raw HTML document to a print-quality PDF with headless Chromium — paper size, orientation, margins, scale and page ranges included. Returns base64 PDF bytes. */
+  /** Render HTML or URL to PDF — Render a public web page or a raw HTML document to a print-quality PDF with headless Chromium — paper size, orientation, margins, scale and page ranges included. Returns base64 PDF bytes, or a signed link with output: url. */
   'html-to-pdf.post': (
     input: HtmlToPdfPostInput,
     options?: CallOptions,
@@ -732,7 +732,7 @@ export type Operations = {
     input: RedditSubredditInfoGetInput,
     options?: CallOptions,
   ) => Promise<RedditSubredditInfoGetOutput>;
-  /** Capture Website Screenshot — Render any public web page in headless Chromium and return a PNG or JPEG screenshot as base64 — viewport or full page, with a configurable viewport size, wait strategy and settle delay. */
+  /** Capture Website Screenshot — Render any public web page in headless Chromium and return a PNG or JPEG screenshot as base64 (or, with output: url, a signed link) — viewport or full page, with a configurable viewport size, wait strategy and settle delay. */
   'screenshot.post': (
     input: ScreenshotPostInput,
     options?: CallOptions,

@@ -11402,7 +11402,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     operationId: 'html_to_pdf_post',
     name: 'Render HTML or URL to PDF',
     description:
-      'Render a public web page or a raw HTML document to a print-quality PDF with headless Chromium — paper size, orientation, margins, scale and page ranges included. Returns base64 PDF bytes.',
+      'Render a public web page or a raw HTML document to a print-quality PDF with headless Chromium — paper size, orientation, margins, scale and page ranges included. Returns base64 PDF bytes, or a signed link with output: url.',
     category: 'Tools',
     tags: ['pdf', 'html', 'browser', 'render', 'print', 'document'],
     workerLanguage: 'ts',
@@ -11494,6 +11494,13 @@ export const OPERATIONS: readonly OperationMeta[] = [
           description:
             "When rendering counts as done: 'domcontentloaded' is fastest, 'load' waits for subresources, 'networkidle' waits for the network to go quiet (e.g. load).",
         },
+        output: {
+          type: 'string',
+          enum: ['base64', 'url'],
+          default: 'base64',
+          description:
+            "How the file comes back: 'base64' (default) puts the bytes in the response; 'url' returns `fileUrl`, a signed HTTPS link that expires after 1 hour, instead — for no-code tools such as Bubble that save a file from a URL (e.g. base64).",
+        },
       },
       additionalProperties: false,
       $schema: 'http://json-schema.org/draft-07/schema#',
@@ -11503,7 +11510,19 @@ export const OPERATIONS: readonly OperationMeta[] = [
       properties: {
         pdf: {
           type: 'string',
-          description: 'Base64-encoded PDF bytes. No `data:` URI prefix — decode directly.',
+          description:
+            "Base64-encoded PDF bytes. No `data:` URI prefix — decode directly. Present when `output` is 'base64' (the default); replaced by `fileUrl` in url mode.",
+        },
+        fileUrl: {
+          type: 'string',
+          format: 'uri',
+          description:
+            "Signed HTTPS link to the file, present only when `output` was 'url'. It expires after 1 hour and the file is deleted soon after.",
+        },
+        fileUrlExpiresAt: {
+          type: 'string',
+          description:
+            "When `fileUrl` stops working, as an ISO 8601 timestamp. Only when `output` was 'url'.",
         },
         pages: {
           type: 'integer',
@@ -11517,7 +11536,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
           description: 'Size of the DECODED PDF in bytes (the base64 string is ~4/3 of this).',
         },
       },
-      required: ['pdf', 'bytes'],
+      required: ['bytes'],
       additionalProperties: false,
       $schema: 'http://json-schema.org/draft-07/schema#',
     },
@@ -16531,7 +16550,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
     operationId: 'screenshot_post',
     name: 'Capture Website Screenshot',
     description:
-      'Render any public web page in headless Chromium and return a PNG or JPEG screenshot as base64 — viewport or full page, with a configurable viewport size, wait strategy and settle delay.',
+      'Render any public web page in headless Chromium and return a PNG or JPEG screenshot as base64 (or, with output: url, a signed link) — viewport or full page, with a configurable viewport size, wait strategy and settle delay.',
     category: 'Tools',
     tags: ['screenshot', 'browser', 'render', 'image', 'capture', 'thumbnail'],
     workerLanguage: 'ts',
@@ -16603,6 +16622,13 @@ export const OPERATIONS: readonly OperationMeta[] = [
           description:
             'Abort requests to known ad and tracker hosts before they load, so they cannot appear in the image (e.g. true).',
         },
+        output: {
+          type: 'string',
+          enum: ['base64', 'url'],
+          default: 'base64',
+          description:
+            "How the file comes back: 'base64' (default) puts the bytes in the response; 'url' returns `fileUrl`, a signed HTTPS link that expires after 1 hour, instead — for no-code tools such as Bubble that save a file from a URL (e.g. base64).",
+        },
       },
       required: ['url'],
       additionalProperties: false,
@@ -16613,7 +16639,19 @@ export const OPERATIONS: readonly OperationMeta[] = [
       properties: {
         image: {
           type: 'string',
-          description: 'Base64-encoded image bytes. No `data:` URI prefix — decode directly.',
+          description:
+            "Base64-encoded image bytes. No `data:` URI prefix — decode directly. Present when `output` is 'base64' (the default); replaced by `fileUrl` in url mode.",
+        },
+        fileUrl: {
+          type: 'string',
+          format: 'uri',
+          description:
+            "Signed HTTPS link to the file, present only when `output` was 'url'. It expires after 1 hour and the file is deleted soon after.",
+        },
+        fileUrlExpiresAt: {
+          type: 'string',
+          description:
+            "When `fileUrl` stops working, as an ISO 8601 timestamp. Only when `output` was 'url'.",
         },
         format: {
           type: 'string',
@@ -16641,7 +16679,7 @@ export const OPERATIONS: readonly OperationMeta[] = [
           description: 'URL of the page actually captured, after any redirects.',
         },
       },
-      required: ['image', 'format', 'width', 'height', 'bytes', 'finalUrl'],
+      required: ['format', 'width', 'height', 'bytes', 'finalUrl'],
       additionalProperties: false,
       $schema: 'http://json-schema.org/draft-07/schema#',
     },

@@ -3348,13 +3348,25 @@ export interface HtmlToPdfPostInput {
    * When rendering counts as done: 'domcontentloaded' is fastest, 'load' waits for subresources, 'networkidle' waits for the network to go quiet (e.g. load).
    */
   waitUntil?: 'load' | 'domcontentloaded' | 'networkidle';
+  /**
+   * How the file comes back: 'base64' (default) puts the bytes in the response; 'url' returns `fileUrl`, a signed HTTPS link that expires after 1 hour, instead — for no-code tools such as Bubble that save a file from a URL (e.g. base64).
+   */
+  output?: 'base64' | 'url';
 }
 
 export interface HtmlToPdfPostOutput {
   /**
-   * Base64-encoded PDF bytes. No `data:` URI prefix — decode directly.
+   * Base64-encoded PDF bytes. No `data:` URI prefix — decode directly. Present when `output` is 'base64' (the default); replaced by `fileUrl` in url mode.
    */
-  pdf: string;
+  pdf?: string;
+  /**
+   * Signed HTTPS link to the file, present only when `output` was 'url'. It expires after 1 hour and the file is deleted soon after.
+   */
+  fileUrl?: string;
+  /**
+   * When `fileUrl` stops working, as an ISO 8601 timestamp. Only when `output` was 'url'.
+   */
+  fileUrlExpiresAt?: string;
   /**
    * Page count, read from the PDF itself. Omitted when the structure cannot be read with certainty — the PDF is still valid.
    */
@@ -4671,13 +4683,25 @@ export interface ScreenshotPostInput {
    * Abort requests to known ad and tracker hosts before they load, so they cannot appear in the image (e.g. true).
    */
   blockAds?: boolean;
+  /**
+   * How the file comes back: 'base64' (default) puts the bytes in the response; 'url' returns `fileUrl`, a signed HTTPS link that expires after 1 hour, instead — for no-code tools such as Bubble that save a file from a URL (e.g. base64).
+   */
+  output?: 'base64' | 'url';
 }
 
 export interface ScreenshotPostOutput {
   /**
-   * Base64-encoded image bytes. No `data:` URI prefix — decode directly.
+   * Base64-encoded image bytes. No `data:` URI prefix — decode directly. Present when `output` is 'base64' (the default); replaced by `fileUrl` in url mode.
    */
-  image: string;
+  image?: string;
+  /**
+   * Signed HTTPS link to the file, present only when `output` was 'url'. It expires after 1 hour and the file is deleted soon after.
+   */
+  fileUrl?: string;
+  /**
+   * When `fileUrl` stops working, as an ISO 8601 timestamp. Only when `output` was 'url'.
+   */
+  fileUrlExpiresAt?: string;
   /**
    * Encoding of the returned image.
    */
