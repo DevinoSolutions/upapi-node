@@ -17833,6 +17833,18 @@ export const OPERATIONS: readonly OperationMeta[] = [
           default: null,
           title: 'Music',
         },
+        textLanguage: {
+          anyOf: [
+            {
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          title: 'Textlanguage',
+        },
         duration: {
           default: 0,
           title: 'Duration',

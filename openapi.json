@@ -24372,6 +24372,12 @@
                       "type": "object",
                       "nullable": true
                     },
+                    "textLanguage": {
+                      "default": null,
+                      "title": "Textlanguage",
+                      "type": "string",
+                      "nullable": true
+                    },
                     "duration": {
                       "default": 0,
                       "title": "Duration",

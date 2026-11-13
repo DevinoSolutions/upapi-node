@@ -5039,6 +5039,7 @@ export interface TiktokGetVideoDetailPostOutput {
   author: Record<string, unknown>;
   stats: Record<string, unknown>;
   music?: Record<string, unknown> | null;
+  textLanguage?: string | null;
   duration?: number;
   fetchedAt: string;
   elapsedMs: number;
