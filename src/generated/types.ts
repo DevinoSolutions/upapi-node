@@ -5329,6 +5329,10 @@ export interface WebSearchPostInput {
    * Region code (wt-wt=global, us-en, uk-en, etc)
    */
   region?: string;
+  /**
+   * Only results from the last day (d), week (w), month (m) or year (y)
+   */
+  timeLimit?: 'd' | 'w' | 'm' | 'y' | null;
 }
 
 export interface WebSearchPostOutputResultItem {

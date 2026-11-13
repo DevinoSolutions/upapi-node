@@ -19134,6 +19134,20 @@ export const OPERATIONS: readonly OperationMeta[] = [
           title: 'Region',
           type: 'string',
         },
+        timeLimit: {
+          anyOf: [
+            {
+              enum: ['d', 'w', 'm', 'y'],
+              type: 'string',
+            },
+            {
+              type: 'null',
+            },
+          ],
+          default: null,
+          description: 'Only results from the last day (d), week (w), month (m) or year (y)',
+          title: 'Timelimit',
+        },
       },
       required: ['query'],
       title: 'Input',

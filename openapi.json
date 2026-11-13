@@ -26217,6 +26217,14 @@
                     "description": "Region code (wt-wt=global, us-en, uk-en, etc)",
                     "title": "Region",
                     "type": "string"
+                  },
+                  "timeLimit": {
+                    "default": null,
+                    "description": "Only results from the last day (d), week (w), month (m) or year (y)",
+                    "title": "Timelimit",
+                    "enum": ["d", "w", "m", "y"],
+                    "type": "string",
+                    "nullable": true
                   }
                 },
                 "required": ["query"],
